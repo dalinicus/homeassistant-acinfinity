@@ -1,0 +1,14 @@
+{
+  "domain": "ac_infinity",
+  "name": "AC Infinity",
+  "version": "0.1.0",
+  "codeowners": [
+    "@dalinicus"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/dalinicus/ac-infinity-ha",
+  "issue_tracker": "https://github.com/dalinicus/ac-infinity-ha/issues",
+  "iot_class": "cloud_polling",
+  "requirements": []
+}

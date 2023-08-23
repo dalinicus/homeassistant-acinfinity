@@ -1,0 +1,38 @@
+categories:
+  - title: ":boom: Breaking Changes"
+    label: "breaking"
+  - title: ":rocket: Features"
+    label: "enhancement"
+  - title: ":fire: Removals and Deprecations"
+    label: "removal"
+  - title: ":beetle: Fixes"
+    label: "bug"
+  - title: ":racehorse: Performance"
+    label: "performance"
+  - title: ":rotating_light: Testing"
+    label: "testing"
+  - title: ":construction_worker: Continuous Integration"
+    label: "ci"
+  - title: ":books: Documentation"
+    label: "documentation"
+  - title: ":hammer: Refactoring"
+    label: "refactoring"
+  - title: ":lipstick: Style"
+    label: "style"
+  - title: ":package: Dependencies"
+    labels:
+      - "dependencies"
+      - "build"
+template: |
+  ## Check list (to be removed before releasing)
+
+  [ ] Check stable version reference in documentation is updated
+  [ ] Version in custom_components/aerogarden/manifest.json has been updated
+
+  ## Overview of changes
+
+  This section highlights the main changes brought by this release.
+
+  ## Changes
+
+  $CHANGES

@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_API_KEY
 
 from .const import DOMAIN, PLATFORMS
-from .ac_infinity_service import ACInfinityService
+from .acinfinity import ACInfinityService
 
 _LOGGER = logging.getLogger(__name__)
 

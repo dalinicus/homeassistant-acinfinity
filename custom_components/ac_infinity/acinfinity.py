@@ -17,10 +17,11 @@ from .const import (
     SENSOR_KEY_HUMIDITY,
     SENSOR_KEY_VPD,
     SENSOR_PORT_KEY_INTENSITY,
-    SENSOR_PORT_KEY_ONLINE
+    SENSOR_PORT_KEY_ONLINE,
 )
 
-class ACInfinityService:
+
+class ACInfinity:
     MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
     def __init__(self, userId) -> None:
@@ -37,13 +38,17 @@ class ACInfinityService:
                 deviceObj = {
                     SENSOR_KEY_TEMPERATURE: device["deviceInfo"]["temperature"] / 100,
                     SENSOR_KEY_HUMIDITY: device["deviceInfo"]["humidity"] / 100,
-                    SENSOR_KEY_VPD: device["deviceInfo"]["vpdnums"] / 100
+                    SENSOR_KEY_VPD: device["deviceInfo"]["vpdnums"] / 100,
                 }
 
                 for portDevice in device["deviceInfo"]["ports"]:
                     portNum = portDevice["port"]
-                    deviceObj[assemble_port_sensor_key(portNum, SENSOR_PORT_KEY_ONLINE)] = portDevice["online"]
-                    deviceObj[assemble_port_sensor_key(portNum, SENSOR_PORT_KEY_INTENSITY)] = portDevice["speak"]
+                    deviceObj[
+                        assemble_port_sensor_key(portNum, SENSOR_PORT_KEY_ONLINE)
+                    ] = portDevice["online"]
+                    deviceObj[
+                        assemble_port_sensor_key(portNum, SENSOR_PORT_KEY_INTENSITY)
+                    ] = portDevice["speak"]
 
                 devices[macAddr] = deviceObj
             self._data = devices
@@ -55,23 +60,26 @@ class ACInfinityService:
         for device in await self._client.get_all_device_info():
             deviceObj = {
                 DEVICE_MAC_ADDR: device["devMacAddr"],
-                DEVICE_LABEL: device["devName"]
+                DEVICE_LABEL: device["devName"],
             }
 
             ports = []
             for portDevice in device["deviceInfo"]["ports"]:
-                ports.append({
-                    DEVICE_PORT_INDEX: portDevice["port"],
-                    DEVICE_PORT_LABEL: portDevice["portName"]
-                })
+                ports.append(
+                    {
+                        DEVICE_PORT_INDEX: portDevice["port"],
+                        DEVICE_PORT_LABEL: portDevice["portName"],
+                    }
+                )
             deviceObj[DEVICE_PORTS] = ports
             devices.append(deviceObj)
         return devices
 
-    def get_sensor_data(self, macAddr:str, sensorKey:str):
+    def get_sensor_data(self, macAddr: str, sensorKey: str):
         if macAddr in self._data.keys():
             return self._data[macAddr][sensorKey]
         return None
+
 
 class ACInfinityClient:
     HOST = "http://www.acinfinityserver.com"
@@ -86,14 +94,19 @@ class ACInfinityClient:
         }
 
     async def get_all_device_info(self):
-        json = await self.__post(self.GET_DEVICE_INFO_LIST_ALL, f"userId={self._userId}")
+        json = await self.__post(
+            self.GET_DEVICE_INFO_LIST_ALL, f"userId={self._userId}"
+        )
         return json["data"]
 
     async def __post(self, path, post_data):
         async with async_timeout.timeout(10):
-            async with aiohttp.ClientSession(raise_for_status=False, headers=self._headers) as session:
-                async with session.post(f"{self.HOST}/{path}", data=post_data) as response:
-
+            async with aiohttp.ClientSession(
+                raise_for_status=False, headers=self._headers
+            ) as session:
+                async with session.post(
+                    f"{self.HOST}/{path}", data=post_data
+                ) as response:
                     if response.status != 200:
                         raise CannotConnect
 
@@ -102,6 +115,7 @@ class ACInfinityClient:
                         raise InvalidAuth
 
                     return json
+
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""

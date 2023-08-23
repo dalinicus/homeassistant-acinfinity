@@ -10,7 +10,7 @@ from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.const import CONF_API_KEY
 
-from .ac_infinity_service import ACInfinityClient, CannotConnect, InvalidAuth
+from .acinfinity import ACInfinityClient, CannotConnect, InvalidAuth
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,12 +21,15 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for AC Infinity."""
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle the initial step."""
 
         errors: dict[str, str] = {}
@@ -45,13 +48,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
             else:
                 truncatedId = apiKey[-6:]
-                await self.async_set_unique_id(f'acinfinity-{truncatedId}')
+                await self.async_set_unique_id(f"acinfinity-{truncatedId}")
                 self._abort_if_unique_id_configured()
 
-                return self.async_create_entry(title=f'AC Infinity ({truncatedId})', data=user_input)
+                return self.async_create_entry(
+                    title=f"AC Infinity ({truncatedId})", data=user_input
+                )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
-
-

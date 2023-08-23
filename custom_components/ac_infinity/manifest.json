@@ -7,8 +7,8 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/dalinicus/ac-infinity-ha",
-  "issue_tracker": "https://github.com/dalinicus/ac-infinity-ha/issues",
   "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/dalinicus/ac-infinity-ha/issues",
   "requirements": [],
   "version": "0.1.0"
 }

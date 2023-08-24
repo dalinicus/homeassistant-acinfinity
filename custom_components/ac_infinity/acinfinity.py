@@ -1,11 +1,9 @@
 from datetime import timedelta
 
-import aiohttp
-import async_timeout
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util import Throttle
 
+from .client import ACInfinityClient
 from .const import (
     DEVICE_LABEL,
     DEVICE_MAC_ADDR,
@@ -24,13 +22,16 @@ from .helpers import assemble_port_sensor_key
 class ACInfinity:
     MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
-    def __init__(self, userId) -> None:
-        self._client = ACInfinityClient(userId)
+    def __init__(self, email: str, password: str) -> None:
+        self._client = ACInfinityClient(email, password)
         self._data: dict = {}
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
         try:
+            if not self._client.is_logged_in():
+                await self._client.login()
+
             devices = {}
             for device in await self._client.get_all_device_info():
                 macAddr = device["devMacAddr"]
@@ -79,43 +80,3 @@ class ACInfinity:
         if macAddr in self._data:
             return self._data[macAddr][sensorKey]
         return None
-
-
-class ACInfinityClient:
-    HOST = "http://www.acinfinityserver.com"
-    GET_DEVICE_INFO_LIST_ALL = "/api/user/devInfoListAll"
-
-    def __init__(self, userId) -> None:
-        self._userId = userId
-        self._headers = {
-            "User-Agent": "ACController/1.8.2 (com.acinfinity.humiture; build:489; iOS 16.5.1) Alamofire/5.4.4",
-            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-            "token": userId,
-        }
-
-    async def get_all_device_info(self):
-        json = await self.__post(
-            self.GET_DEVICE_INFO_LIST_ALL, f"userId={self._userId}"
-        )
-        return json["data"]
-
-    async def __post(self, path, post_data):
-        async with async_timeout.timeout(10), aiohttp.ClientSession(
-            raise_for_status=False, headers=self._headers
-        ) as session, session.post(f"{self.HOST}/{path}", data=post_data) as response:
-            if response.status != 200:
-                raise CannotConnect
-
-            json = await response.json()
-            if json["code"] != 200:
-                raise InvalidAuth
-
-            return json
-
-
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""

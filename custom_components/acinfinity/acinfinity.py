@@ -1,24 +1,24 @@
-import aiohttp
-import async_timeout
 from datetime import timedelta
 
-from homeassistant.util import Throttle
+import aiohttp
+import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util import Throttle
 
-from .helpers import assemble_port_sensor_key
 from .const import (
     DEVICE_LABEL,
     DEVICE_MAC_ADDR,
-    DEVICE_PORTS,
     DEVICE_PORT_INDEX,
     DEVICE_PORT_LABEL,
-    SENSOR_KEY_TEMPERATURE,
+    DEVICE_PORTS,
     SENSOR_KEY_HUMIDITY,
+    SENSOR_KEY_TEMPERATURE,
     SENSOR_KEY_VPD,
     SENSOR_PORT_KEY_INTENSITY,
     SENSOR_PORT_KEY_ONLINE,
 )
+from .helpers import assemble_port_sensor_key
 
 
 class ACInfinity:
@@ -26,7 +26,7 @@ class ACInfinity:
 
     def __init__(self, userId) -> None:
         self._client = ACInfinityClient(userId)
-        self._data = {}
+        self._data: dict = {}
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
@@ -52,8 +52,8 @@ class ACInfinity:
 
                 devices[macAddr] = deviceObj
             self._data = devices
-        except Exception as err:
-            raise UpdateFailed(f"Error communicating with API: {err}")
+        except Exception:
+            raise UpdateFailed from Exception
 
     async def get_registered_devices(self):
         devices = []
@@ -76,7 +76,7 @@ class ACInfinity:
         return devices
 
     def get_sensor_data(self, macAddr: str, sensorKey: str):
-        if macAddr in self._data.keys():
+        if macAddr in self._data:
             return self._data[macAddr][sensorKey]
         return None
 
@@ -100,21 +100,17 @@ class ACInfinityClient:
         return json["data"]
 
     async def __post(self, path, post_data):
-        async with async_timeout.timeout(10):
-            async with aiohttp.ClientSession(
-                raise_for_status=False, headers=self._headers
-            ) as session:
-                async with session.post(
-                    f"{self.HOST}/{path}", data=post_data
-                ) as response:
-                    if response.status != 200:
-                        raise CannotConnect
+        async with async_timeout.timeout(10), aiohttp.ClientSession(
+            raise_for_status=False, headers=self._headers
+        ) as session, session.post(f"{self.HOST}/{path}", data=post_data) as response:
+            if response.status != 200:
+                raise CannotConnect
 
-                    json = await response.json()
-                    if json["code"] != 200:
-                        raise InvalidAuth
+            json = await response.json()
+            if json["code"] != 200:
+                raise InvalidAuth
 
-                    return json
+            return json
 
 
 class CannotConnect(HomeAssistantError):

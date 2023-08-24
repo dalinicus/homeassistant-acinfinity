@@ -1,30 +1,31 @@
 import logging
 
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import StateType
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.number import NumberEntity, NumberDeviceClass
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.components.binary_sensor import (
-    BinarySensorEntity,
     BinarySensorDeviceClass,
+    BinarySensorEntity,
 )
-from homeassistant.const import UnitOfTemperature, UnitOfPressure, PERCENTAGE
+from homeassistant.components.number import NumberDeviceClass, NumberEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import StateType
+
+from .acinfinity import ACInfinity
 from .const import (
-    DOMAIN,
     DEVICE_LABEL,
     DEVICE_MAC_ADDR,
-    DEVICE_PORTS,
-    DEVICE_PORT_LABEL,
     DEVICE_PORT_INDEX,
-    SENSOR_KEY_TEMPERATURE,
+    DEVICE_PORT_LABEL,
+    DEVICE_PORTS,
+    DOMAIN,
     SENSOR_KEY_HUMIDITY,
+    SENSOR_KEY_TEMPERATURE,
     SENSOR_KEY_VPD,
     SENSOR_PORT_KEY_INTENSITY,
     SENSOR_PORT_KEY_ONLINE,
 )
-from .acinfinity import ACInfinityService
 from .helpers import assemble_port_sensor_key
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class ACInfinitySensor(SensorEntity):
 
     def __init__(
         self,
-        acis: ACInfinityService,
+        acis: ACInfinity,
         uuid: str,
         deviceName: str,
         macAddr: str,
@@ -69,7 +70,7 @@ class ACInfinityBinarySensor(BinarySensorEntity):
 
     def __init__(
         self,
-        acis: ACInfinityService,
+        acis: ACInfinity,
         uuid: str,
         deviceName: str,
         macAddr: str,
@@ -102,7 +103,7 @@ class ACInfinityNumberSensor(NumberEntity):
 
     def __init__(
         self,
-        acis: ACInfinityService,
+        acis: ACInfinity,
         uuid: str,
         deviceName: str,
         macAddr: str,
@@ -134,9 +135,9 @@ class ACInfinityNumberSensor(NumberEntity):
 async def async_setup_entry(
     hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
 ) -> None:
-    """Setup the AC Infinity Platform"""
+    """Setup the AC Infinity Platform."""
 
-    acis: ACInfinityService = hass.data[DOMAIN][config.entry_id]
+    acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
         SENSOR_KEY_TEMPERATURE: {
@@ -182,18 +183,18 @@ async def async_setup_entry(
     for device in devices:
         for key, descr in device_sensors.items():
             sensor_objects.extend(
-                create_sensors(acis, config.unique_id, device, key, descr)
+                __create_sensors(acis, config.unique_id, device, key, descr)
             )
 
     add_entities_callback(sensor_objects)
 
 
-def create_sensors(acis: ACInfinityService, uuid, device, sensorKey, descr):
+def __create_sensors(acis: ACInfinity, uuid, device, sensorKey, descr):
     if descr["perPort"]:
         sensors = []
         for port in device[DEVICE_PORTS]:
             sensors.append(
-                create_sensor(
+                __create_sensor(
                     acis,
                     uuid,
                     device,
@@ -208,7 +209,7 @@ def create_sensors(acis: ACInfinityService, uuid, device, sensorKey, descr):
         return sensors
 
     return [
-        create_sensor(
+        __create_sensor(
             acis,
             uuid,
             device,
@@ -221,8 +222,8 @@ def create_sensors(acis: ACInfinityService, uuid, device, sensorKey, descr):
     ]
 
 
-def create_sensor(
-    acis: ACInfinityService,
+def __create_sensor(
+    acis: ACInfinity,
     uuid,
     device,
     sensorKey,
@@ -264,4 +265,3 @@ def create_sensor(
             deviceClass,
             unit,
         )
-    raise "Congratulations! You Win!"

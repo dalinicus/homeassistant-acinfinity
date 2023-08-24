@@ -29,6 +29,10 @@ repos:
           - --ignore-words-list=hass
           - --write-changes
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.5.1"
+    hooks:
+    - id: mypy
 
 ci:
   autofix_prs: true

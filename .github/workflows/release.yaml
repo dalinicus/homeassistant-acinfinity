@@ -1,0 +1,26 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          directory: custom_components/ac_infinity
+          filename: 'ac_infinity.zip'
+          exclusions: '*.git* .editorconfig *.vscode* *.github*'
+      - name: Upload zip to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: custom_components/ac_infinity/ac_infinity.zip
+          asset_name: ac_infinity.zip
+          tag: ${{ github.ref }}
+          overwrite: true

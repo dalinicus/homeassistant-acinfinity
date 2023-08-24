@@ -1,13 +1,18 @@
-name: Validate
+name: validate
 
 on:
-  #push:
-  #pull_request:
-  #schedule:
-  #  - cron: "0 0 * * *"
+  push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+    - uses: pre-commit/action@v3.0.0
+
   validate-hassfest:
     name: Hassfest validation
     runs-on: ubuntu-latest

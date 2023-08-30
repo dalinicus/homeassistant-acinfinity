@@ -84,3 +84,11 @@ ignore = [
     "UP038", # Use `X | Y` in `isinstance` call instead of `(X, Y)`
 
 ]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]

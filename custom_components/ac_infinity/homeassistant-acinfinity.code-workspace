@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "homeassistant-acinfinity",
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"python.testing.pytestArgs": [
+			"."
+		],
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true
+	}
+}

@@ -4,17 +4,24 @@ from homeassistant.const import Platform
 
 DOMAIN = "ac_infinity"
 PLATFORMS = [Platform.SENSOR]
+HOST = "http://www.acinfinityserver.com"
 
-DEVICE_MAC_ADDR = "deviceMacAddr"
-DEVICE_LABEL = "deviceLabel"
-DEVICE_PORTS = "devicePorts"
-DEVICE_PORT_INDEX = "devicePortIndex"
-DEVICE_PORT_LABEL = "devicePortLabel"
+# Device Metadata
+DEVICE_KEY_DEVICE_ID = "devId"
+DEVICE_KEY_DEVICE_NAME = "devName"
+DEVICE_KEY_MAC_ADDR = "devMacAddr"
+DEVICE_KEY_DEVICE_INFO = "deviceInfo"
+DEVICE_KEY_PORTS = "ports"
 
-SENSOR_KEY_TEMPERATURE = "temperature"
-SENSOR_KEY_HUMIDITY = "humidity"
-SENSOR_KEY_VPD = "vpd"
+# Device Port Metadata
+DEVICE_PORT_KEY_PORT = "port"
+DEVICE_PORT_KEY_NAME = "portName"
 
-SENSOR_PORT_PREFIX = "port"
-SENSOR_PORT_KEY_INTENSITY = "intensity"
-SENSOR_PORT_KEY_ONLINE = "online"
+# Device Sensor Fields
+DEVICE_KEY_TEMPERATURE = "temperature"
+DEVICE_KEY_HUMIDITY = "humidity"
+DEVICE_KEY_VAPOR_PRESSURE_DEFICIT = "vpdnums"
+
+# Device Port Sensor Fields
+DEVICE_PORT_KEY_SPEAK = "speak"
+DEVICE_PORT_KEY_ONLINE = "online"

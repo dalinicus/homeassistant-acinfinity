@@ -1,136 +1,79 @@
 import logging
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
 from homeassistant.components.number import NumberDeviceClass, NumberEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import StateType
 
-from .acinfinity import ACInfinity
+from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
 from .const import (
-    DEVICE_LABEL,
-    DEVICE_MAC_ADDR,
-    DEVICE_PORT_INDEX,
-    DEVICE_PORT_LABEL,
-    DEVICE_PORTS,
+    DEVICE_KEY_HUMIDITY,
+    DEVICE_KEY_TEMPERATURE,
+    DEVICE_KEY_VAPOR_PRESSURE_DEFICIT,
+    DEVICE_PORT_KEY_ONLINE,
+    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
-    SENSOR_KEY_HUMIDITY,
-    SENSOR_KEY_TEMPERATURE,
-    SENSOR_KEY_VPD,
-    SENSOR_PORT_KEY_INTENSITY,
-    SENSOR_PORT_KEY_ONLINE,
 )
-from .helpers import assemble_port_sensor_key
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class ACInfinitySensor(SensorEntity):
-    _attr_has_entity_name = True
-
     def __init__(
         self,
         acis: ACInfinity,
+        device: ACInfinityDevice,
         uuid: str,
-        deviceName: str,
-        macAddr: str,
-        sensorKey: str,
-        sensorLabel: str,
-        deviceClass: str,
+        property_key: str,
+        sensor_label: str,
+        device_class: str,
         unit: str,
     ) -> None:
         self._acis = acis
-        self._macAddr = macAddr
-        self._sensorKey = sensorKey
+        self._device = device
 
-        self._attr_unique_id = f"aci_{uuid}_{macAddr}_{sensorKey}"
-        self._attr_device_class = deviceClass
+        self._property_key = property_key
+        self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
-        self._attr_name = f"{deviceName} {sensorLabel}"
+
+        self._attr_unique_id = f"aci_{uuid}_{device.mac_addr}_{property_key}"
+        self._attr_name = f"{device.device_name} {sensor_label}"
 
     async def async_update(self) -> None:
-        await self._acis.update_data()
-        self._attr_native_value = self._acis.get_sensor_data(
-            self._macAddr, self._sensorKey
+        await self._acis.update()
+        self._attr_native_value = self._acis.get_device_property(
+            self._device.device_id, self._property_key
         )
 
-    @property
-    def native_value(self) -> StateType:
-        return self._attr_native_value
-
-
-class ACInfinityBinarySensor(BinarySensorEntity):
-    _attr_has_entity_name = True
-
+class ACInfinityPortSensor(SensorEntity):
     def __init__(
         self,
         acis: ACInfinity,
+        device: ACInfinityDevice,
+        port: ACInfinityDevicePort,
         uuid: str,
-        deviceName: str,
-        macAddr: str,
-        sensorKey: str,
-        sensorLabel: str,
-        deviceClass: str,
+        property_key: str,
+        sensor_label: str,
+        device_class: str,
         unit: str,
     ) -> None:
         self._acis = acis
-        self._macAddr = macAddr
-        self._sensorKey = sensorKey
+        self._device = device
+        self._port = port
 
-        self._attr_unique_id = f"aci_{uuid}_{macAddr}_{sensorKey}"
-        self._attr_device_class = deviceClass
+        self._property_key = property_key
+        self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
-        self._attr_name = f"{deviceName} {sensorLabel}"
+
+        self._attr_unique_id = f"aci_{uuid}_{device.mac_addr}_port_{port.port_id}_{property_key}"
+        self._attr_name = f"{device.device_name} {port.port_name} {sensor_label}"
 
     async def async_update(self) -> None:
-        await self._acis.update_data()
-        value = self._acis.get_sensor_data(self._macAddr, self._sensorKey)
-        self._attr_is_on = value == 1
-
-    @property
-    def is_on(self) -> bool:
-        return self._attr_is_on
-
-
-class ACInfinityNumberSensor(NumberEntity):
-    _attr_has_entity_name = True
-
-    def __init__(
-        self,
-        acis: ACInfinity,
-        uuid: str,
-        deviceName: str,
-        macAddr: str,
-        sensorKey: str,
-        sensorLabel: str,
-        deviceClass: str,
-        unit: str,
-    ) -> None:
-        self._acis = acis
-        self._macAddr = macAddr
-        self._sensorKey = sensorKey
-
-        self._attr_unique_id = f"aci_{uuid}_{macAddr}_{sensorKey}"
-        self._attr_device_class = deviceClass
-        self._attr_native_unit_of_measurement = unit
-        self._attr_name = f"{deviceName} {sensorLabel}"
-
-    async def async_update(self) -> None:
-        await self._acis.update_data()
-        self._attr_native_value = self._acis.get_sensor_data(
-            self._macAddr, self._sensorKey
+        await self._acis.update()
+        self._attr_native_value = self._acis.get_device_port_property(
+            self._device.device_id, self._port.port_id, self._property_key
         )
-
-    @property
-    def native_value(self) -> StateType:
-        return self._attr_native_value
-
 
 async def async_setup_entry(
     hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
@@ -140,35 +83,35 @@ async def async_setup_entry(
     acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
-        SENSOR_KEY_TEMPERATURE: {
+        DEVICE_KEY_TEMPERATURE: {
             "label": "Temperature",
             "entityClass": SensorEntity,
             "deviceClass": SensorDeviceClass.TEMPERATURE,
             "unit": UnitOfTemperature.CELSIUS,
             "perPort": False,
         },
-        SENSOR_KEY_HUMIDITY: {
+        DEVICE_KEY_HUMIDITY: {
             "label": "Humidity",
             "entityClass": SensorEntity,
             "deviceClass": SensorDeviceClass.HUMIDITY,
             "unit": PERCENTAGE,
             "perPort": False,
         },
-        SENSOR_KEY_VPD: {
+        DEVICE_KEY_VAPOR_PRESSURE_DEFICIT: {
             "label": "VPD",
             "entityClass": SensorEntity,
             "deviceClass": SensorDeviceClass.PRESSURE,
             "unit": UnitOfPressure.KPA,
             "perPort": False,
         },
-        SENSOR_PORT_KEY_ONLINE: {
+        DEVICE_PORT_KEY_ONLINE: {
             "label": "Online",
             "entityClass": BinarySensorEntity,
             "deviceClass": BinarySensorDeviceClass.POWER,
             "unit": None,
             "perPort": True,
         },
-        SENSOR_PORT_KEY_INTENSITY: {
+        DEVICE_PORT_KEY_SPEAK: {
             "label": "Intensity",
             "entityClass": NumberEntity,
             "deviceClass": NumberDeviceClass.POWER_FACTOR,
@@ -189,15 +132,15 @@ async def async_setup_entry(
     add_entities_callback(sensor_objects)
 
 
-def __create_sensors(acis: ACInfinity, uuid, device, sensorKey, descr):
+def __create_sensors(acis: ACInfinity, uuid, device_id, sensorKey, descr):
     if descr["perPort"]:
         sensors = []
-        for port in device[DEVICE_PORTS]:
+        for port in acis.get_device_port_ids(device_id):
             sensors.append(
                 __create_sensor(
                     acis,
                     uuid,
-                    device,
+                    device_id,
                     assemble_port_sensor_key(port[DEVICE_PORT_INDEX], sensorKey),
                     descr["entityClass"],
                     f'{port[DEVICE_PORT_LABEL]} {descr["label"]}',
@@ -225,7 +168,7 @@ def __create_sensors(acis: ACInfinity, uuid, device, sensorKey, descr):
 def __create_sensor(
     acis: ACInfinity,
     uuid,
-    device,
+    device_id,
     sensorKey,
     sensorClass,
     label,
@@ -265,3 +208,6 @@ def __create_sensor(
             deviceClass,
             unit,
         )
+
+def __assemble_port_sensor_key(port_id: int, sensor_key: str):
+    return f"{SENSOR_PORT_PREFIX}_{portNumber}_{sensorKey}"

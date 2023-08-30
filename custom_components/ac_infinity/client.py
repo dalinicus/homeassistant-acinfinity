@@ -2,14 +2,13 @@ import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 
-HOST = "http://www.acinfinityserver.com"
-
 API_URL_LOGIN = "/api/user/appUserLogin"
 API_URL_GET_DEVICE_INFO_LIST_ALL = "/api/user/devInfoListAll"
 
 
 class ACInfinityClient:
-    def __init__(self, email: str, password: str) -> None:
+    def __init__(self, host: str, email: str, password: str) -> None:
+        self._host = host
         self._email = email
         self._password = password
 
@@ -29,18 +28,20 @@ class ACInfinityClient:
 
     async def get_all_device_info(self):
         if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("Aerogarden client is not logged in.")
+            raise ACInfinityClientCannotConnect(
+                "Aerogarden client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
-            API_URL_GET_DEVICE_INFO_LIST_ALL, {"userId": self._user_id}, headers
+            API_URL_GET_DEVICE_INFO_LIST_ALL, {
+                "userId": self._user_id}, headers
         )
         return json["data"]
 
     async def __post(self, path, post_data, headers):
         async with async_timeout.timeout(10), aiohttp.ClientSession(
             raise_for_status=False, headers=headers
-        ) as session, session.post(f"{HOST}/{path}", data=post_data) as response:
+        ) as session, session.post(f"{self._host}{path}", data=post_data) as response:
             if response.status != 200:
                 raise ACInfinityClientCannotConnect
 

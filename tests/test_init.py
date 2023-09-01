@@ -1,9 +1,11 @@
 import asyncio
+from asyncio import Future
 
 import pytest
 from homeassistant.config_entries import ConfigEntries, ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity import async_setup_entry, async_unload_entry
 from custom_components.ac_infinity.ac_infinity import ACInfinity
@@ -16,11 +18,11 @@ ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 
 @pytest.fixture
-def setup(mocker):
-    future = asyncio.Future()
+def setup(mocker: MockFixture):
+    future: Future = asyncio.Future()
     future.set_result(None)
 
-    boolFuture = asyncio.Future()
+    boolFuture: Future = asyncio.Future()
     boolFuture.set_result(True)
 
     mocker.patch.object(ACInfinity, "update", return_value=future)

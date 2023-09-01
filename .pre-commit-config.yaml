@@ -33,6 +33,10 @@ repos:
     rev: "v1.5.1"
     hooks:
     - id: mypy
+      args:
+      - --explicit-package-bases
+      - --ignore-missing-imports
+      - --check-untyped-defs
 
   - repo: local
     hooks:

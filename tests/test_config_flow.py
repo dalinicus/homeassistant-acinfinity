@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import Future
 
 import pytest
 from homeassistant import config_entries
@@ -18,7 +19,7 @@ USER_INPUT = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
 
 @pytest.fixture
 def setup(mocker):
-    future = asyncio.Future()
+    future: Future = asyncio.Future()
     future.set_result(None)
 
     mocker.patch.object(config_entries.ConfigFlow, "async_show_form")

@@ -28,13 +28,11 @@ class ACInfinityClient:
 
     async def get_all_device_info(self):
         if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect(
-                "Aerogarden client is not logged in.")
+            raise ACInfinityClientCannotConnect("Aerogarden client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
-            API_URL_GET_DEVICE_INFO_LIST_ALL, {
-                "userId": self._user_id}, headers
+            API_URL_GET_DEVICE_INFO_LIST_ALL, {"userId": self._user_id}, headers
         )
         return json["data"]
 

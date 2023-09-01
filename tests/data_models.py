@@ -1,11 +1,10 @@
-
 HOST = "https://unittest.abcxyz"
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
 
 USER_ID = "11763238626156107487"
 DEVICE_ID = 54929097239553773072
-
+DEVICE_NAME = "Grow Tent"
 MAC_ADDR = "2B120D62DC00"
 
 LOGIN_PAYLOAD = {
@@ -23,15 +22,15 @@ LOGIN_PAYLOAD = {
         "appIsanalytics": 0,
         "appIsbugreport": 0,
         "appIsemailrepost": 0,
-        "createTime": None
-    }
+        "createTime": None,
+    },
 }
 
 DEVICE_INFO_LIST_ALL = [
     {
         "devId": str(DEVICE_ID),
         "devCode": "ABCDEFG",
-        "devName": "Grow Tent",
+        "devName": DEVICE_NAME,
         "devType": 11,
         "devAccesstime": 1692328784,
         "devPortCount": 4,
@@ -81,7 +80,7 @@ DEVICE_INFO_LIST_ALL = [
                     "loadType": 0,
                     "loadState": 1,
                     "abnormalState": 0,
-                    "overcurrentStatus": 0
+                    "overcurrentStatus": 0,
                 },
                 {
                     "speak": 7,
@@ -100,7 +99,7 @@ DEVICE_INFO_LIST_ALL = [
                     "loadType": 0,
                     "loadState": 1,
                     "abnormalState": 0,
-                    "overcurrentStatus": 0
+                    "overcurrentStatus": 0,
                 },
                 {
                     "speak": 5,
@@ -119,7 +118,7 @@ DEVICE_INFO_LIST_ALL = [
                     "loadType": 0,
                     "loadState": 1,
                     "abnormalState": 0,
-                    "overcurrentStatus": 0
+                    "overcurrentStatus": 0,
                 },
                 {
                     "speak": 0,
@@ -138,8 +137,8 @@ DEVICE_INFO_LIST_ALL = [
                     "loadType": 0,
                     "loadState": 0,
                     "abnormalState": 0,
-                    "overcurrentStatus": 0
-                }
+                    "overcurrentStatus": 0,
+                },
             ],
             "logCreateTime": None,
             "isOpenAutomation": 0,
@@ -156,7 +155,7 @@ DEVICE_INFO_LIST_ALL = [
             "sensors": None,
             "overcurrentStatus": 0,
             "vpdnums": 83,
-            "vpdstatus": 0
+            "vpdstatus": 0,
         },
         "appEmail": EMAIL,
         "devTimeZone": "GMT+00:00",
@@ -167,12 +166,12 @@ DEVICE_INFO_LIST_ALL = [
         "hardwareVersion": "1.1",
         "workMode": 1,
         "zoneId": "America/Chicago",
-        "wifiName": None
+        "wifiName": None,
     }
 ]
 
 DEVICE_INFO_LIST_ALL_PAYLOAD = {
     "msg": "操作成功",
     "code": 200,
-    "data": DEVICE_INFO_LIST_ALL
+    "data": DEVICE_INFO_LIST_ALL,
 }

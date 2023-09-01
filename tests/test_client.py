@@ -1,4 +1,3 @@
-
 import pytest
 from aioresponses import aioresponses
 
@@ -77,10 +76,7 @@ class TestACInfinityClient:
             mocked.post(
                 f"{HOST}{API_URL_LOGIN}",
                 status=200,
-                payload={
-                    "msg": "User Does Not Exist",
-                    "code": code
-                },
+                payload={"msg": "User Does Not Exist", "code": code},
             )
 
             client = ACInfinityClient(HOST, EMAIL, PASSWORD)

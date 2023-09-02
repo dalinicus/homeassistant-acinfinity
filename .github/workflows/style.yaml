@@ -1,0 +1,28 @@
+name: Code Style
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
+          name: Setup Python
+          with:
+            python-version: 3.11
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install -r requirements.dev.txt
+        - name: Ruff
+          run: ruff .
+        - name: Black
+          run : black .
+        - name: Codespell
+          run: codespell --ignore-words-list=hass
+        - name: MyPy
+          run: mypy --ignore-missing-imports --explicit-package-bases --check-untyped-defs .

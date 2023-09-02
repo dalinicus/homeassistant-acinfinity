@@ -14,7 +14,7 @@ from .client import (
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
-from .const import DOMAIN
+from .const import DOMAIN, HOST
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
         if user_input is not None:
             try:
                 client = ACInfinityClient(
-                    user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
+                    HOST, user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
                 )
                 await client.login()
                 _ = await client.get_all_device_info()

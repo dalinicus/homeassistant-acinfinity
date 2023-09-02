@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
-from .acinfinity import ACInfinity
+from .ac_infinity import ACInfinity
 from .const import DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
 
     ac_infinity = ACInfinity(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    await ac_infinity.update_data()
+    await ac_infinity.update()
 
     hass.data[DOMAIN][entry.entry_id] = ac_infinity
 

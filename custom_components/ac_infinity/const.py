@@ -3,7 +3,7 @@
 from homeassistant.const import Platform
 
 DOMAIN = "ac_infinity"
-PLATFORMS = [ Platform.SENSOR, Platform.BINARY_SENSOR, Platform.NUMBER ]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.NUMBER]
 HOST = "http://www.acinfinityserver.com"
 
 # Device Metadata

@@ -11,6 +11,7 @@ from custom_components.ac_infinity.const import (
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
 from .utilities import get_device_port_property_unique_id
 
+
 class ACInfinityPortNumberEntity(NumberEntity):
     def __init__(
         self,
@@ -21,7 +22,7 @@ class ACInfinityPortNumberEntity(NumberEntity):
         sensor_label: str,
         device_class: str,
         min_value: int,
-        max_value: int
+        max_value: int,
     ) -> None:
         self._acis = acis
         self._device = device
@@ -31,7 +32,9 @@ class ACInfinityPortNumberEntity(NumberEntity):
         self._attr_native_min_value = min_value
         self._attr_native_max_value = max_value
         self._attr_device_class = device_class
-        self._attr_unique_id = get_device_port_property_unique_id(device, port, property_key)
+        self._attr_unique_id = get_device_port_property_unique_id(
+            device, port, property_key
+        )
         self._attr_name = f"{device.device_name} {port.port_name} {sensor_label}"
 
     async def async_update(self) -> None:
@@ -53,7 +56,7 @@ async def async_setup_entry(
             "label": "Intensity",
             "deviceClass": NumberDeviceClass.POWER_FACTOR,
             "min": 0,
-            "max": 10
+            "max": 10,
         },
     }
 
@@ -73,7 +76,7 @@ async def async_setup_entry(
                         descr["label"],
                         descr["deviceClass"],
                         descr["min"],
-                        descr["max"]
+                        descr["max"],
                     )
                 )
 

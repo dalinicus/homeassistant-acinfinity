@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Iterable
+from asyncio import Future
 
 import pytest
 from homeassistant.components.sensor import SensorDeviceClass
@@ -31,11 +31,11 @@ ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 class EntitiesTracker:
     def __init__(self) -> None:
-        self._added_entities = []
+        self._added_entities: list[ACInfinitySensorEntity] = []
 
     def add_entities_callback(
         self,
-        new_entities: Iterable[ACInfinitySensorEntity],
+        new_entities: list[ACInfinitySensorEntity],
         update_before_add: bool = False,
     ):
         self._added_entities = new_entities
@@ -43,14 +43,15 @@ class EntitiesTracker:
 
 @pytest.fixture
 def setup(mocker):
-    future = asyncio.Future()
+    future: Future = asyncio.Future()
     future.set_result(None)
 
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
+
     def set_data():
         ac_infinity._data = DEVICE_INFO_LIST_ALL
         return future
-    
+
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
     mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)

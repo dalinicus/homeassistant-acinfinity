@@ -1,20 +1,15 @@
 import asyncio
-from collections.abc import Iterable
+from asyncio import Future
 
 import pytest
-from homeassistant.components.number import NumberDeviceClass, NumberEntity
+from homeassistant.components.number import NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry
-
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
-    DEVICE_KEY_HUMIDITY,
-    DEVICE_KEY_TEMPERATURE,
-    DEVICE_KEY_VAPOR_PRESSURE_DEFICIT,
+    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
-    DEVICE_PORT_KEY_ONLINE,
-    DEVICE_PORT_KEY_SPEAK
 )
 from custom_components.ac_infinity.number import (
     ACInfinityPortNumberEntity,
@@ -22,18 +17,18 @@ from custom_components.ac_infinity.number import (
 )
 from tests.data_models import DEVICE_INFO_LIST_ALL, MAC_ADDR
 
-
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
 ENTRY_ID = f"ac_infinity-{EMAIL}"
 
+
 class EntitiesTracker:
     def __init__(self) -> None:
-        self._added_entities = []
+        self._added_entities: list[ACInfinityPortNumberEntity] = []
 
     def add_entities_callback(
         self,
-        new_entities: Iterable[ACInfinityPortNumberEntity],
+        new_entities: list[ACInfinityPortNumberEntity],
         update_before_add: bool = False,
     ):
         self._added_entities = new_entities
@@ -41,14 +36,15 @@ class EntitiesTracker:
 
 @pytest.fixture
 def setup(mocker):
-    future = asyncio.Future()
+    future: Future = asyncio.Future()
     future.set_result(None)
 
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
+
     def set_data():
         ac_infinity._data = DEVICE_INFO_LIST_ALL
         return future
-    
+
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
     mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
@@ -99,7 +95,10 @@ class TestNumbers:
         sensor = await self.__execute_and_get_port_sensor(setup, DEVICE_PORT_KEY_SPEAK)
 
         assert "Intensity" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_1_{DEVICE_PORT_KEY_SPEAK}"
+        assert (
+            sensor._attr_unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_port_1_{DEVICE_PORT_KEY_SPEAK}"
+        )
         assert sensor._attr_device_class == NumberDeviceClass.POWER_FACTOR
         assert sensor._attr_native_min_value == 0
         assert sensor._attr_native_max_value == 10

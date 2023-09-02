@@ -25,4 +25,4 @@ jobs:
         - name: Codespell
           run: codespell --ignore-words-list=hass
         - name: MyPy
-          run: mypy --ignore-missing-imports .
+          run: mypy --ignore-missing-imports --explicit-package-bases --check-untyped-defs .

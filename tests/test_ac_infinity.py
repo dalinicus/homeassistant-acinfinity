@@ -125,7 +125,7 @@ class TestACInfinity:
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
         ac_infinity._data = DEVICE_INFO_LIST_ALL
 
-        result = ac_infinity.get_device_port_property(DEVICE_ID, port_num, property)
+        result = ac_infinity.get_device_port_property(device_id, port_num, property)
         assert result == value
 
     @pytest.mark.parametrize(
@@ -162,7 +162,7 @@ class TestACInfinity:
         with pytest.raises(UpdateFailed):
             await ac_infinity.update()
 
-    async def test_get_device_port_ids_returns_port_ids_if_device_exists(self):
+    async def test_get_device_all_device_meta_data_returns_meta_data(self):
         """getting port device ids should return ids"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
         ac_infinity._data = DEVICE_INFO_LIST_ALL
@@ -176,10 +176,11 @@ class TestACInfinity:
         assert device.mac_addr == MAC_ADDR
         assert [port.port_id for port in device.ports] == [1, 2, 3, 4]
 
-    async def test_get_device_port_ids_returns_emtpy_list_if_device_doesnt_exist(self):
-        """getting port device ids should return an empty list if no device is found"""
+    @pytest.mark.parametrize("data", [[], None])
+    async def test_get_device_all_device_meta_data_returns_empty_list(self, data):
+        """getting device metadata returns empty list if no device exists or data isn't initialized"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = []
+        ac_infinity._data = data
 
         result = ac_infinity.get_all_device_meta_data()
         assert result == []

@@ -10,6 +10,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
@@ -42,7 +43,7 @@ class EntitiesTracker:
 
 
 @pytest.fixture
-def setup(mocker):
+def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 
@@ -158,4 +159,4 @@ class TestSensors:
         )
         await sensor.async_update()
 
-        assert sensor._attr_native_value == 83
+        assert sensor._attr_native_value == 0.83

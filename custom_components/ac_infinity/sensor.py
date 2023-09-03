@@ -27,12 +27,10 @@ class ACInfinitySensorEntity(SensorEntity):
         sensor_label: str,
         device_class: str,
         unit: str,
-        factor: int,
     ) -> None:
         self._acis = acis
         self._device = device
         self._property_key = property_key
-        self._factor = factor
 
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
@@ -43,7 +41,7 @@ class ACInfinitySensorEntity(SensorEntity):
         await self._acis.update()
         self._attr_native_value = (
             self._acis.get_device_property(self._device.device_id, self._property_key)
-            / self._factor
+            / 100
         )
 
 
@@ -59,19 +57,16 @@ async def async_setup_entry(
             "label": "Temperature",
             "deviceClass": SensorDeviceClass.TEMPERATURE,
             "unit": UnitOfTemperature.CELSIUS,
-            "factor": 100,
         },
         DEVICE_KEY_HUMIDITY: {
             "label": "Humidity",
             "deviceClass": SensorDeviceClass.HUMIDITY,
             "unit": PERCENTAGE,
-            "factor": 100,
         },
         DEVICE_KEY_VAPOR_PRESSURE_DEFICIT: {
             "label": "VPD",
             "deviceClass": SensorDeviceClass.PRESSURE,
             "unit": UnitOfPressure.KPA,
-            "factor": 1,
         },
     }
 
@@ -89,7 +84,6 @@ async def async_setup_entry(
                     descr["label"],
                     descr["deviceClass"],
                     descr["unit"],
-                    descr["factor"],
                 )
             )
 

@@ -27,6 +27,7 @@ class ACInfinityPortBinarySensorEntity(BinarySensorEntity):
         self._port = port
         self._property_key = property_key
 
+        self._attr_device_info = device.device_info
         self._attr_device_class = device_class
         self._attr_unique_id = get_device_port_property_unique_id(
             device, port, property_key

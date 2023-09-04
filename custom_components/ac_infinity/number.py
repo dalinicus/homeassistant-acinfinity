@@ -31,6 +31,7 @@ class ACInfinityPortNumberEntity(NumberEntity):
 
         self._attr_native_min_value = min_value
         self._attr_native_max_value = max_value
+        self._attr_device_info = device.device_info
         self._attr_device_class = device_class
         self._attr_unique_id = get_device_port_property_unique_id(
             device, port, property_key

@@ -32,6 +32,7 @@ class ACInfinitySensorEntity(SensorEntity):
         self._device = device
         self._property_key = property_key
 
+        self._attr_device_info = device.device_info
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
         self._attr_unique_id = get_device_property_unique_id(device, property_key)

@@ -12,6 +12,8 @@ from custom_components.ac_infinity.const import (
     DEVICE_KEY_TEMPERATURE,
     DEVICE_PORT_KEY_NAME,
     DEVICE_PORT_KEY_SPEAK,
+    DOMAIN,
+    MANUFACTURER,
 )
 
 from .data_models import (
@@ -184,3 +186,27 @@ class TestACInfinity:
 
         result = ac_infinity.get_all_device_meta_data()
         assert result == []
+
+    @pytest.mark.parametrize(
+        "devType,expected_model",
+        [(11, "Controller 69 Pro (CTR69P)"), (3, "Controller Type 3")],
+    )
+    async def test_ac_infinity_device_has_correct_device_info(
+        self, devType: int, expected_model: str
+    ):
+        """getting device returns an model object that contains correct device info for the device registry"""
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._data[0]["devType"] = devType
+
+        result = ac_infinity.get_all_device_meta_data()
+        assert len(result) > 0
+
+        device = result[0]
+        device_info = device._device_info
+        assert (DOMAIN, str(DEVICE_ID)) in device_info.get("identifiers")
+        assert device_info.get("hw_version") == "1.1"
+        assert device_info.get("sw_version") == "3.2.25"
+        assert device_info.get("name") == DEVICE_NAME
+        assert device_info.get("manufacturer") == MANUFACTURER
+        assert device_info.get("model") == expected_model

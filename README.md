@@ -12,20 +12,17 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 
 ## Data Available
 
-This integration will create the following sensors for each AC Infinity Controller on the configured user account
+This integration will create a device for each AC Infinity Controller on the configured user account. Each device will have the following sensors created.
 - Humidity
 - Air Temperature
 - Vaper Pressure Deficit (VPD)
 
-![Sensors](/images/controller-sensors.png)
-
-
 Sensors will also be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
-- Power - Is there a device on that port
-- Intensity - Power supplied to the connected device
+- Status - Is there a device plugged in on that port
+- Power - Current Power supplied to the connected device
 
-![Sensors](/images/port-sensors.png)
+![AC-Infinity](/images/ac-infinity-device.png)
 
 Integration is currently only read only, but triggering state changes on connected devices is planned.
 

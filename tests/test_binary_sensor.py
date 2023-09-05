@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.binary_sensor import (
@@ -37,7 +38,7 @@ class EntitiesTracker:
 
 
 @pytest.fixture
-def setup(mocker):
+def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 
@@ -65,7 +66,7 @@ def setup(mocker):
 @pytest.mark.asyncio
 class TestBinarySensors:
     async def __execute_and_get_port_sensor(
-        self, setup, property_key: str
+        self, setup, port: int, property_key: str
     ) -> ACInfinityPortBinarySensorEntity:
         entities: EntitiesTracker
         (hass, configEntry, entities) = setup
@@ -76,7 +77,7 @@ class TestBinarySensors:
             sensor
             for sensor in entities._added_entities
             if property_key in sensor._attr_unique_id
-            and "port_1" in sensor._attr_unique_id
+            and f"port_{port}" in sensor._attr_unique_id
         ]
         assert len(found) == 1
 
@@ -91,24 +92,38 @@ class TestBinarySensors:
 
         assert len(entities._added_entities) == 4
 
-    async def test_async_setup_entry_plug_created_for_each_port(self, setup):
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_entry_plug_created_for_each_port(self, setup, port):
         """Sensor for device port connected is created on setup"""
 
-        sensor = await self.__execute_and_get_port_sensor(setup, DEVICE_PORT_KEY_ONLINE)
+        sensor = await self.__execute_and_get_port_sensor(
+            setup, port, DEVICE_PORT_KEY_ONLINE
+        )
 
-        assert "Online" in sensor._attr_name
+        assert "Status" in sensor._attr_name
         assert (
             sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_1_{DEVICE_PORT_KEY_ONLINE}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DEVICE_PORT_KEY_ONLINE}"
         )
         assert sensor._attr_device_class == BinarySensorDeviceClass.PLUG
 
-    async def test_async_update_plug_value_Correct(self, setup):
+    @pytest.mark.parametrize(
+        "port,expected",
+        [
+            (1, True),
+            (2, True),
+            (3, True),
+            (4, False),
+        ],
+    )
+    async def test_async_update_plug_value_Correct(self, setup, port, expected):
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortBinarySensorEntity = (
-            await self.__execute_and_get_port_sensor(setup, DEVICE_PORT_KEY_ONLINE)
+            await self.__execute_and_get_port_sensor(
+                setup, port, DEVICE_PORT_KEY_ONLINE
+            )
         )
         await sensor.async_update()
 
-        assert sensor.is_on
+        assert sensor.is_on == expected

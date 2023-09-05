@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Any, List
 
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util import Throttle
 
@@ -9,23 +10,41 @@ from .const import (
     DEVICE_KEY_DEVICE_ID,
     DEVICE_KEY_DEVICE_INFO,
     DEVICE_KEY_DEVICE_NAME,
+    DEVICE_KEY_DEVICE_TYPE,
+    DEVICE_KEY_HW_VERSION,
     DEVICE_KEY_MAC_ADDR,
     DEVICE_KEY_PORTS,
+    DEVICE_KEY_SW_VERSION,
     DEVICE_PORT_KEY_NAME,
     DEVICE_PORT_KEY_PORT,
+    DOMAIN,
     HOST,
+    MANUFACTURER,
 )
 
 
 class ACInfinityDevice:
     def __init__(self, device_json) -> None:
+        # device info
         self._device_id = str(device_json[DEVICE_KEY_DEVICE_ID])
         self._mac_addr = device_json[DEVICE_KEY_MAC_ADDR]
         self._device_name = device_json[DEVICE_KEY_DEVICE_NAME]
+
         self._ports = [
             ACInfinityDevicePort(port)
             for port in device_json[DEVICE_KEY_DEVICE_INFO][DEVICE_KEY_PORTS]
         ]
+
+        self._device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=self._device_name,
+            manufacturer=MANUFACTURER,
+            hw_version=device_json[DEVICE_KEY_HW_VERSION],
+            sw_version=device_json[DEVICE_KEY_SW_VERSION],
+            model=self.__get_device_model_by_device_type(
+                device_json[DEVICE_KEY_DEVICE_TYPE]
+            ),
+        )
 
     @property
     def device_id(self):
@@ -42,6 +61,17 @@ class ACInfinityDevice:
     @property
     def ports(self):
         return self._ports
+
+    @property
+    def device_info(self):
+        return self._device_info
+
+    def __get_device_model_by_device_type(self, device_type: int):
+        match device_type:
+            case 11:
+                return "Controller 69 Pro (CTR69P)"
+            case _:
+                return f"Controller Type {device_type}"
 
 
 class ACInfinityDevicePort:

@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.ac_infinity.const import DEVICE_PORT_KEY_ONLINE, DOMAIN
 
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
-from .utilities import get_device_port_property_unique_id
+from .utilities import get_device_port_property_name, get_device_port_property_unique_id
 
 
 class ACInfinityPortBinarySensorEntity(BinarySensorEntity):
@@ -21,17 +21,20 @@ class ACInfinityPortBinarySensorEntity(BinarySensorEntity):
         property_key: str,
         sensor_label: str,
         device_class: str,
+        icon: str,
     ) -> None:
         self._acis = acis
         self._device = device
         self._port = port
         self._property_key = property_key
 
+        self._attr_icon = icon
+        self._attr_device_info = device.device_info
         self._attr_device_class = device_class
         self._attr_unique_id = get_device_port_property_unique_id(
             device, port, property_key
         )
-        self._attr_name = f"{device.device_name} {port.port_name} {sensor_label}"
+        self._attr_name = get_device_port_property_name(device, port, sensor_label)
 
     async def async_update(self) -> None:
         await self._acis.update()
@@ -49,8 +52,9 @@ async def async_setup_entry(
 
     device_sensors = {
         DEVICE_PORT_KEY_ONLINE: {
-            "label": "Online",
+            "label": "Status",
             "deviceClass": BinarySensorDeviceClass.PLUG,
+            "icon": "mdi:power",
         },
     }
 
@@ -69,6 +73,7 @@ async def async_setup_entry(
                         key,
                         descr["label"],
                         descr["deviceClass"],
+                        descr["icon"],
                     )
                 )
 

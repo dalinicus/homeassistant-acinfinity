@@ -4,6 +4,7 @@ from asyncio import Future
 import pytest
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.client import (
     ACInfinityClient,
@@ -18,7 +19,7 @@ USER_INPUT = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
 
 
 @pytest.fixture
-def setup(mocker):
+def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 

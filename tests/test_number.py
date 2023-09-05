@@ -5,6 +5,7 @@ import pytest
 from homeassistant.components.number import NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
@@ -35,7 +36,7 @@ class EntitiesTracker:
 
 
 @pytest.fixture
-def setup(mocker):
+def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 

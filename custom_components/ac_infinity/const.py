@@ -2,8 +2,9 @@
 
 from homeassistant.const import Platform
 
+MANUFACTURER = "AC Infinity"
 DOMAIN = "ac_infinity"
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.NUMBER]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 HOST = "http://www.acinfinityserver.com"
 
 # Device Metadata
@@ -12,6 +13,9 @@ DEVICE_KEY_DEVICE_NAME = "devName"
 DEVICE_KEY_MAC_ADDR = "devMacAddr"
 DEVICE_KEY_DEVICE_INFO = "deviceInfo"
 DEVICE_KEY_PORTS = "ports"
+DEVICE_KEY_HW_VERSION = "hardwareVersion"
+DEVICE_KEY_SW_VERSION = "firmwareVersion"
+DEVICE_KEY_DEVICE_TYPE = "devType"
 
 # Device Port Metadata
 DEVICE_PORT_KEY_PORT = "port"

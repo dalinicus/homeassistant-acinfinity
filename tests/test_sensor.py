@@ -10,15 +10,18 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
+from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
     DEVICE_KEY_HUMIDITY,
     DEVICE_KEY_TEMPERATURE,
     DEVICE_KEY_VAPOR_PRESSURE_DEFICIT,
+    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
 )
 from custom_components.ac_infinity.sensor import (
+    ACInfinityPortSensorEntity,
     ACInfinitySensorEntity,
     async_setup_entry,
 )
@@ -42,7 +45,7 @@ class EntitiesTracker:
 
 
 @pytest.fixture
-def setup(mocker):
+def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 
@@ -86,6 +89,24 @@ class TestSensors:
 
         return found[0]
 
+    async def __execute_and_get_port_sensor(
+        self, setup, port: int, property_key: str
+    ) -> ACInfinityPortSensorEntity:
+        entities: EntitiesTracker
+        (hass, configEntry, entities) = setup
+
+        await async_setup_entry(hass, configEntry, entities.add_entities_callback)
+
+        found = [
+            sensor
+            for sensor in entities._added_entities
+            if property_key in sensor._attr_unique_id
+            and f"port_{port}" in sensor._attr_unique_id
+        ]
+        assert len(found) == 1
+
+        return found[0]
+
     async def test_async_setup_all_sensors_created(self, setup):
         """All sensors created"""
         entities: EntitiesTracker
@@ -93,7 +114,7 @@ class TestSensors:
 
         await async_setup_entry(hass, configEntry, entities.add_entities_callback)
 
-        assert len(entities._added_entities) == 3
+        assert len(entities._added_entities) == 7
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
@@ -158,4 +179,42 @@ class TestSensors:
         )
         await sensor.async_update()
 
-        assert sensor._attr_native_value == 83
+        assert sensor._attr_native_value == 0.83
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_entry_current_power_created_for_each_port(
+        self, setup, port
+    ):
+        """Sensor for device port speak created on setup"""
+
+        sensor = await self.__execute_and_get_port_sensor(
+            setup, port, DEVICE_PORT_KEY_SPEAK
+        )
+
+        assert "Power" in sensor._attr_name
+        assert (
+            sensor._attr_unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DEVICE_PORT_KEY_SPEAK}"
+        )
+        assert sensor._attr_device_class == SensorDeviceClass.POWER_FACTOR
+
+    @pytest.mark.parametrize(
+        "port,expected",
+        [
+            (1, 5),
+            (2, 7),
+            (3, 5),
+            (4, 0),
+        ],
+    )
+    async def test_async_update_current_power_value_Correct(
+        self, setup, port, expected
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        sensor: ACInfinityPortSensorEntity = await self.__execute_and_get_port_sensor(
+            setup, port, DEVICE_PORT_KEY_SPEAK
+        )
+        await sensor.async_update()
+
+        assert sensor._attr_native_value == expected

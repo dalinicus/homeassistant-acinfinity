@@ -19,8 +19,8 @@ This integration will create a device for each AC Infinity Controller on the con
 
 Sensors will also be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
-- Power - Is there a device on that port
-- Intensity - Power supplied to the connected device
+- Status - Is there a device plugged in on that port
+- Power - Current Power supplied to the connected device
 
 ![AC-Infinity](/images/ac-infinity-device.png)
 

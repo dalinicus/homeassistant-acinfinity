@@ -9,7 +9,7 @@ from custom_components.ac_infinity.const import (
 )
 
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
-from .utilities import get_device_port_property_unique_id
+from .utilities import get_device_port_property_name, get_device_port_property_unique_id
 
 
 class ACInfinityPortNumberEntity(NumberEntity):
@@ -36,7 +36,7 @@ class ACInfinityPortNumberEntity(NumberEntity):
         self._attr_unique_id = get_device_port_property_unique_id(
             device, port, property_key
         )
-        self._attr_name = f"{device.device_name} {port.port_name} {sensor_label}"
+        self._attr_name = get_device_port_property_name(device, port, sensor_label)
 
     async def async_update(self) -> None:
         await self._acis.update()

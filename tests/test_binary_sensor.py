@@ -52,7 +52,7 @@ def setup(mocker: MockFixture):
     mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
 
-    hass = HomeAssistant()
+    hass = HomeAssistant("/path")
     hass.data = {DOMAIN: {ENTRY_ID: ac_infinity}}
 
     configEntry = ConfigEntry()

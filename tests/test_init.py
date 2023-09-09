@@ -41,7 +41,7 @@ def setup(mocker: MockFixture):
     config_entry.entry_id = ENTRY_ID
     config_entry.data = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
 
-    hass = HomeAssistant()
+    hass = HomeAssistant("/path")
     hass.config_entries = ConfigEntries()
     hass.data = {}
 

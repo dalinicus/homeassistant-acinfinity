@@ -14,11 +14,11 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
-    DEVICE_KEY_HUMIDITY,
-    DEVICE_KEY_TEMPERATURE,
-    DEVICE_KEY_VAPOR_PRESSURE_DEFICIT,
-    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
+    SENSOR_KEY_HUMIDITY,
+    SENSOR_KEY_TEMPERATURE,
+    SENSOR_KEY_VPD,
+    SENSOR_PORT_KEY_SPEAK,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityPortSensorEntity,
@@ -52,7 +52,7 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_LIST_ALL
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
@@ -119,10 +119,10 @@ class TestSensors:
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(setup, DEVICE_KEY_TEMPERATURE)
+        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_TEMPERATURE)
 
         assert "Temperature" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{DEVICE_KEY_TEMPERATURE}"
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_TEMPERATURE}"
         assert sensor._attr_device_class == SensorDeviceClass.TEMPERATURE
         assert sensor._attr_native_unit_of_measurement == UnitOfTemperature.CELSIUS
 
@@ -130,7 +130,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, DEVICE_KEY_TEMPERATURE
+            setup, SENSOR_KEY_TEMPERATURE
         )
         await sensor.async_update()
 
@@ -139,10 +139,10 @@ class TestSensors:
     async def test_async_setup_entry_humidity_created(self, mocker, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(setup, DEVICE_KEY_HUMIDITY)
+        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_HUMIDITY)
 
         assert "Humidity" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{DEVICE_KEY_HUMIDITY}"
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
         assert sensor._attr_device_class == SensorDeviceClass.HUMIDITY
         assert sensor._attr_native_unit_of_measurement == PERCENTAGE
 
@@ -150,7 +150,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, DEVICE_KEY_HUMIDITY
+            setup, SENSOR_KEY_HUMIDITY
         )
         await sensor.async_update()
 
@@ -159,15 +159,10 @@ class TestSensors:
     async def test_async_setup_entry_vpd_created(self, mocker, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(
-            setup, DEVICE_KEY_VAPOR_PRESSURE_DEFICIT
-        )
+        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_VPD)
 
         assert "VPD" in sensor._attr_name
-        assert (
-            sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_{DEVICE_KEY_VAPOR_PRESSURE_DEFICIT}"
-        )
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
         assert sensor._attr_device_class == SensorDeviceClass.PRESSURE
         assert sensor._attr_native_unit_of_measurement == UnitOfPressure.KPA
 
@@ -175,7 +170,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, DEVICE_KEY_VAPOR_PRESSURE_DEFICIT
+            setup, SENSOR_KEY_VPD
         )
         await sensor.async_update()
 
@@ -188,13 +183,13 @@ class TestSensors:
         """Sensor for device port speak created on setup"""
 
         sensor = await self.__execute_and_get_port_sensor(
-            setup, port, DEVICE_PORT_KEY_SPEAK
+            setup, port, SENSOR_PORT_KEY_SPEAK
         )
 
         assert "Power" in sensor._attr_name
         assert (
             sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DEVICE_PORT_KEY_SPEAK}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_SPEAK}"
         )
         assert sensor._attr_device_class == SensorDeviceClass.POWER_FACTOR
 
@@ -213,7 +208,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortSensorEntity = await self.__execute_and_get_port_sensor(
-            setup, port, DEVICE_PORT_KEY_SPEAK
+            setup, port, SENSOR_PORT_KEY_SPEAK
         )
         await sensor.async_update()
 

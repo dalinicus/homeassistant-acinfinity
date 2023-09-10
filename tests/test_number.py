@@ -9,8 +9,8 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
-    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
+    SENSOR_PORT_KEY_SPEAK,
 )
 from custom_components.ac_infinity.number import (
     ACInfinityPortNumberEntity,
@@ -43,7 +43,7 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_LIST_ALL
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
@@ -93,12 +93,12 @@ class TestNumbers:
     async def test_async_setup_entry_intensity_created_for_each_port(self, setup):
         """Sensor for device port intensity created on setup"""
 
-        sensor = await self.__execute_and_get_port_sensor(setup, DEVICE_PORT_KEY_SPEAK)
+        sensor = await self.__execute_and_get_port_sensor(setup, SENSOR_PORT_KEY_SPEAK)
 
         assert "Intensity" in sensor._attr_name
         assert (
             sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_1_{DEVICE_PORT_KEY_SPEAK}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_1_{SENSOR_PORT_KEY_SPEAK}"
         )
         assert sensor._attr_device_class == NumberDeviceClass.POWER_FACTOR
         assert sensor._attr_native_min_value == 0
@@ -108,7 +108,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortNumberEntity = await self.__execute_and_get_port_sensor(
-            setup, DEVICE_PORT_KEY_SPEAK
+            setup, SENSOR_PORT_KEY_SPEAK
         )
         await sensor.async_update()
 

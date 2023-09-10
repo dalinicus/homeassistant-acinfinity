@@ -4,6 +4,8 @@ from homeassistant.exceptions import HomeAssistantError
 
 API_URL_LOGIN = "/api/user/appUserLogin"
 API_URL_GET_DEVICE_INFO_LIST_ALL = "/api/user/devInfoListAll"
+API_URL_GET_DEV_MODE_SETTING = "/api/dev/getdevModeSettingList"
+API_URL_ADD_DEV_MODE = "/api/dev/addDevMode"
 
 
 class ACInfinityClient:
@@ -36,6 +38,68 @@ class ACInfinityClient:
         )
         return json["data"]
 
+    async def get_device_port_settings(self, device_id: (str | int), port_id: int):
+        if not self.is_logged_in():
+            raise ACInfinityClientCannotConnect("Aerogarden client is not logged in.")
+
+        headers = self.__create_headers(use_auth_token=True)
+        json = await self.__post(
+            API_URL_GET_DEV_MODE_SETTING, {"devId": device_id, "port": port_id}, headers
+        )
+        return json["data"]
+
+    async def set_device_port_setting(
+        self, device_id: (str | int), port_id: int, setting: str, value: int
+    ):
+        active_settings = await self.get_device_port_settings(device_id, port_id)
+        payload = {
+            "acitveTimerOff": active_settings["acitveTimerOff"],
+            "acitveTimerOn": active_settings["acitveTimerOn"],
+            "activeCycleOff": active_settings["activeCycleOff"],
+            "activeCycleOn": active_settings["activeCycleOn"],
+            "activeHh": active_settings["activeHh"],
+            "activeHt": active_settings["activeHt"],
+            "activeHtVpd": active_settings["activeHtVpd"],
+            "activeHtVpdNums": active_settings["activeHtVpdNums"],
+            "activeLh": active_settings["activeLh"],
+            "activeLt": active_settings["activeLt"],
+            "activeLtVpd": active_settings["activeLtVpd"],
+            "activeLtVpdNums": active_settings["activeLtVpdNums"],
+            "atType": active_settings["atType"],
+            "devHh": active_settings["devHh"],
+            "devHt": active_settings["devHt"],
+            "devHtf": active_settings["devHtf"],
+            "devId": active_settings["devId"],
+            "devLh": active_settings["devLh"],
+            "devLt": active_settings["devLt"],
+            "devLtf": active_settings["devLtf"],
+            "externalPort": active_settings["externalPort"],
+            "hTrend": active_settings["hTrend"],
+            "isOpenAutomation": active_settings["isOpenAutomation"],
+            "onSpead": active_settings["onSpead"],
+            "offSpead": active_settings["offSpead"],
+            "onlyUpdateSpeed": active_settings["onlyUpdateSpeed"],
+            "schedEndtTime": active_settings["schedEndtTime"],
+            "schedStartTime": active_settings["schedStartTime"],
+            "settingMode": active_settings["settingMode"],
+            "surplus": active_settings["surplus"] or 0,
+            "tTrend": active_settings["tTrend"],
+            "targetHumi": active_settings["targetHumi"],
+            "targetHumiSwitch": active_settings["targetHumiSwitch"],
+            "targetTSwitch": active_settings["targetTSwitch"],
+            "targetTemp": active_settings["targetTemp"],
+            "targetTempF": active_settings["targetTempF"],
+            "targetVpd": active_settings["targetVpd"],
+            "targetVpdSwitch": active_settings["targetVpdSwitch"],
+            "trend": active_settings["trend"],
+            "unit": active_settings["unit"],
+            "vpdSettingMode": active_settings["vpdSettingMode"],
+        }
+
+        payload[setting] = int(value)
+        headers = self.__create_headers(use_auth_token=True)
+        _ = await self.__post(API_URL_ADD_DEV_MODE, payload, headers)
+
     async def __post(self, path, post_data, headers):
         async with async_timeout.timeout(10), aiohttp.ClientSession(
             raise_for_status=False, headers=headers
@@ -45,7 +109,7 @@ class ACInfinityClient:
 
             json = await response.json()
             if json["code"] != 200:
-                raise ACInfinityClientInvalidAuth
+                raise ACInfinityClientRequestFailed(json)
 
             return json
 
@@ -67,3 +131,7 @@ class ACInfinityClientCannotConnect(HomeAssistantError):
 
 class ACInfinityClientInvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class ACInfinityClientRequestFailed(HomeAssistantError):
+    """Error to indicate a request failed"""

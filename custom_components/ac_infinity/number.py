@@ -49,6 +49,7 @@ class ACInfinityPortNumberEntity(NumberEntity):
         await self._acis.set_device_port_setting(
             self._device.device_id, self._port.port_id, self._setting_key, value
         )
+        self._attr_native_value = value
 
 
 async def async_setup_entry(

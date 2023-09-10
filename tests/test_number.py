@@ -49,6 +49,7 @@ def setup(mocker: MockFixture):
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
+    mocker.patch.object(ACInfinity, "set_device_port_setting", return_value=future)
     mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
 
@@ -122,3 +123,16 @@ class TestNumbers:
         await sensor.async_update()
 
         assert sensor._attr_native_value == expected
+
+    @pytest.mark.parametrize(
+        "setting,expected", [(SETTING_KEY_OFF_SPEED, 0), (SETTING_KEY_ON_SPEED, 5)]
+    )
+    async def test_async_set_native_value(self, setup, setting, expected):
+        """Reported sensor value matches the value in the json payload"""
+
+        sensor: ACInfinityPortNumberEntity = await self.__execute_and_get_port_sensor(
+            setup, setting
+        )
+        await sensor.async_set_native_value(4)
+
+        assert sensor._attr_native_value == 4

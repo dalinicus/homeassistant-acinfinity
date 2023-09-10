@@ -109,7 +109,10 @@ class ACInfinityClient:
 
             json = await response.json()
             if json["code"] != 200:
-                raise ACInfinityClientRequestFailed(json)
+                if path == API_URL_LOGIN:
+                    raise ACInfinityClientInvalidAuth
+                else:
+                    raise ACInfinityClientRequestFailed(json)
 
             return json
 

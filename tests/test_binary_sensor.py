@@ -18,7 +18,7 @@ from custom_components.ac_infinity.const import (
     DOMAIN,
     SENSOR_PORT_KEY_ONLINE,
 )
-from tests.data_models import DEVICE_INFO_LIST_ALL, MAC_ADDR
+from tests.data_models import DEVICE_INFO_DATA, MAC_ADDR
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -45,7 +45,7 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._devices = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)

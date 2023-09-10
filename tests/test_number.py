@@ -10,13 +10,14 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    SENSOR_PORT_KEY_SPEAK,
+    SETTING_KEY_OFF_SPEED,
+    SETTING_KEY_ON_SPEED,
 )
 from custom_components.ac_infinity.number import (
     ACInfinityPortNumberEntity,
     async_setup_entry,
 )
-from tests.data_models import DEVICE_INFO_LIST_ALL, MAC_ADDR
+from tests.data_models import DEVICE_INFO_DATA, DEVICE_SETTINGS, MAC_ADDR
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -43,7 +44,8 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._devices = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
@@ -88,28 +90,35 @@ class TestNumbers:
 
         await async_setup_entry(hass, configEntry, entities.add_entities_callback)
 
-        assert len(entities._added_entities) == 4
+        assert len(entities._added_entities) == 8
 
-    async def test_async_setup_entry_intensity_created_for_each_port(self, setup):
+    @pytest.mark.parametrize(
+        "setting", [(SETTING_KEY_OFF_SPEED), (SETTING_KEY_ON_SPEED)]
+    )
+    async def test_async_setup_entry_current_speed_created_for_each_port(
+        self, setup, setting
+    ):
         """Sensor for device port intensity created on setup"""
 
-        sensor = await self.__execute_and_get_port_sensor(setup, SENSOR_PORT_KEY_SPEAK)
+        sensor = await self.__execute_and_get_port_sensor(setup, setting)
 
-        assert "Intensity" in sensor._attr_name
-        assert (
-            sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_1_{SENSOR_PORT_KEY_SPEAK}"
-        )
+        assert "Speed" in sensor._attr_name
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_1_{setting}"
         assert sensor._attr_device_class == NumberDeviceClass.POWER_FACTOR
         assert sensor._attr_native_min_value == 0
         assert sensor._attr_native_max_value == 10
 
-    async def test_async_update_intensity_value_Correct(self, setup):
+    @pytest.mark.parametrize(
+        "setting,expected", [(SETTING_KEY_OFF_SPEED, 0), (SETTING_KEY_ON_SPEED, 5)]
+    )
+    async def test_async_update_current_speed_value_Correct(
+        self, setup, setting, expected
+    ):
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortNumberEntity = await self.__execute_and_get_port_sensor(
-            setup, SENSOR_PORT_KEY_SPEAK
+            setup, setting
         )
         await sensor.async_update()
 
-        assert sensor._attr_native_value == 5
+        assert sensor._attr_native_value == expected

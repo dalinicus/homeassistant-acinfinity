@@ -25,7 +25,7 @@ from custom_components.ac_infinity.sensor import (
     ACInfinitySensorEntity,
     async_setup_entry,
 )
-from tests.data_models import DEVICE_INFO_LIST_ALL, MAC_ADDR
+from tests.data_models import DEVICE_INFO_DATA, MAC_ADDR
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -52,7 +52,7 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._devices = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
@@ -186,7 +186,7 @@ class TestSensors:
             setup, port, SENSOR_PORT_KEY_SPEAK
         )
 
-        assert "Power" in sensor._attr_name
+        assert "Current Speed" in sensor._attr_name
         assert (
             sensor._attr_unique_id
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_SPEAK}"

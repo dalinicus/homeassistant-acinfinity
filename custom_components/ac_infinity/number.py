@@ -45,7 +45,7 @@ class ACInfinityPortNumberEntity(NumberEntity):
             self._device.device_id, self._port.port_id, self._setting_key
         )
 
-    async def async_set_native_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: int) -> None:
         await self._acis.set_device_port_setting(
             self._device.device_id, self._port.port_id, self._setting_key, value
         )

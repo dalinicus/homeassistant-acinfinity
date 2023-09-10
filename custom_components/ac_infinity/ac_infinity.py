@@ -142,17 +142,18 @@ class ACInfinity:
     def get_device_port_setting(
         self, device_id: (str | int), port_id: int, setting: str
     ):
+        device_id_str = str(device_id)
         if (
-            device_id in self._port_settings
-            and port_id in self._port_settings[device_id]
-            and setting in self._port_settings[device_id][port_id]
+            device_id_str in self._port_settings
+            and port_id in self._port_settings[device_id_str]
+            and setting in self._port_settings[device_id_str][port_id]
         ):
-            return self._port_settings[device_id][port_id][setting]
+            return self._port_settings[device_id_str][port_id][setting]
 
         return None
 
     async def set_device_port_setting(
-        self, device_id: (str | int), port_id: int, setting: str, value: str
+        self, device_id: (str | int), port_id: int, setting: str, value: int
     ):
         await self._client.set_device_port_setting(device_id, port_id, setting, value)
 

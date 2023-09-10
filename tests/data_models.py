@@ -324,3 +324,5 @@ DEVICE_INFO_LIST_ALL_PAYLOAD = {
     "code": 200,
     "data": DEVICE_INFO_LIST_ALL,
 }
+
+ADD_DEV_MODE_PAYLOAD = {"msg": "操作成功", "code": 200}

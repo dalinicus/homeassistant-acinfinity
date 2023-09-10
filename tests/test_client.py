@@ -2,15 +2,23 @@ import pytest
 from aioresponses import aioresponses
 
 from custom_components.ac_infinity.client import (
+    API_URL_ADD_DEV_MODE,
+    API_URL_GET_DEV_MODE_SETTING,
     API_URL_GET_DEVICE_INFO_LIST_ALL,
     API_URL_LOGIN,
     ACInfinityClient,
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
+from custom_components.ac_infinity.const import (
+    SETTING_KEY_ON_SPEED,
+    SETTING_KEY_SURPLUS,
+)
 from tests.data_models import (
+    ADD_DEV_MODE_PAYLOAD,
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL_PAYLOAD,
+    DEVICE_SETTINGS_PAYLOAD,
     EMAIL,
     HOST,
     LOGIN_PAYLOAD,
@@ -105,3 +113,121 @@ class TestACInfinityClient:
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
             await client.get_all_device_info()
+
+    async def test_set_device_port_setting_values_copied_from_get_call(self):
+        """When setting a value, first fetch the existing settings to build the payload"""
+
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        with aioresponses() as mocked:
+            mocked.post(
+                f"{HOST}{API_URL_GET_DEV_MODE_SETTING}",
+                status=200,
+                payload=DEVICE_SETTINGS_PAYLOAD,
+            )
+
+            mocked.post(
+                f"{HOST}{API_URL_ADD_DEV_MODE}",
+                status=200,
+                payload=ADD_DEV_MODE_PAYLOAD,
+            )
+
+            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+
+            gen = (request for request in mocked.requests.values())
+            _ = next(gen)
+            found = next(gen)
+            payload = found[0].kwargs["data"]
+
+            assert payload["acitveTimerOff"] == 0
+            assert payload["acitveTimerOn"] == 0
+            assert payload["activeCycleOff"] == 0
+            assert payload["activeCycleOn"] == 0
+            assert payload["activeHh"] == 0
+            assert payload["activeHt"] == 1
+            assert payload["activeHtVpd"] == 0
+            assert payload["activeHtVpdNums"] == 99
+            assert payload["activeLh"] == 0
+            assert payload["activeLt"] == 0
+            assert payload["activeLtVpd"] == 0
+            assert payload["activeLtVpdNums"] == 1
+            assert payload["atType"] == 2
+            assert payload["devHh"] == 100
+            assert payload["devHt"] == 89
+            assert payload["devHtf"] == 193
+            assert payload["devId"] == "1424979258063355749"
+            assert payload["devLh"] == 0
+            assert payload["devLt"] == 0
+            assert payload["devLtf"] == 32
+            assert payload["externalPort"] == 4
+            assert payload["hTrend"] == 1
+            assert payload["isOpenAutomation"] == 0
+            assert payload["offSpead"] == 0
+            assert payload["onlyUpdateSpeed"] == 0
+            assert payload["schedEndtTime"] == 65535
+            assert payload["schedStartTime"] == 65535
+            assert payload["settingMode"] == 0
+            assert payload["tTrend"] == 0
+            assert payload["targetHumi"] == 0
+            assert payload["targetHumiSwitch"] == 0
+            assert payload["targetTSwitch"] == 0
+            assert payload["targetTemp"] == 0
+            assert payload["targetTempF"] == 32
+            assert payload["targetVpd"] == 0
+            assert payload["targetVpdSwitch"] == 0
+            assert payload["trend"] == 0
+            assert payload["unit"] == 0
+            assert payload["vpdSettingMode"] == 0
+
+    async def test_set_device_port_setting_value_changed_in_payload(self):
+        """When setting a value, the value is updated in the built payload before sending"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        with aioresponses() as mocked:
+            mocked.post(
+                f"{HOST}{API_URL_GET_DEV_MODE_SETTING}",
+                status=200,
+                payload=DEVICE_SETTINGS_PAYLOAD,
+            )
+
+            mocked.post(
+                f"{HOST}{API_URL_ADD_DEV_MODE}",
+                status=200,
+                payload=ADD_DEV_MODE_PAYLOAD,
+            )
+
+            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+
+            gen = (request for request in mocked.requests.values())
+            _ = next(gen)
+            found = next(gen)
+            payload = found[0].kwargs["data"]
+
+            assert payload["onSpead"] == 2
+
+    async def test_set_device_port_setting_surplus_zero_even_when_null(self):
+        """When fetching existing settings before update, surplus should be set to 0 if existing is null"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        with aioresponses() as mocked:
+            mocked.post(
+                f"{HOST}{API_URL_GET_DEV_MODE_SETTING}",
+                status=200,
+                payload=DEVICE_SETTINGS_PAYLOAD,
+            )
+
+            request_payload = ADD_DEV_MODE_PAYLOAD
+            request_payload[SETTING_KEY_SURPLUS] = None
+
+            mocked.post(
+                f"{HOST}{API_URL_ADD_DEV_MODE}", status=200, payload=request_payload
+            )
+
+            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+
+            gen = (request for request in mocked.requests.values())
+            _ = next(gen)
+            found = next(gen)
+            payload = found[0].kwargs["data"]
+
+            assert payload[SETTING_KEY_SURPLUS] == 0

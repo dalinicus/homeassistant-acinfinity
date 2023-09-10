@@ -30,7 +30,7 @@ class ACInfinityClient:
 
     async def get_all_device_info(self):
         if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("Aerogarden client is not logged in.")
+            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
@@ -40,7 +40,7 @@ class ACInfinityClient:
 
     async def get_device_port_settings(self, device_id: (str | int), port_id: int):
         if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("Aerogarden client is not logged in.")
+            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(

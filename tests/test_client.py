@@ -9,6 +9,7 @@ from custom_components.ac_infinity.client import (
     ACInfinityClient,
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
+    ACInfinityClientRequestFailed,
 )
 from custom_components.ac_infinity.const import (
     SETTING_KEY_ON_SPEED,
@@ -76,7 +77,7 @@ class TestACInfinityClient:
             with pytest.raises(ACInfinityClientCannotConnect):
                 await client.login()
 
-    @pytest.mark.parametrize("code", [500])
+    @pytest.mark.parametrize("code", [400, 500])
     async def test_login_api_auth_error_on_failed_login(self, code):
         """When login is called and returns a non-succesful status code, connect error should be raised"""
 
@@ -90,6 +91,23 @@ class TestACInfinityClient:
             client = ACInfinityClient(HOST, EMAIL, PASSWORD)
             with pytest.raises(ACInfinityClientInvalidAuth):
                 await client.login()
+
+    @pytest.mark.parametrize("code", [400, 500])
+    async def test_post_request_failed_error_on_failed_request(self, code):
+        """When login is called and returns a non-succesful status code, connect error should be raised"""
+
+        with aioresponses() as mocked:
+            mocked.post(
+                f"{HOST}{API_URL_GET_DEVICE_INFO_LIST_ALL}",
+                status=200,
+                payload={"msg": "User Does Not Exist", "code": code},
+            )
+
+            client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+            client._user_id = USER_ID
+
+            with pytest.raises(ACInfinityClientRequestFailed):
+                await client.get_all_device_info()
 
     async def test_get_all_device_info_returns_user_devices(self):
         """When logged in, user devices should return a list of user devices"""
@@ -113,6 +131,12 @@ class TestACInfinityClient:
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
             await client.get_all_device_info()
+
+    async def test_get_device_port_settings_connect_error_on_not_logged_in(self):
+        """When not logged in, get user devices should throw a connect error"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        with pytest.raises(ACInfinityClientCannotConnect):
+            await client.get_device_port_settings(DEVICE_ID, 1)
 
     async def test_set_device_port_setting_values_copied_from_get_call(self):
         """When setting a value, first fetch the existing settings to build the payload"""

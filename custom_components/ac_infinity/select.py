@@ -21,7 +21,7 @@ class ACInfinityPortSelectEntity(SelectEntity):
         port: ACInfinityDevicePort,
         setting_key: str,
         label: str,
-        options: list,
+        options: list[str],
     ) -> None:
         self._acis = acis
         self._device = device
@@ -49,6 +49,7 @@ class ACInfinityPortSelectEntity(SelectEntity):
         await self._acis.set_device_port_setting(
             self._device.device_id, self._port.port_id, self._setting_key, index + 1
         )  # 0 to 1 based array
+        self._attr_current_option = option
 
 
 async def async_setup_entry(
@@ -87,8 +88,8 @@ async def async_setup_entry(
                         device,
                         port,
                         key,
-                        descr["label"],
-                        descr["options"],
+                        str(descr["label"]),
+                        list[str](descr["options"]),
                     )
                 )
 

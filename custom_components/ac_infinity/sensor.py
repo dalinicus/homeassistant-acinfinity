@@ -8,11 +8,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
 from .const import (
-    DEVICE_KEY_HUMIDITY,
-    DEVICE_KEY_TEMPERATURE,
-    DEVICE_KEY_VAPOR_PRESSURE_DEFICIT,
-    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
+    SENSOR_KEY_HUMIDITY,
+    SENSOR_KEY_TEMPERATURE,
+    SENSOR_KEY_VPD,
+    SENSOR_PORT_KEY_SPEAK,
 )
 from .utilities import (
     get_device_port_property_name,
@@ -71,7 +71,7 @@ class ACInfinityPortSensorEntity(SensorEntity):
         self._port = port
         self._property_key = property_key
 
-        self._attr_device_info = device.device_info
+        self._attr_device_info = port.device_info
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
         self._attr_unique_id = get_device_port_property_unique_id(
@@ -95,19 +95,19 @@ async def async_setup_entry(
     acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
-        DEVICE_KEY_TEMPERATURE: {
+        SENSOR_KEY_TEMPERATURE: {
             "label": "Temperature",
             "deviceClass": SensorDeviceClass.TEMPERATURE,
             "unit": UnitOfTemperature.CELSIUS,
             "icon": None,  # default
         },
-        DEVICE_KEY_HUMIDITY: {
+        SENSOR_KEY_HUMIDITY: {
             "label": "Humidity",
             "deviceClass": SensorDeviceClass.HUMIDITY,
             "unit": PERCENTAGE,
             "icon": None,  # default
         },
-        DEVICE_KEY_VAPOR_PRESSURE_DEFICIT: {
+        SENSOR_KEY_VPD: {
             "label": "VPD",
             "deviceClass": SensorDeviceClass.PRESSURE,
             "unit": UnitOfPressure.KPA,
@@ -116,8 +116,8 @@ async def async_setup_entry(
     }
 
     port_sensors = {
-        DEVICE_PORT_KEY_SPEAK: {
-            "label": "Power",
+        SENSOR_PORT_KEY_SPEAK: {
+            "label": "Current Speed",
             "deviceClass": SensorDeviceClass.POWER_FACTOR,
             "unit": None,
             "icon": "mdi:speedometer",

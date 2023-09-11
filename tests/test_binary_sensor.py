@@ -15,10 +15,10 @@ from custom_components.ac_infinity.binary_sensor import (
     async_setup_entry,
 )
 from custom_components.ac_infinity.const import (
-    DEVICE_PORT_KEY_ONLINE,
     DOMAIN,
+    SENSOR_PORT_KEY_ONLINE,
 )
-from tests.data_models import DEVICE_INFO_LIST_ALL, MAC_ADDR
+from tests.data_models import DEVICE_INFO_DATA, MAC_ADDR
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -45,7 +45,7 @@ def setup(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
 
     def set_data():
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
         return future
 
     mocker.patch.object(ACInfinity, "update", side_effect=set_data)
@@ -97,13 +97,13 @@ class TestBinarySensors:
         """Sensor for device port connected is created on setup"""
 
         sensor = await self.__execute_and_get_port_sensor(
-            setup, port, DEVICE_PORT_KEY_ONLINE
+            setup, port, SENSOR_PORT_KEY_ONLINE
         )
 
         assert "Status" in sensor._attr_name
         assert (
             sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DEVICE_PORT_KEY_ONLINE}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_ONLINE}"
         )
         assert sensor._attr_device_class == BinarySensorDeviceClass.PLUG
 
@@ -121,7 +121,7 @@ class TestBinarySensors:
 
         sensor: ACInfinityPortBinarySensorEntity = (
             await self.__execute_and_get_port_sensor(
-                setup, port, DEVICE_PORT_KEY_ONLINE
+                setup, port, SENSOR_PORT_KEY_ONLINE
             )
         )
         await sensor.async_update()

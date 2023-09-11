@@ -1,3 +1,6 @@
+import asyncio
+from asyncio import Future
+
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_mock import MockFixture
@@ -6,20 +9,26 @@ from pytest_mock.plugin import MockType
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.const import (
-    DEVICE_KEY_DEVICE_NAME,
-    DEVICE_KEY_HUMIDITY,
-    DEVICE_KEY_MAC_ADDR,
-    DEVICE_KEY_TEMPERATURE,
-    DEVICE_PORT_KEY_NAME,
-    DEVICE_PORT_KEY_SPEAK,
     DOMAIN,
     MANUFACTURER,
+    PROPERTY_KEY_DEVICE_NAME,
+    PROPERTY_KEY_MAC_ADDR,
+    PROPERTY_PORT_KEY_NAME,
+    SENSOR_KEY_HUMIDITY,
+    SENSOR_KEY_TEMPERATURE,
+    SENSOR_PORT_KEY_SPEAK,
+    SETTING_KEY_AT_TYPE,
+    SETTING_KEY_OFF_SPEED,
+    SETTING_KEY_ON_SPEED,
 )
 
 from .data_models import (
     DEVICE_ID,
+    DEVICE_INFO_DATA,
     DEVICE_INFO_LIST_ALL,
     DEVICE_NAME,
+    DEVICE_SETTINGS,
+    DEVICE_SETTINGS_PAYLOAD,
     EMAIL,
     MAC_ADDR,
     PASSWORD,
@@ -37,6 +46,11 @@ class TestACInfinity:
         mocker.patch.object(
             ACInfinityClient, "get_all_device_info", return_value=DEVICE_INFO_LIST_ALL
         )
+        mocker.patch.object(
+            ACInfinityClient,
+            "get_device_port_settings",
+            return_value=DEVICE_SETTINGS_PAYLOAD,
+        )
         mockLogin: MockType = mocker.patch.object(ACInfinityClient, "login")
 
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
@@ -53,6 +67,11 @@ class TestACInfinity:
         mocker.patch.object(
             ACInfinityClient, "get_all_device_info", return_value=DEVICE_INFO_LIST_ALL
         )
+        mocker.patch.object(
+            ACInfinityClient,
+            "get_device_port_settings",
+            return_value=DEVICE_SETTINGS_PAYLOAD,
+        )
         mockLogin: MockType = mocker.patch.object(ACInfinityClient, "login")
 
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
@@ -66,88 +85,98 @@ class TestACInfinity:
         mocker.patch.object(
             ACInfinityClient, "get_all_device_info", return_value=DEVICE_INFO_LIST_ALL
         )
+        mocker.patch.object(
+            ACInfinityClient,
+            "get_device_port_settings",
+            return_value=DEVICE_SETTINGS_PAYLOAD,
+        )
         mocker.patch.object(ACInfinityClient, "login")
 
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
         await ac_infinity.update()
 
-        assert len(ac_infinity._data) == 1
-        assert ac_infinity._data[0][DEVICE_KEY_DEVICE_NAME] == "Grow Tent"
+        assert len(ac_infinity._devices) == 1
+        assert (
+            ac_infinity._devices[str(DEVICE_ID)][PROPERTY_KEY_DEVICE_NAME]
+            == "Grow Tent"
+        )
 
     @pytest.mark.parametrize(
-        "property, value",
+        "property_key, value",
         [
-            (DEVICE_KEY_DEVICE_NAME, "Grow Tent"),
-            (DEVICE_KEY_MAC_ADDR, MAC_ADDR),
-            (DEVICE_KEY_TEMPERATURE, 2417),
-            (DEVICE_KEY_HUMIDITY, 7200),
+            (PROPERTY_KEY_DEVICE_NAME, "Grow Tent"),
+            (PROPERTY_KEY_MAC_ADDR, MAC_ADDR),
+            (SENSOR_KEY_TEMPERATURE, 2417),
+            (SENSOR_KEY_HUMIDITY, 7200),
         ],
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_device_property_gets_correct_property(
-        self, device_id, property, value
+        self, device_id, property_key, value
     ):
         """getting a device property returns the correct value"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
 
-        result = ac_infinity.get_device_property(device_id, property)
+        result = ac_infinity.get_device_property(device_id, property_key)
         assert result == value
 
     @pytest.mark.parametrize(
-        "property, device_id",
+        "property_key, device_id",
         [
-            (DEVICE_KEY_DEVICE_NAME, "232161"),
+            (PROPERTY_KEY_DEVICE_NAME, "232161"),
             ("MyFakeField", DEVICE_ID),
             ("MyFakeField", str(DEVICE_ID)),
         ],
     )
-    async def test_get_device_property_returns_null_properly(self, property, device_id):
+    async def test_get_device_property_returns_null_properly(
+        self, property_key, device_id
+    ):
         """the absence of a value should return None instead of keyerror"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
 
-        result = ac_infinity.get_device_property(device_id, property)
+        result = ac_infinity.get_device_property(device_id, property_key)
         assert result is None
 
     @pytest.mark.parametrize(
-        "property, port_num, value",
+        "property_key, port_num, value",
         [
-            (DEVICE_PORT_KEY_SPEAK, 1, 5),
-            (DEVICE_PORT_KEY_SPEAK, 2, 7),
-            (DEVICE_PORT_KEY_NAME, 3, "Circulating Fan"),
-            (DEVICE_PORT_KEY_NAME, 1, "Grow Lights"),
+            (SENSOR_PORT_KEY_SPEAK, 1, 5),
+            (SENSOR_PORT_KEY_SPEAK, 2, 7),
+            (PROPERTY_PORT_KEY_NAME, 3, "Circulating Fan"),
+            (PROPERTY_PORT_KEY_NAME, 1, "Grow Lights"),
         ],
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_device_port_property_gets_correct_property(
-        self, device_id, port_num, property, value
+        self, device_id, port_num, property_key, value
     ):
         """getting a porp property gets the correct property from the correct port"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
 
-        result = ac_infinity.get_device_port_property(device_id, port_num, property)
+        result = ac_infinity.get_device_port_property(device_id, port_num, property_key)
         assert result == value
 
     @pytest.mark.parametrize(
-        "property, device_id, port_num",
+        "property_key, device_id, port_num",
         [
-            (DEVICE_PORT_KEY_SPEAK, "232161", 1),
+            (SENSOR_PORT_KEY_SPEAK, "232161", 1),
             ("MyFakeField", DEVICE_ID, 1),
-            (DEVICE_PORT_KEY_SPEAK, DEVICE_ID, 9),
+            (SENSOR_PORT_KEY_SPEAK, DEVICE_ID, 9),
             ("MyFakeField", str(DEVICE_ID), 1),
-            (DEVICE_PORT_KEY_SPEAK, str(DEVICE_ID), 9),
+            (SENSOR_PORT_KEY_SPEAK, str(DEVICE_ID), 9),
         ],
     )
     async def test_get_device_port_property_returns_null_properly(
-        self, property, device_id, port_num
+        self, property_key, device_id, port_num
     ):
         """the absence of a value should return None instead of keyerror"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
 
-        result = ac_infinity.get_device_port_property(device_id, port_num, property)
+        result = ac_infinity.get_device_port_property(device_id, port_num, property_key)
         assert result is None
 
     async def test_update_update_failed_thrown(self, mocker: MockFixture):
@@ -167,7 +196,7 @@ class TestACInfinity:
     async def test_get_device_all_device_meta_data_returns_meta_data(self):
         """getting port device ids should return ids"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
+        ac_infinity._devices = DEVICE_INFO_DATA
 
         result = ac_infinity.get_all_device_meta_data()
         assert len(result) > 0
@@ -178,26 +207,26 @@ class TestACInfinity:
         assert device.mac_addr == MAC_ADDR
         assert [port.port_id for port in device.ports] == [1, 2, 3, 4]
 
-    @pytest.mark.parametrize("data", [[], None])
+    @pytest.mark.parametrize("data", [{}, None])
     async def test_get_device_all_device_meta_data_returns_empty_list(self, data):
         """getting device metadata returns empty list if no device exists or data isn't initialized"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = data
+        ac_infinity._devices = data
 
         result = ac_infinity.get_all_device_meta_data()
         assert result == []
 
     @pytest.mark.parametrize(
         "devType,expected_model",
-        [(11, "Controller 69 Pro (CTR69P)"), (3, "Controller Type 3")],
+        [(11, "UIS Controller 69 Pro (CTR69P)"), (3, "UIS Controller Type 3")],
     )
     async def test_ac_infinity_device_has_correct_device_info(
         self, devType: int, expected_model: str
     ):
         """getting device returns an model object that contains correct device info for the device registry"""
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        ac_infinity._data = DEVICE_INFO_LIST_ALL
-        ac_infinity._data[0]["devType"] = devType
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._devices[str(DEVICE_ID)]["devType"] = devType
 
         result = ac_infinity.get_all_device_meta_data()
         assert len(result) > 0
@@ -210,3 +239,63 @@ class TestACInfinity:
         assert device_info.get("name") == DEVICE_NAME
         assert device_info.get("manufacturer") == MANUFACTURER
         assert device_info.get("model") == expected_model
+
+    @pytest.mark.parametrize(
+        "setting_key, value",
+        [
+            (SETTING_KEY_ON_SPEED, 5),
+            (SETTING_KEY_OFF_SPEED, 0),
+            (SETTING_KEY_AT_TYPE, 2),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
+    async def test_get_device_port_setting_gets_correct_property(
+        self, device_id, setting_key, value
+    ):
+        """getting a port setting gets the correct setting from the correct port"""
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        result = ac_infinity.get_device_port_setting(device_id, 1, setting_key)
+        assert result == value
+
+    @pytest.mark.parametrize(
+        "setting_key, device_id",
+        [
+            (SETTING_KEY_ON_SPEED, "232161"),
+            ("MyFakeField", DEVICE_ID),
+            (PROPERTY_PORT_KEY_NAME, DEVICE_ID),
+            ("MyFakeField", str(DEVICE_ID)),
+            (PROPERTY_PORT_KEY_NAME, str(DEVICE_ID)),
+        ],
+    )
+    async def test_get_device_port_setting_returns_null_properly(
+        self,
+        setting_key,
+        device_id,
+    ):
+        """the absence of a value should return None instead of keyerror"""
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        result = ac_infinity.get_device_port_setting(device_id, 1, setting_key)
+        assert result is None
+
+    async def test_set_device_port_setting(self, mocker: MockFixture):
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_set = mocker.patch.object(
+            ACInfinityClient, "set_device_port_setting", return_value=future
+        )
+
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        await ac_infinity.set_device_port_setting(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)
+
+        mocked_set.assert_called_with(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)

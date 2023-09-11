@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.ac_infinity.const import DEVICE_PORT_KEY_ONLINE, DOMAIN
+from custom_components.ac_infinity.const import DOMAIN, SENSOR_PORT_KEY_ONLINE
 
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
 from .utilities import get_device_port_property_name, get_device_port_property_unique_id
@@ -29,7 +29,7 @@ class ACInfinityPortBinarySensorEntity(BinarySensorEntity):
         self._property_key = property_key
 
         self._attr_icon = icon
-        self._attr_device_info = device.device_info
+        self._attr_device_info = port.device_info
         self._attr_device_class = device_class
         self._attr_unique_id = get_device_port_property_unique_id(
             device, port, property_key
@@ -51,7 +51,7 @@ async def async_setup_entry(
     acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
-        DEVICE_PORT_KEY_ONLINE: {
+        SENSOR_PORT_KEY_ONLINE: {
             "label": "Status",
             "deviceClass": BinarySensorDeviceClass.PLUG,
             "icon": "mdi:power",

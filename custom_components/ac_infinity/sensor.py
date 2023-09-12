@@ -2,7 +2,12 @@ import logging
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfPressure, UnitOfTemperature
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfPressure,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -13,6 +18,7 @@ from .const import (
     SENSOR_KEY_TEMPERATURE,
     SENSOR_KEY_VPD,
     SENSOR_PORT_KEY_SPEAK,
+    SENSOR_SETTING_KEY_SURPLUS,
 )
 from .utilities import (
     get_device_port_property_name,
@@ -87,6 +93,17 @@ class ACInfinityPortSensorEntity(SensorEntity):
         )
 
 
+class ACInfinityPortSettingSensorEntity(ACInfinityPortSensorEntity):
+    async def async_update(self) -> None:
+        await self._acis.update()
+        self._attr_native_value = self._acis.get_device_port_setting(
+            self._device.device_id,
+            self._port.port_id,
+            self._property_key,
+            default_value=0,
+        )
+
+
 async def async_setup_entry(
     hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
 ) -> None:
@@ -121,6 +138,14 @@ async def async_setup_entry(
             "deviceClass": SensorDeviceClass.POWER_FACTOR,
             "unit": None,
             "icon": "mdi:speedometer",
+            "isSettingSensor": False,
+        },
+        SENSOR_SETTING_KEY_SURPLUS: {
+            "label": "Remaining Time",
+            "deviceClass": SensorDeviceClass.DURATION,
+            "unit": UnitOfTime.SECONDS,
+            "icon": None,  # default
+            "isSettingSensor": True,
         },
     }
 
@@ -146,17 +171,31 @@ async def async_setup_entry(
         # port sensors
         for port in device.ports:
             for key, descr in port_sensors.items():
-                sensor_objects.append(
-                    ACInfinityPortSensorEntity(
-                        acis,
-                        device,
-                        port,
-                        key,
-                        descr["label"],
-                        descr["deviceClass"],
-                        descr["unit"],
-                        descr["icon"],
+                if descr["isSettingSensor"]:
+                    sensor_objects.append(
+                        ACInfinityPortSettingSensorEntity(
+                            acis,
+                            device,
+                            port,
+                            key,
+                            descr["label"],
+                            descr["deviceClass"],
+                            descr["unit"],
+                            descr["icon"],
+                        )
                     )
-                )
+                else:
+                    sensor_objects.append(
+                        ACInfinityPortSensorEntity(
+                            acis,
+                            device,
+                            port,
+                            key,
+                            descr["label"],
+                            descr["deviceClass"],
+                            descr["unit"],
+                            descr["icon"],
+                        )
+                    )
 
     add_entities_callback(sensor_objects)

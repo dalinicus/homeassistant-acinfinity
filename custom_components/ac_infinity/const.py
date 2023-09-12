@@ -4,7 +4,13 @@ from homeassistant.const import Platform
 
 MANUFACTURER = "AC Infinity"
 DOMAIN = "ac_infinity"
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SELECT, Platform.NUMBER]
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SELECT,
+    Platform.NUMBER,
+    Platform.TIME,
+]
 HOST = "http://www.acinfinityserver.com"
 
 # devInfoListAll ReadOnly Device Fields
@@ -26,8 +32,12 @@ SENSOR_KEY_VPD = "vpdnums"
 SENSOR_PORT_KEY_SPEAK = "speak"
 SENSOR_PORT_KEY_ONLINE = "online"
 
+# getdevModeSettingsList Sensor Fields
+SENSOR_SETTING_KEY_SURPLUS = "surplus"
+
 # getdevModeSettingList Setting Fields
 SETTING_KEY_ON_SPEED = "onSpead"
 SETTING_KEY_OFF_SPEED = "offSpead"
 SETTING_KEY_AT_TYPE = "atType"
-SETTING_KEY_SURPLUS = "surplus"
+SETTING_KEY_SCHEDULED_START_TIME = "schedStartTime"
+SETTING_KEY_SCHEDULED_END_TIME = "schedEndtTime"

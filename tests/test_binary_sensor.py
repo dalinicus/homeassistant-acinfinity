@@ -66,7 +66,10 @@ def setup(mocker: MockFixture):
 @pytest.mark.asyncio
 class TestBinarySensors:
     async def __execute_and_get_port_sensor(
-        self, setup, port: int, property_key: str
+        self,
+        setup,
+        port: int,
+        property_key: str,
     ) -> ACInfinityPortBinarySensorEntity:
         entities: EntitiesTracker
         (hass, configEntry, entities) = setup

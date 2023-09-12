@@ -17,6 +17,7 @@ from custom_components.ac_infinity.const import (
     SENSOR_KEY_HUMIDITY,
     SENSOR_KEY_TEMPERATURE,
     SENSOR_PORT_KEY_SPEAK,
+    SENSOR_SETTING_KEY_SURPLUS,
     SETTING_KEY_AT_TYPE,
     SETTING_KEY_OFF_SPEED,
     SETTING_KEY_ON_SPEED,
@@ -244,7 +245,10 @@ class TestACInfinity:
         "setting_key, value",
         [
             (SETTING_KEY_ON_SPEED, 5),
-            (SETTING_KEY_OFF_SPEED, 0),
+            (
+                SETTING_KEY_OFF_SPEED,
+                0,
+            ),  # make sure 0 still returns 0 and not None or default
             (SETTING_KEY_AT_TYPE, 2),
         ],
     )
@@ -259,6 +263,23 @@ class TestACInfinity:
 
         result = ac_infinity.get_device_port_setting(device_id, 1, setting_key)
         assert result == value
+
+    @pytest.mark.parametrize("default_value", [0, None, 5455])
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
+    async def test_get_device_port_setting_gets_returns_default_if_value_is_null(
+        self, device_id, default_value
+    ):
+        """getting a port setting returns 0 instead of null if the key exists but the value is null"""
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        ac_infinity._port_settings[str(DEVICE_ID)][1][SENSOR_SETTING_KEY_SURPLUS] = None
+
+        result = ac_infinity.get_device_port_setting(
+            device_id, 1, SENSOR_SETTING_KEY_SURPLUS, default_value=default_value
+        )
+        assert result == default_value
 
     @pytest.mark.parametrize(
         "setting_key, device_id",

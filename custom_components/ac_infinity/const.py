@@ -26,8 +26,10 @@ SENSOR_KEY_VPD = "vpdnums"
 SENSOR_PORT_KEY_SPEAK = "speak"
 SENSOR_PORT_KEY_ONLINE = "online"
 
+# getdevModeSettingsList Sensor Fields
+SENSOR_SETTING_KEY_SURPLUS = "surplus"
+
 # getdevModeSettingList Setting Fields
 SETTING_KEY_ON_SPEED = "onSpead"
 SETTING_KEY_OFF_SPEED = "offSpead"
 SETTING_KEY_AT_TYPE = "atType"
-SETTING_KEY_SURPLUS = "surplus"

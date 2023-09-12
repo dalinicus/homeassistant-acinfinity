@@ -19,6 +19,7 @@ from custom_components.ac_infinity.const import (
     SENSOR_KEY_TEMPERATURE,
     SENSOR_KEY_VPD,
     SENSOR_PORT_KEY_SPEAK,
+    SENSOR_SETTING_KEY_SURPLUS,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityPortSensorEntity,
@@ -114,7 +115,7 @@ class TestSensors:
 
         await async_setup_entry(hass, configEntry, entities.add_entities_callback)
 
-        assert len(entities._added_entities) == 7
+        assert len(entities._added_entities) == 11
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
@@ -192,6 +193,21 @@ class TestSensors:
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_SPEAK}"
         )
         assert sensor._attr_device_class == SensorDeviceClass.POWER_FACTOR
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_remaining_time_for_each_port(self, setup, port):
+        """Sensor for device port surplus created on setup"""
+
+        sensor = await self.__execute_and_get_port_sensor(
+            setup, port, SENSOR_SETTING_KEY_SURPLUS
+        )
+
+        assert "Remaining Time" in sensor._attr_name
+        assert (
+            sensor._attr_unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_SETTING_KEY_SURPLUS}"
+        )
+        assert sensor._attr_device_class == SensorDeviceClass.DURATION
 
     @pytest.mark.parametrize(
         "port,expected",

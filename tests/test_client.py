@@ -12,8 +12,8 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientRequestFailed,
 )
 from custom_components.ac_infinity.const import (
+    SENSOR_SETTING_KEY_SURPLUS,
     SETTING_KEY_ON_SPEED,
-    SETTING_KEY_SURPLUS,
 )
 from tests.data_models import (
     ADD_DEV_MODE_PAYLOAD,
@@ -241,7 +241,7 @@ class TestACInfinityClient:
             )
 
             request_payload = ADD_DEV_MODE_PAYLOAD
-            request_payload[SETTING_KEY_SURPLUS] = None
+            request_payload[SENSOR_SETTING_KEY_SURPLUS] = None
 
             mocked.post(
                 f"{HOST}{API_URL_ADD_DEV_MODE}", status=200, payload=request_payload
@@ -254,4 +254,4 @@ class TestACInfinityClient:
             found = next(gen)
             payload = found[0].kwargs["data"]
 
-            assert payload[SETTING_KEY_SURPLUS] == 0
+            assert payload[SENSOR_SETTING_KEY_SURPLUS] == 0

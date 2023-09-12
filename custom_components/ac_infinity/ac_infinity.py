@@ -189,7 +189,7 @@ class ACInfinity:
             and port_id in self._port_settings[device_id_str]
             and setting in self._port_settings[device_id_str][port_id]
         ):
-            return self._port_settings[device_id_str][port_id][setting]
+            return self._port_settings[device_id_str][port_id][setting] or 0
 
         return None
 

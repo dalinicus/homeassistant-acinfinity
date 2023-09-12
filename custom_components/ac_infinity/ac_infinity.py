@@ -176,7 +176,7 @@ class ACInfinity:
         return None
 
     def get_device_port_setting(
-        self, device_id: (str | int), port_id: int, setting: str
+        self, device_id: (str | int), port_id: int, setting: str, default_value=None
     ):
         """gets the current set value for a given device setting
 
@@ -189,9 +189,11 @@ class ACInfinity:
             and port_id in self._port_settings[device_id_str]
             and setting in self._port_settings[device_id_str][port_id]
         ):
-            return self._port_settings[device_id_str][port_id][setting] or 0
+            value = self._port_settings[device_id_str][port_id][setting]
+            if value is not None:
+                return value
 
-        return None
+        return default_value
 
     async def set_device_port_setting(
         self, device_id: (str | int), port_id: int, setting: str, value: int

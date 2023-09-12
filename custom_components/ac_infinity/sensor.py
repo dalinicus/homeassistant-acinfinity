@@ -97,7 +97,10 @@ class ACInfinityPortSettingSensorEntity(ACInfinityPortSensorEntity):
     async def async_update(self) -> None:
         await self._acis.update()
         self._attr_native_value = self._acis.get_device_port_setting(
-            self._device.device_id, self._port.port_id, self._property_key
+            self._device.device_id,
+            self._port.port_id,
+            self._property_key,
+            default_value=0,
         )
 
 

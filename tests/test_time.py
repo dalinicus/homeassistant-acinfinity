@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from asyncio import Future
 
 import pytest
@@ -9,10 +10,11 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    SETTING_KEY_AT_TYPE,
+    SETTING_KEY_SCHEDULED_END_TIME,
+    SETTING_KEY_SCHEDULED_START_TIME,
 )
-from custom_components.ac_infinity.select import (
-    ACInfinityPortSelectEntity,
+from custom_components.ac_infinity.time import (
+    ACInfinityPortTimeEntity,
     async_setup_entry,
 )
 from tests.data_models import DEVICE_ID, DEVICE_INFO_DATA, DEVICE_SETTINGS, MAC_ADDR
@@ -24,11 +26,11 @@ ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 class EntitiesTracker:
     def __init__(self) -> None:
-        self._added_entities: list[ACInfinityPortSelectEntity] = []
+        self._added_entities: list[ACInfinityPortTimeEntity] = []
 
     def add_entities_callback(
         self,
-        new_entities: list[ACInfinityPortSelectEntity],
+        new_entities: list[ACInfinityPortTimeEntity],
         update_before_add: bool = False,
     ):
         self._added_entities = new_entities
@@ -69,7 +71,7 @@ class TestNumbers:
 
     async def __execute_and_get_port_sensor(
         self, setup, property_key: str, port: int
-    ) -> ACInfinityPortSelectEntity:
+    ) -> ACInfinityPortTimeEntity:
         entities: EntitiesTracker
         (hass, configEntry, entities, _) = setup
 
@@ -92,45 +94,41 @@ class TestNumbers:
 
         await async_setup_entry(hass, configEntry, entities.add_entities_callback)
 
-        assert len(entities._added_entities) == 4
-
-    @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_setup_mode_created_for_each_port(self, setup, port):
-        """Sensor for device port mode created on setup"""
-
-        sensor = await self.__execute_and_get_port_sensor(
-            setup, SETTING_KEY_AT_TYPE, port
-        )
-
-        assert "Mode" in sensor._attr_name
-        assert (
-            sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SETTING_KEY_AT_TYPE}"
-        )
-        assert len(sensor._attr_options) == 8
+        assert len(entities._added_entities) == 8
 
     @pytest.mark.parametrize(
-        "atType,expected",
-        [
-            (1, "Off"),
-            (2, "On"),
-            (3, "Auto"),
-            (4, "Timer to On"),
-            (5, "Timer to Off"),
-            (6, "Cycle"),
-            (7, "Schedule"),
-            (8, "VPD"),
-        ],
+        "key", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]
     )
-    async def test_async_update_mode_value_Correct(
-        self, setup, mocker: MockFixture, atType, expected
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_schedule_end_time_created_for_each_port(
+        self, setup, key, port
+    ):
+        """Setting for scheduled end time created on setup"""
+
+        sensor: ACInfinityPortTimeEntity = await self.__execute_and_get_port_sensor(
+            setup, key, port
+        )
+
+        assert "Scheduled" in sensor._attr_name
+        assert "Time" in sensor._attr_name
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+
+    @pytest.mark.parametrize(
+        "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]
+    )
+    @pytest.mark.parametrize(
+        "value,expected_hour,expected_minute",
+        [(750, 12, 30), (0, 0, 0)],  # make sure midnight is not represented as None
+    )
+    async def test_async_update_value_Correct(
+        self, setup, mocker: MockFixture, setting, value, expected_hour, expected_minute
     ):
         """Reported sensor value matches the value in the json payload"""
         ac_infinity: ACInfinity
 
         (_, _, _, ac_infinity) = setup
-        sensor: ACInfinityPortSelectEntity = await self.__execute_and_get_port_sensor(
-            setup, SETTING_KEY_AT_TYPE, 1
+        sensor: ACInfinityPortTimeEntity = await self.__execute_and_get_port_sensor(
+            setup, setting, 1
         )
 
         def set_data():
@@ -139,29 +137,53 @@ class TestNumbers:
 
             ac_infinity._devices = DEVICE_INFO_DATA
             ac_infinity._port_settings = DEVICE_SETTINGS
-            ac_infinity._port_settings[str(DEVICE_ID)][1][SETTING_KEY_AT_TYPE] = atType
+            ac_infinity._port_settings[str(DEVICE_ID)][1][setting] = value
             return future
 
         mocker.patch.object(ACInfinity, "update", side_effect=set_data)
         await sensor.async_update()
 
-        assert sensor._attr_current_option == expected
+        assert sensor._attr_native_value
+        assert sensor._attr_native_value.hour == expected_hour
+        assert sensor._attr_native_value.minute == expected_minute
 
     @pytest.mark.parametrize(
-        "expected,atTypeString",
-        [
-            (1, "Off"),
-            (2, "On"),
-            (3, "Auto"),
-            (4, "Timer to On"),
-            (5, "Timer to Off"),
-            (6, "Cycle"),
-            (7, "Schedule"),
-            (8, "VPD"),
-        ],
+        "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]
+    )
+    @pytest.mark.parametrize("value", [None, 1441, 65535])
+    async def test_async_update_value_represents_disabled_Correct(
+        self, setup, mocker: MockFixture, setting, value
+    ):
+        """Reported sensor value is None (disabled) if the number of minutes is None or greater than 24 hours"""
+        ac_infinity: ACInfinity
+
+        (_, _, _, ac_infinity) = setup
+        sensor: ACInfinityPortTimeEntity = await self.__execute_and_get_port_sensor(
+            setup, setting, 1
+        )
+
+        def set_data():
+            future: Future = asyncio.Future()
+            future.set_result(None)
+
+            ac_infinity._devices = DEVICE_INFO_DATA
+            ac_infinity._port_settings = DEVICE_SETTINGS
+            ac_infinity._port_settings[str(DEVICE_ID)][1][setting] = value
+            return future
+
+        mocker.patch.object(ACInfinity, "update", side_effect=set_data)
+        await sensor.async_update()
+
+        assert sensor._attr_native_value is None
+
+    @pytest.mark.parametrize(
+        "value, expected", [(None, None), (datetime.time(12, 30), 750)]
+    )
+    @pytest.mark.parametrize(
+        "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]
     )
     async def test_async_set_native_value(
-        self, mocker: MockFixture, setup, atTypeString, expected
+        self, mocker: MockFixture, setup, setting, value: datetime.time, expected: int
     ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()
@@ -170,10 +192,10 @@ class TestNumbers:
         mock_set = mocker.patch.object(
             ACInfinity, "set_device_port_setting", return_value=future
         )
-        sensor: ACInfinityPortSelectEntity = await self.__execute_and_get_port_sensor(
-            setup, SETTING_KEY_AT_TYPE, 1
+        sensor: ACInfinityPortTimeEntity = await self.__execute_and_get_port_sensor(
+            setup, setting, 1
         )
-        await sensor.async_select_option(atTypeString)
+        await sensor.async_set_value(value)
+        assert sensor._attr_native_value == value
 
-        assert sensor._attr_current_option == atTypeString
-        mock_set.assert_called_with(str(DEVICE_ID), 1, SETTING_KEY_AT_TYPE, expected)
+        mock_set.assert_called_with(str(DEVICE_ID), 1, setting, expected)

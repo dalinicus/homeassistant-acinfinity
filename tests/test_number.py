@@ -67,7 +67,7 @@ def setup(mocker: MockFixture):
 @pytest.mark.asyncio
 class TestNumbers:
     async def __execute_and_get_port_sensor(
-        self, setup, property_key: str
+        self, setup, property_key: str, port: int
     ) -> ACInfinityPortNumberEntity:
         entities: EntitiesTracker
         (hass, configEntry, entities) = setup
@@ -78,7 +78,7 @@ class TestNumbers:
             sensor
             for sensor in entities._added_entities
             if property_key in sensor._attr_unique_id
-            and "port_1" in sensor._attr_unique_id
+            and f"port_{port}" in sensor._attr_unique_id
         ]
         assert len(found) == 1
 
@@ -96,15 +96,16 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting", [(SETTING_KEY_OFF_SPEED), (SETTING_KEY_ON_SPEED)]
     )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_speed_created_for_each_port(
-        self, setup, setting
+        self, setup, setting, port
     ):
         """Sensor for device port intensity created on setup"""
 
-        sensor = await self.__execute_and_get_port_sensor(setup, setting)
+        sensor = await self.__execute_and_get_port_sensor(setup, setting, port)
 
         assert "Speed" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_1_{setting}"
+        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         assert sensor._attr_device_class == NumberDeviceClass.POWER_FACTOR
         assert sensor._attr_native_min_value == 0
         assert sensor._attr_native_max_value == 10
@@ -118,20 +119,19 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortNumberEntity = await self.__execute_and_get_port_sensor(
-            setup, setting
+            setup, setting, 1
         )
         await sensor.async_update()
 
         assert sensor._attr_native_value == expected
 
-    @pytest.mark.parametrize(
-        "setting,expected", [(SETTING_KEY_OFF_SPEED, 0), (SETTING_KEY_ON_SPEED, 5)]
-    )
-    async def test_async_set_native_value(self, setup, setting, expected):
+    @pytest.mark.parametrize("setting", [SETTING_KEY_OFF_SPEED, SETTING_KEY_ON_SPEED])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value(self, setup, setting, port):
         """Reported sensor value matches the value in the json payload"""
 
         sensor: ACInfinityPortNumberEntity = await self.__execute_and_get_port_sensor(
-            setup, setting
+            setup, setting, port
         )
         await sensor.async_set_native_value(4)
 

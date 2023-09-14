@@ -1,45 +1,45 @@
+import logging
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from custom_components.ac_infinity import (
+    ACInfinityDataUpdateCoordinator,
+    ACInfinityPortEntity,
+)
 from custom_components.ac_infinity.const import DOMAIN, SENSOR_PORT_KEY_ONLINE
 
-from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
-from .utilities import get_device_port_property_name, get_device_port_property_unique_id
+from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
+
+_LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortBinarySensorEntity(BinarySensorEntity):
+class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity):
     def __init__(
         self,
-        acis: ACInfinity,
+        coordinator: ACInfinityDataUpdateCoordinator,
         device: ACInfinityDevice,
         port: ACInfinityDevicePort,
-        property_key: str,
-        sensor_label: str,
+        data_key: str,
+        label: str,
         device_class: str,
         icon: str,
     ) -> None:
-        self._acis = acis
-        self._device = device
-        self._port = port
-        self._property_key = property_key
-
-        self._attr_icon = icon
-        self._attr_device_info = port.device_info
+        super().__init__(coordinator, device, port, data_key, label, icon)
         self._attr_device_class = device_class
-        self._attr_unique_id = get_device_port_property_unique_id(
-            device, port, property_key
-        )
-        self._attr_name = get_device_port_property_name(device, port, sensor_label)
+        self._attr_is_on = self.get_property_value()
 
-    async def async_update(self) -> None:
-        await self._acis.update()
-        self._attr_is_on = self._acis.get_device_port_property(
-            self._device.device_id, self._port.port_id, self._property_key
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._attr_is_on = self.get_property_value()
+        self.async_write_ha_state()
+        _LOGGER.debug(
+            "%s._attr_is_on updated to %s", self._attr_unique_id, self._attr_is_on
         )
 
 
@@ -48,7 +48,7 @@ async def async_setup_entry(
 ) -> None:
     """Setup the AC Infinity Platform."""
 
-    acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
+    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
         SENSOR_PORT_KEY_ONLINE: {
@@ -58,16 +58,15 @@ async def async_setup_entry(
         },
     }
 
-    await acis.update()
-    devices = acis.get_all_device_meta_data()
+    devices = coordinator.ac_infinity.get_all_device_meta_data()
 
-    sensor_objects: list[ACInfinityPortBinarySensorEntity] = []
+    entities: list[ACInfinityPortBinarySensorEntity] = []
     for device in devices:
         for port in device.ports:
             for key, descr in device_sensors.items():
-                sensor_objects.append(
+                entities.append(
                     ACInfinityPortBinarySensorEntity(
-                        acis,
+                        coordinator,
                         device,
                         port,
                         key,
@@ -77,4 +76,4 @@ async def async_setup_entry(
                     )
                 )
 
-    add_entities_callback(sensor_objects)
+    add_entities_callback(entities)

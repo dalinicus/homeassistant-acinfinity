@@ -2,7 +2,6 @@ import asyncio
 from asyncio import Future
 
 import pytest
-from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_mock import MockFixture
 from pytest_mock.plugin import MockType
 
@@ -179,20 +178,6 @@ class TestACInfinity:
 
         result = ac_infinity.get_device_port_property(device_id, port_num, property_key)
         assert result is None
-
-    async def test_update_update_failed_thrown(self, mocker: MockFixture):
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_all_device_info",
-            return_value=DEVICE_INFO_LIST_ALL,
-            side_effect=Exception("unit test"),
-        )
-        mocker.patch.object(ACInfinityClient, "login")
-
-        ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        with pytest.raises(UpdateFailed):
-            await ac_infinity.update()
 
     async def test_get_device_all_device_meta_data_returns_meta_data(self):
         """getting port device ids should return ids"""

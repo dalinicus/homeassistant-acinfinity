@@ -2,8 +2,6 @@ from datetime import timedelta
 from typing import Any
 
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.update_coordinator import UpdateFailed
-from homeassistant.util import Throttle
 
 from .client import ACInfinityClient
 from .const import (
@@ -112,26 +110,22 @@ class ACInfinity:
         self._devices: dict[str, dict[str, Any]] = {}
         self._port_settings: dict[str, dict[int, Any]] = {}
 
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update(self):
         """refreshes the values of properties and settings from the AC infinity API"""
-        try:
-            if not self._client.is_logged_in():
-                await self._client.login()
 
-            device_list = await self._client.get_all_device_info()
-            for device in device_list:
-                device_id = device[PROPERTY_KEY_DEVICE_ID]
-                self._devices[device_id] = device
-                self._port_settings[device_id] = {}
-                for port in device[PROPERTY_KEY_DEVICE_INFO][PROPERTY_KEY_PORTS]:
-                    port_id = port[PROPERTY_PORT_KEY_PORT]
-                    self._port_settings[device_id][
-                        port_id
-                    ] = await self._client.get_device_port_settings(device_id, port_id)
+        if not self._client.is_logged_in():
+            await self._client.login()
 
-        except Exception:
-            raise UpdateFailed from Exception
+        device_list = await self._client.get_all_device_info()
+        for device in device_list:
+            device_id = device[PROPERTY_KEY_DEVICE_ID]
+            self._devices[device_id] = device
+            self._port_settings[device_id] = {}
+            for port in device[PROPERTY_KEY_DEVICE_INFO][PROPERTY_KEY_PORTS]:
+                port_id = port[PROPERTY_PORT_KEY_PORT]
+                self._port_settings[device_id][
+                    port_id
+                ] = await self._client.get_device_port_settings(device_id, port_id)
 
     def get_all_device_meta_data(self) -> list[ACInfinityDevice]:
         """gets device metadata, such as ids, labels, macaddr, etc.. that are not expected to change"""
@@ -199,4 +193,5 @@ class ACInfinity:
         self, device_id: (str | int), port_id: int, setting: str, value: int
     ):
         """set a desired value for a given device setting"""
+        self._port_settings[str(device_id)][port_id][setting] = value
         await self._client.set_device_port_setting(device_id, port_id, setting, value)

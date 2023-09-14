@@ -5,9 +5,14 @@ import pytest
 from homeassistant.config_entries import ConfigEntries, ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity import async_setup_entry, async_unload_entry
+from custom_components.ac_infinity import (
+    ACInfinityDataUpdateCoordinator,
+    async_setup_entry,
+    async_unload_entry,
+)
 from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.const import DOMAIN, PLATFORMS
@@ -81,3 +86,12 @@ class TestInit:
         hass.config_entries.async_unload_platforms.assert_called_with(
             config_entry, PLATFORMS
         )
+
+    async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
+        (hass, _) = setup
+
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        mocker.patch.object(ac_infinity, "update", side_effect=Exception("unit test"))
+        coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity)
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()

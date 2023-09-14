@@ -7,6 +7,10 @@ DEVICE_ID = 54929097239553773072
 DEVICE_NAME = "Grow Tent"
 MAC_ADDR = "2B120D62DC00"
 
+EMAIL = "myemail@unittest.com"
+PASSWORD = "hunter2"
+ENTRY_ID = f"ac_infinity-{EMAIL}"
+
 LOGIN_PAYLOAD = {
     "msg": "Success",
     "code": 200,
@@ -313,7 +317,14 @@ DEVICE_SETTING = {
 
 DEVICE_SETTINGS_PAYLOAD = {"msg": "操作成功", "code": 200, "data": DEVICE_SETTING}
 
-DEVICE_SETTINGS = {str(DEVICE_ID): {1: DEVICE_SETTING}}
+DEVICE_SETTINGS = {
+    str(DEVICE_ID): {
+        1: DEVICE_SETTING,
+        2: DEVICE_SETTING,
+        3: DEVICE_SETTING,
+        4: DEVICE_SETTING,
+    }
+}
 
 DEVICE_INFO_LIST_ALL = [DEVICE_INFO]
 

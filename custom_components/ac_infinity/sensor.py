@@ -8,10 +8,16 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
+from custom_components.ac_infinity import (
+    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceEntity,
+    ACInfinityPortEntity,
+)
+
+from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
 from .const import (
     DOMAIN,
     SENSOR_KEY_HUMIDITY,
@@ -20,87 +26,79 @@ from .const import (
     SENSOR_PORT_KEY_SPEAK,
     SENSOR_SETTING_KEY_SURPLUS,
 )
-from .utilities import (
-    get_device_port_property_name,
-    get_device_port_property_unique_id,
-    get_device_property_name,
-    get_device_property_unique_id,
-)
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinitySensorEntity(SensorEntity):
+class ACInfinitySensorEntity(ACInfinityDeviceEntity, SensorEntity):
     def __init__(
         self,
-        acis: ACInfinity,
+        coordinator: ACInfinityDataUpdateCoordinator,
         device: ACInfinityDevice,
-        property_key: str,
-        sensor_label: str,
+        data_key: str,
+        label: str,
         device_class: str,
         unit: str,
         icon: str,
     ) -> None:
-        self._acis = acis
-        self._device = device
-        self._property_key = property_key
+        super().__init__(coordinator, device, data_key, label, icon)
 
-        self._attr_device_info = device.device_info
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
-        self._attr_unique_id = get_device_property_unique_id(device, property_key)
-        self._attr_name = get_device_property_name(device, sensor_label)
-        self._attr_icon = icon
+        self._attr_native_value = self.__get_property_value_correct_precision()
 
-    async def async_update(self) -> None:
-        await self._acis.update()
-        self._attr_native_value = (
-            self._acis.get_device_property(self._device.device_id, self._property_key)
-            / 100  # device sensors are all integers representing float values with 2 digit decimal precision
+    def _handle_coordinator_update(self) -> None:
+        self._attr_native_value = self.__get_property_value_correct_precision()
+        self.async_write_ha_state()
+        _LOGGER.debug(
+            "%s._attr_native_value updated to %s",
+            self._attr_unique_id,
+            self._attr_native_value,
         )
 
+    def __get_property_value_correct_precision(self):
+        # device sensors are all integers representing float values with 2 digit decimal precision
+        return self.get_property_value() / 100
 
-class ACInfinityPortSensorEntity(SensorEntity):
+
+class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
     def __init__(
         self,
-        acis: ACInfinity,
+        coordinator: ACInfinityDataUpdateCoordinator,
         device: ACInfinityDevice,
         port: ACInfinityDevicePort,
-        property_key: str,
-        sensor_label: str,
+        data_key: str,
+        label: str,
         device_class: str,
         unit: str,
         icon: str,
     ) -> None:
-        self._acis = acis
-        self._device = device
-        self._port = port
-        self._property_key = property_key
+        super().__init__(coordinator, device, port, data_key, label, icon)
 
-        self._attr_device_info = port.device_info
         self._attr_device_class = device_class
         self._attr_native_unit_of_measurement = unit
-        self._attr_unique_id = get_device_port_property_unique_id(
-            device, port, property_key
-        )
-        self._attr_name = get_device_port_property_name(device, port, sensor_label)
-        self._attr_icon = icon
+        self._attr_native_value = self.get_property_value()
 
-    async def async_update(self) -> None:
-        await self._acis.update()
-        self._attr_native_value = self._acis.get_device_port_property(
-            self._device.device_id, self._port.port_id, self._property_key
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._attr_native_value = self.get_property_value()
+        self.async_write_ha_state()
+        _LOGGER.debug(
+            "%s._attr_native_value updated to %s",
+            self._attr_unique_id,
+            self._attr_native_value,
         )
 
 
 class ACInfinityPortSettingSensorEntity(ACInfinityPortSensorEntity):
-    async def async_update(self) -> None:
-        await self._acis.update()
-        self._attr_native_value = self._acis.get_device_port_setting(
-            self._device.device_id,
-            self._port.port_id,
-            self._property_key,
-            default_value=0,
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._attr_native_value = self.get_setting_value(default=0)
+        self.async_write_ha_state()
+        _LOGGER.debug(
+            "%s._attr_native_value updated to %s",
+            self._attr_unique_id,
+            self._attr_native_value,
         )
 
 
@@ -109,7 +107,7 @@ async def async_setup_entry(
 ) -> None:
     """Setup the AC Infinity Platform."""
 
-    acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
+    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
     device_sensors = {
         SENSOR_KEY_TEMPERATURE: {
@@ -138,27 +136,27 @@ async def async_setup_entry(
             "deviceClass": SensorDeviceClass.POWER_FACTOR,
             "unit": None,
             "icon": "mdi:speedometer",
-            "isSettingSensor": False,
-        },
+        }
+    }
+
+    port_setting_sensors = {
         SENSOR_SETTING_KEY_SURPLUS: {
             "label": "Remaining Time",
             "deviceClass": SensorDeviceClass.DURATION,
             "unit": UnitOfTime.SECONDS,
             "icon": None,  # default
-            "isSettingSensor": True,
         },
     }
 
-    await acis.update()
-    devices = acis.get_all_device_meta_data()
+    devices = coordinator.ac_infinity.get_all_device_meta_data()
 
-    sensor_objects = []
+    entities = []
     for device in devices:
         # device sensors
         for key, descr in device_sensors.items():
-            sensor_objects.append(
+            entities.append(
                 ACInfinitySensorEntity(
-                    acis,
+                    coordinator,
                     device,
                     key,
                     descr["label"],
@@ -171,31 +169,31 @@ async def async_setup_entry(
         # port sensors
         for port in device.ports:
             for key, descr in port_sensors.items():
-                if descr["isSettingSensor"]:
-                    sensor_objects.append(
-                        ACInfinityPortSettingSensorEntity(
-                            acis,
-                            device,
-                            port,
-                            key,
-                            descr["label"],
-                            descr["deviceClass"],
-                            descr["unit"],
-                            descr["icon"],
-                        )
+                entities.append(
+                    ACInfinityPortSensorEntity(
+                        coordinator,
+                        device,
+                        port,
+                        key,
+                        descr["label"],
+                        descr["deviceClass"],
+                        descr["unit"],
+                        descr["icon"],
                     )
-                else:
-                    sensor_objects.append(
-                        ACInfinityPortSensorEntity(
-                            acis,
-                            device,
-                            port,
-                            key,
-                            descr["label"],
-                            descr["deviceClass"],
-                            descr["unit"],
-                            descr["icon"],
-                        )
-                    )
+                )
 
-    add_entities_callback(sensor_objects)
+            for key, descr in port_setting_sensors.items():
+                entities.append(
+                    ACInfinityPortSettingSensorEntity(
+                        coordinator,
+                        device,
+                        port,
+                        key,
+                        descr["label"],
+                        descr["deviceClass"],
+                        descr["unit"],
+                        descr["icon"],
+                    )
+                )
+
+    add_entities_callback(entities)

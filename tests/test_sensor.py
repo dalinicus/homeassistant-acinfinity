@@ -1,18 +1,12 @@
-import asyncio
-from asyncio import Future
-
 import pytest
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfPressure,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SENSOR_KEY_HUMIDITY,
@@ -27,119 +21,41 @@ from custom_components.ac_infinity.sensor import (
     ACInfinitySensorEntity,
     async_setup_entry,
 )
-from tests.data_models import DEVICE_ID, DEVICE_INFO_DATA, DEVICE_SETTINGS, MAC_ADDR
-
-EMAIL = "myemail@unittest.com"
-PASSWORD = "hunter2"
-ENTRY_ID = f"ac_infinity-{EMAIL}"
-
-
-class EntitiesTracker:
-    def __init__(self) -> None:
-        self._added_entities: list[ACInfinitySensorEntity] = []
-
-    def add_entities_callback(
-        self,
-        new_entities: list[ACInfinitySensorEntity],
-        update_before_add: bool = False,
-    ):
-        self._added_entities = new_entities
+from tests import (
+    ACTestObjects,
+    execute_and_get_device_entity,
+    execute_and_get_port_entity,
+    setup_entity_mocks,
+)
+from tests.data_models import DEVICE_ID, MAC_ADDR
 
 
 @pytest.fixture
 def setup(mocker: MockFixture):
-    future: Future = asyncio.Future()
-    future.set_result(None)
-
-    ac_infinity = ACInfinity(EMAIL, PASSWORD)
-
-    def set_data():
-        ac_infinity._devices = DEVICE_INFO_DATA
-        return future
-
-    mocker.patch.object(ACInfinity, "update", side_effect=set_data)
-    mocker.patch.object(ConfigEntry, "__init__", return_value=None)
-    mocker.patch.object(HomeAssistant, "__init__", return_value=None)
-
-    hass = HomeAssistant("/path")
-    hass.data = {DOMAIN: {ENTRY_ID: ac_infinity}}
-
-    configEntry = ConfigEntry()
-    configEntry.entry_id = ENTRY_ID
-
-    entities = EntitiesTracker()
-
-    return (hass, configEntry, entities, ac_infinity)
+    return setup_entity_mocks(mocker)
 
 
 @pytest.mark.asyncio
 class TestSensors:
-    async def __execute_and_get_sensor(
-        self, setup, property_key: str
-    ) -> ACInfinitySensorEntity:
-        entities: EntitiesTracker
-        (hass, configEntry, entities, _) = setup
-
-        await async_setup_entry(hass, configEntry, entities.add_entities_callback)
-
-        found = [
-            sensor
-            for sensor in entities._added_entities
-            if property_key in sensor._attr_unique_id
-        ]
-        assert len(found) == 1
-
-        return found[0]
-
-    async def __execute_and_get_port_sensor(
-        self, setup, port: int, property_key: str
-    ) -> ACInfinityPortSensorEntity:
-        entities: EntitiesTracker
-        (hass, configEntry, entities, _) = setup
-
-        await async_setup_entry(hass, configEntry, entities.add_entities_callback)
-
-        found = [
-            sensor
-            for sensor in entities._added_entities
-            if property_key in sensor._attr_unique_id
-            and f"port_{port}" in sensor._attr_unique_id
-        ]
-        assert len(found) == 1
-
-        return found[0]
-
-    async def __execute_and_get_port_setting_sensor(
-        self, setup, port: int, property_key: str
-    ) -> ACInfinityPortSettingSensorEntity:
-        entities: EntitiesTracker
-        (hass, configEntry, entities, _) = setup
-
-        await async_setup_entry(hass, configEntry, entities.add_entities_callback)
-
-        found = [
-            sensor
-            for sensor in entities._added_entities
-            if property_key in sensor._attr_unique_id
-            and f"port_{port}" in sensor._attr_unique_id
-        ]
-        assert len(found) == 1
-
-        return found[0]
-
     async def test_async_setup_all_sensors_created(self, setup):
         """All sensors created"""
-        entities: EntitiesTracker
-        (hass, configEntry, entities, _) = setup
 
-        await async_setup_entry(hass, configEntry, entities.add_entities_callback)
+        test_objects: ACTestObjects = setup
 
-        assert len(entities._added_entities) == 11
+        await async_setup_entry(
+            test_objects.hass,
+            test_objects.configEntry,
+            test_objects.entities.add_entities_callback,
+        )
+
+        assert len(test_objects.entities._added_entities) == 11
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_TEMPERATURE)
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
+        )
 
         assert "Temperature" in sensor._attr_name
         assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_TEMPERATURE}"
@@ -149,17 +65,19 @@ class TestSensors:
     async def test_async_update_temperature_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, SENSOR_KEY_TEMPERATURE
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
         )
-        await sensor.async_update()
+        sensor._handle_coordinator_update()
 
         assert sensor._attr_native_value == 24.17
 
-    async def test_async_setup_entry_humidity_created(self, mocker, setup):
+    async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_HUMIDITY)
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_HUMIDITY
+        )
 
         assert "Humidity" in sensor._attr_name
         assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
@@ -169,17 +87,19 @@ class TestSensors:
     async def test_async_update_humidity_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, SENSOR_KEY_HUMIDITY
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_HUMIDITY
         )
-        await sensor.async_update()
+        sensor._handle_coordinator_update()
 
         assert sensor._attr_native_value == 72
 
-    async def test_async_setup_entry_vpd_created(self, mocker, setup):
+    async def test_async_setup_entry_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor = await self.__execute_and_get_sensor(setup, SENSOR_KEY_VPD)
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_VPD
+        )
 
         assert "VPD" in sensor._attr_name
         assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
@@ -189,10 +109,10 @@ class TestSensors:
     async def test_async_update_vpd_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await self.__execute_and_get_sensor(
-            setup, SENSOR_KEY_VPD
+        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+            setup, async_setup_entry, SENSOR_KEY_VPD
         )
-        await sensor.async_update()
+        sensor._handle_coordinator_update()
 
         assert sensor._attr_native_value == 0.83
 
@@ -202,8 +122,8 @@ class TestSensors:
     ):
         """Sensor for device port speak created on setup"""
 
-        sensor = await self.__execute_and_get_port_sensor(
-            setup, port, SENSOR_PORT_KEY_SPEAK
+        sensor: ACInfinityPortSensorEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, SENSOR_PORT_KEY_SPEAK
         )
 
         assert "Current Speed" in sensor._attr_name
@@ -217,8 +137,8 @@ class TestSensors:
     async def test_async_setup_remaining_time_for_each_port(self, setup, port):
         """Sensor for device port surplus created on setup"""
 
-        sensor = await self.__execute_and_get_port_setting_sensor(
-            setup, port, SENSOR_SETTING_KEY_SURPLUS
+        sensor: ACInfinityPortSettingSensorEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 
         assert "Remaining Time" in sensor._attr_name
@@ -241,35 +161,30 @@ class TestSensors:
         self, setup, port, expected
     ):
         """Reported sensor value matches the value in the json payload"""
-
-        sensor: ACInfinityPortSensorEntity = await self.__execute_and_get_port_sensor(
-            setup, port, SENSOR_PORT_KEY_SPEAK
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][
+            SENSOR_PORT_KEY_SPEAK
+        ] = expected
+        sensor: ACInfinityPortSensorEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, SENSOR_PORT_KEY_SPEAK
         )
-        await sensor.async_update()
+        sensor._handle_coordinator_update()
 
         assert sensor._attr_native_value == expected
 
-    async def test_async_update_duration_left_value_Correct(self, setup, mocker):
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_duration_left_value_Correct(self, setup, port):
         """Reported sensor value matches the value in the json payload"""
-        ac_infinity: ACInfinity
-        (_, _, _, ac_infinity) = setup
+        test_objects: ACTestObjects = setup
 
-        sensor: ACInfinityPortSensorEntity = await self.__execute_and_get_port_sensor(
-            setup, 1, SENSOR_SETTING_KEY_SURPLUS
+        sensor: ACInfinityPortSettingSensorEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 
-        def set_data():
-            future: Future = asyncio.Future()
-            future.set_result(None)
-
-            ac_infinity._devices = DEVICE_INFO_DATA
-            ac_infinity._port_settings = DEVICE_SETTINGS
-            ac_infinity._port_settings[str(DEVICE_ID)][1][
-                SENSOR_SETTING_KEY_SURPLUS
-            ] = 12345
-            return future
-
-        mocker.patch.object(ACInfinity, "update", side_effect=set_data)
-        await sensor.async_update()
+        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][
+            SENSOR_SETTING_KEY_SURPLUS
+        ] = 12345
+        sensor._handle_coordinator_update()
 
         assert sensor._attr_native_value == 12345
+        test_objects.write_ha_mock.assert_called()

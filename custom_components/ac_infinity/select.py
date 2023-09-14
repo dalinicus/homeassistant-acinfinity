@@ -1,55 +1,66 @@
+import logging
+
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from custom_components.ac_infinity import (
+    ACInfinityDataUpdateCoordinator,
+    ACInfinityPortEntity,
+)
 from custom_components.ac_infinity.ac_infinity import (
-    ACInfinity,
     ACInfinityDevice,
     ACInfinityDevicePort,
 )
 from custom_components.ac_infinity.const import DOMAIN, SETTING_KEY_AT_TYPE
 
-from .utilities import get_device_port_property_name, get_device_port_property_unique_id
+_LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortSelectEntity(SelectEntity):
+class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
     def __init__(
         self,
-        acis: ACInfinity,
+        coordinator: ACInfinityDataUpdateCoordinator,
         device: ACInfinityDevice,
         port: ACInfinityDevicePort,
-        setting_key: str,
+        data_key: str,
         label: str,
         options: list[str],
     ) -> None:
-        self._acis = acis
-        self._device = device
-        self._port = port
-        self._setting_key = setting_key
+        super().__init__(coordinator, device, port, data_key, label, "form-dropdown")
 
-        self._attr_device_info = port.device_info
-        self._attr_unique_id = get_device_port_property_unique_id(
-            device, port, setting_key
-        )
-        self._attr_name = get_device_port_property_name(device, port, label)
         self._attr_options = options
-        self._attr_current_option = options[0]
+        self._attr_current_option = self.__get_option_from_setting_value()
 
-    async def async_update(self) -> None:
-        await self._acis.update()
-        option = self._acis.get_device_port_setting(
-            self._device.device_id, self._port.port_id, self._setting_key
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._attr_current_option = self.__get_option_from_setting_value()
+        self.async_write_ha_state()
+        _LOGGER.debug(
+            "%s._attr_current_option updated to %s",
+            self._attr_unique_id,
+            self._attr_current_option,
         )
-        self._attr_current_option = self._attr_options[option - 1]  # 1 to 0 based array
 
     async def async_select_option(self, option: str) -> None:
         index = self._attr_options.index(option)
 
-        await self._acis.set_device_port_setting(
-            self._device.device_id, self._port.port_id, self._setting_key, index + 1
-        )  # 0 to 1 based array
-        self._attr_current_option = option
+        await self.set_setting_value(
+            index + 1
+        )  # data is 1 based.  Adjust from 0 based enum
+        _LOGGER.debug(
+            "User updated value of %s.%s %s",
+            self._attr_unique_id,
+            self._data_key,
+            option,
+        )
+
+    def __get_option_from_setting_value(self) -> str:
+        option: int = self.get_setting_value()
+        return self._attr_options[
+            option - 1
+        ]  # data is 1 based.  Adjust for 0 based enum
 
 
 async def async_setup_entry(
@@ -57,7 +68,7 @@ async def async_setup_entry(
 ) -> None:
     """Setup the AC Infinity Platform."""
 
-    acis: ACInfinity = hass.data[DOMAIN][config.entry_id]
+    coordintator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
     select_entities = {
         SETTING_KEY_AT_TYPE: {
@@ -75,16 +86,15 @@ async def async_setup_entry(
         }
     }
 
-    await acis.update()
-    devices = acis.get_all_device_meta_data()
+    devices = coordintator.ac_infinity.get_all_device_meta_data()
 
-    sensor_objects = []
+    entities = []
     for device in devices:
         for port in device.ports:
             for key, descr in select_entities.items():
-                sensor_objects.append(
+                entities.append(
                     ACInfinityPortSelectEntity(
-                        acis,
+                        coordintator,
                         device,
                         port,
                         key,
@@ -93,4 +103,4 @@ async def async_setup_entry(
                     )
                 )
 
-    add_entities_callback(sensor_objects)
+    add_entities_callback(entities)

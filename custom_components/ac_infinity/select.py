@@ -50,7 +50,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
             index + 1
         )  # data is 1 based.  Adjust from 0 based enum
         _LOGGER.debug(
-            "User updated value of %s.%s %s",
+            "User updated value of %s.%s to %s",
             self._attr_unique_id,
             self._data_key,
             option,

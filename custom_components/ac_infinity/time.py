@@ -64,10 +64,10 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
         total_minutes = None if value is None else (value.hour * 60) + value.minute
         await self.set_setting_value(total_minutes)
         _LOGGER.debug(
-            "User updated value of %s.%s %s",
+            "User updated value of %s.%s to %s",
             self._attr_unique_id,
             self._data_key,
-            self._attr_native_value,
+            total_minutes,
         )
 
 

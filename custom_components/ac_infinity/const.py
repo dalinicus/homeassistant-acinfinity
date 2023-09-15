@@ -10,6 +10,7 @@ PLATFORMS = [
     Platform.SELECT,
     Platform.NUMBER,
     Platform.TIME,
+    Platform.TEXT,
 ]
 HOST = "http://www.acinfinityserver.com"
 

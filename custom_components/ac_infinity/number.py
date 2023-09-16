@@ -7,7 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
+    ACInfinityPortSettingEntity,
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
@@ -20,7 +20,7 @@ from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
+class ACInfinityPortNumberEntity(ACInfinityPortSettingEntity, NumberEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,

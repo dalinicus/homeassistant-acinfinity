@@ -7,7 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
+    ACInfinityPortSettingEntity,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityDevice,
@@ -20,10 +20,10 @@ from custom_components.ac_infinity.const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-TIMER_REGEX = r"^(0|[1-9]\d{0,2}|1[0-3]\d{2}|1440)$"  # timer minute values must be between 0 and 1440 (24 hours)
+TIMER_REGEX = r"^(0|[1-9]\d{0,2}|1[0-3]\d{2}|14[0-3]\d|1440)$"  # timer minute values must be between 0 and 1440 (24 hours)
 
 
-class ACInfinityPortTimerEntity(ACInfinityPortEntity, TextEntity):
+class ACInfinityPortTimerEntity(ACInfinityPortSettingEntity, TextEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,

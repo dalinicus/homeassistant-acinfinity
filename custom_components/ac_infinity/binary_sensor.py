@@ -10,7 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
+    ACInfinityPortPropertyEntity,
 )
 from custom_components.ac_infinity.const import DOMAIN, SENSOR_PORT_KEY_ONLINE
 
@@ -19,7 +19,9 @@ from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity):
+class ACInfinityPortBinarySensorEntity(
+    ACInfinityPortPropertyEntity, BinarySensorEntity
+):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,

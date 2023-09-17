@@ -83,7 +83,7 @@ async def execute_and_get_port_entity(
     found = [
         sensor
         for sensor in test_objects.entities._added_entities
-        if data_key in sensor._attr_unique_id
+        if sensor._attr_unique_id.endswith(data_key)
         and f"port_{port}" in sensor._attr_unique_id
     ]
     assert len(found) == 1

@@ -7,6 +7,10 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER,
+    SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F,
+    SETTING_KEY_AUTO_TEMP_LOW_TRIGGER,
+    SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F,
     SETTING_KEY_CYCLE_DURATION_OFF,
     SETTING_KEY_CYCLE_DURATION_ON,
     SETTING_KEY_OFF_SPEED,
@@ -20,6 +24,7 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.number import (
     ACInfinityPortNumberEntity,
+    ACInfinityPortTempTriggerEntity,
     async_setup_entry,
 )
 from tests import ACTestObjects, execute_and_get_port_entity, setup_entity_mocks
@@ -55,7 +60,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 32
+        assert len(test_objects.entities._added_entities) == 48
 
     @pytest.mark.parametrize(
         "setting", [(SETTING_KEY_OFF_SPEED), (SETTING_KEY_ON_SPEED)]
@@ -205,12 +210,12 @@ class TestNumbers:
         ],
     )
     @pytest.mark.parametrize(
-        "value,enabled,expected",
-        [(55, 1, 5.5), (55, 0, 0), (0, 0, 0), (0, 1, 0)],  # minutes to seconds
+        "value,expected",
+        [(55, 5.5), (0, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_value_vpd(
-        self, setup, setting, value, expected, port, enabled, enabled_setting
+        self, setup, setting, value, expected, port, enabled_setting
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -219,9 +224,6 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][
-            enabled_setting
-        ] = enabled
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
@@ -229,19 +231,19 @@ class TestNumbers:
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting, enabled",
+        "setting",
         [
-            (SETTING_KEY_VPD_LOW_TRIGGER, SETTING_KEY_VPD_LOW_ENABLED),
-            (SETTING_KEY_VPD_HIGH_TRIGGER, SETTING_KEY_VPD_HIGH_ENABLED),
+            SETTING_KEY_VPD_LOW_TRIGGER,
+            SETTING_KEY_VPD_HIGH_TRIGGER,
         ],
     )
     @pytest.mark.parametrize(
         "expected,value,prev_value",
-        [((55, 1), 5.5, 45), ((45, 0), 0, 45)],  # minutes to seconds
+        [(55, 5.5, 45), (0, 0, 45)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_vpd(
-        self, setup, setting, value, expected, port, prev_value, enabled
+        self, setup, setting, value, expected, port, prev_value
     ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()
@@ -257,10 +259,8 @@ class TestNumbers:
         )
         await sensor.async_set_native_value(value)
 
-        leftValue, rightValue = expected
-
-        test_objects.sets_mock.assert_called_with(
-            str(DEVICE_ID), port, [(setting, leftValue), (enabled, rightValue)]
+        test_objects.set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, expected
         )
 
     #
@@ -333,4 +333,69 @@ class TestNumbers:
 
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
+        )
+
+    @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F),
+            (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER, SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "c,f",
+        [(0, 32), (90, 194), (46, 115)],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_temp_trigger_correct(
+        self,
+        setup,
+        setting,
+        f_setting,
+        c,
+        f,
+        port,
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        sensor: ACInfinityPortNumberEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = c
+        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][f_setting] = f
+        sensor._handle_coordinator_update()
+
+        assert sensor._attr_native_value == c
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "c,f",
+        [(0, 32), (90, 194), (46, 115)],
+    )
+    @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F),
+            (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER, SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_temp_trigger_value(
+        self, setup, setting, c, f, port, f_setting
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+
+        sensor: ACInfinityPortTempTriggerEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+        await sensor.async_set_native_value(c)
+
+        test_objects.sets_mock.assert_called_with(
+            str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
         )

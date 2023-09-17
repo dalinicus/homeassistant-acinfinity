@@ -86,7 +86,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
         port: ACInfinityDevicePort,
         data_key: str,
         label: str,
-        icon: str,
+        icon: str | None,
     ) -> None:
         super().__init__(coordinator, data_key)
         self._device = device
@@ -127,7 +127,7 @@ class ACInfinityPortSettingEntity(ACInfinityPortEntity):
         port: ACInfinityDevicePort,
         data_key: str,
         label: str,
-        icon: str,
+        icon: str | None,
     ) -> None:
         super().__init__(coordinator, device, port, data_key, label, icon)
 
@@ -153,7 +153,7 @@ class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
         port: ACInfinityDevicePort,
         tuple_key: Tuple[str, str],
         label: str,
-        icon: str,
+        icon: str | None,
     ) -> None:
         """The first tuple value will be used as the "primary" data key used for ids.
         Values will be fetched from api using both keys.

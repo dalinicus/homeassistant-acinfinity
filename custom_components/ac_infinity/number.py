@@ -3,6 +3,7 @@ from typing import Tuple
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -13,15 +14,19 @@ from custom_components.ac_infinity import (
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+    SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER,
+    SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER,
+    SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F,
+    SETTING_KEY_AUTO_TEMP_LOW_TRIGGER,
+    SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F,
     SETTING_KEY_CYCLE_DURATION_OFF,
     SETTING_KEY_CYCLE_DURATION_ON,
     SETTING_KEY_OFF_SPEED,
     SETTING_KEY_ON_SPEED,
     SETTING_KEY_TIMER_DURATION_TO_OFF,
     SETTING_KEY_TIMER_DURATION_TO_ON,
-    SETTING_KEY_VPD_HIGH_ENABLED,
     SETTING_KEY_VPD_HIGH_TRIGGER,
-    SETTING_KEY_VPD_LOW_ENABLED,
     SETTING_KEY_VPD_LOW_TRIGGER,
 )
 
@@ -79,7 +84,7 @@ class ACInfinityPortNumberEntity(ACInfinityPortSettingEntity, NumberEntity):
         return self.get_setting_value() / self._data_facotr
 
 
-class ACInfinityPortNumberTupleEntity(ACInfinityPortTupleSettingEntity, NumberEntity):
+class ACInfinityPortTempTriggerEntity(ACInfinityPortTupleSettingEntity, NumberEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
@@ -87,27 +92,20 @@ class ACInfinityPortNumberTupleEntity(ACInfinityPortTupleSettingEntity, NumberEn
         port: ACInfinityDevicePort,
         tuple_key: Tuple[str, str],
         label: str,
-        icon: str,
-        device_class: str,
-        min_value: float,
-        max_value: float,
-        step_value: float,
-        mode: int,
-        data_factor: int,
     ) -> None:
-        super().__init__(coordinator, device, port, tuple_key, label, icon)
-        self._data_factor = data_factor
+        super().__init__(coordinator, device, port, tuple_key, label, None)
 
-        self._attr_native_min_value = min_value
-        self._attr_native_max_value = max_value
-        self._attr_native_step = step_value
-        self._attr_mode = mode
-        self._attr_device_class = device_class
-        self._attr_native_value = self.__get_setting_value()
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 90
+        self._attr_native_step = 1
+        self._attr_mode = NumberMode.AUTO
+        self._attr_device_class = NumberDeviceClass.TEMPERATURE
+        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        self._attr_native_value, _ = self.get_setting_value()
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        self._attr_native_value = self.__get_setting_value()
+        self._attr_native_value, _ = self.get_setting_value()
         self.async_write_ha_state()
         _LOGGER.debug(
             "%s._attr_native_value updated to %s",
@@ -116,34 +114,14 @@ class ACInfinityPortNumberTupleEntity(ACInfinityPortTupleSettingEntity, NumberEn
         )
 
     async def async_set_native_value(self, value: int) -> None:
-        if value <= 0:
-            (previous, _) = self.get_setting_value()
-            await self.set_setting_value(
-                (previous, 0)
-            )  # update enabled to 0, leave trigger as is
-        else:
-            value_adjusted: int = self.__adjust_value_from_ha(value)
-            await self.set_setting_value(
-                (value_adjusted, 1)
-            )  # update enabled to 1, update trigger to user value
+        f = round((value * 1.8) + 32, 0)
+        await self.set_setting_value((value, int(f)))
         _LOGGER.debug(
             "User updated value of %s.%s to %s",
             self._attr_unique_id,
             self._data_key,
             value,
         )
-
-    def __get_setting_value(self):
-        (value, enabled) = self.get_setting_value()
-        if not enabled:
-            return 0
-        return self.__adjust_value_from_data(value)
-
-    def __adjust_value_from_data(self, value: float) -> float:
-        return value / self._data_factor
-
-    def __adjust_value_from_ha(self, value: float) -> int:
-        return int(value * self._data_factor)
 
 
 async def async_setup_entry(
@@ -214,10 +192,7 @@ async def async_setup_entry(
             "mode": NumberMode.BOX,
             "data_factor": 60,
         },
-    }
-
-    tuple_entities = {
-        (SETTING_KEY_VPD_LOW_TRIGGER, SETTING_KEY_VPD_LOW_ENABLED): {
+        SETTING_KEY_VPD_LOW_TRIGGER: {
             "label": "VPD Low Trigger",
             "icon": "mdi:water-thermometer-outline",
             "deviceClass": NumberDeviceClass.PRESSURE,
@@ -227,7 +202,7 @@ async def async_setup_entry(
             "mode": NumberMode.BOX,
             "data_factor": 10,
         },
-        (SETTING_KEY_VPD_HIGH_TRIGGER, SETTING_KEY_VPD_HIGH_ENABLED): {
+        SETTING_KEY_VPD_HIGH_TRIGGER: {
             "label": "VPD High Trigger",
             "icon": "mdi:water-thermometer-outline",
             "deviceClass": NumberDeviceClass.PRESSURE,
@@ -236,6 +211,35 @@ async def async_setup_entry(
             "step": 0.1,
             "mode": NumberMode.BOX,
             "data_factor": 10,
+        },
+        SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER: {
+            "label": "VPD Low Trigger",
+            "icon": "mdi:water-thermometer-outline",
+            "deviceClass": NumberDeviceClass.PRESSURE,
+            "min": 0,
+            "max": 9.9,
+            "step": 0.1,
+            "mode": NumberMode.BOX,
+            "data_factor": 10,
+        },
+        SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER: {
+            "label": "VPD High Trigger",
+            "icon": "mdi:water-thermometer-outline",
+            "deviceClass": NumberDeviceClass.PRESSURE,
+            "min": 0,
+            "max": 9.9,
+            "step": 0.1,
+            "mode": NumberMode.BOX,
+            "data_factor": 10,
+        },
+    }
+
+    tuple_entities = {
+        (SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F): {
+            "label": "Auto High Temp Trigger",
+        },
+        (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER, SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F): {
+            "label": "Auto Low Temp Trigger",
         },
     }
 
@@ -263,19 +267,12 @@ async def async_setup_entry(
                 )
             for tupleKey, descr in tuple_entities.items():
                 entities.append(
-                    ACInfinityPortNumberTupleEntity(
+                    ACInfinityPortTempTriggerEntity(
                         coordinator,
                         device,
                         port,
                         tupleKey,
                         descr["label"],
-                        descr["icon"],
-                        descr["deviceClass"],
-                        descr["min"],
-                        descr["max"],
-                        descr["step"],
-                        descr["mode"],
-                        descr["data_factor"],
                     )
                 )
 

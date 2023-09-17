@@ -14,10 +14,14 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityDeviceEntity,
-    ACInfinityPortEntity,
+    ACInfinityPortPropertyEntity,
+    ACInfinityPortSettingEntity,
+)
+from custom_components.ac_infinity.ac_infinity import (
+    ACInfinityDevice,
+    ACInfinityDevicePort,
 )
 
-from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
 from .const import (
     DOMAIN,
     SENSOR_KEY_HUMIDITY,
@@ -61,7 +65,7 @@ class ACInfinitySensorEntity(ACInfinityDeviceEntity, SensorEntity):
         return self.get_property_value() / 100
 
 
-class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
+class ACInfinityPortSensorEntity(ACInfinityPortPropertyEntity, SensorEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
@@ -90,7 +94,24 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
         )
 
 
-class ACInfinityPortSettingSensorEntity(ACInfinityPortSensorEntity):
+class ACInfinityPortSettingSensorEntity(ACInfinityPortSettingEntity, SensorEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        device: ACInfinityDevice,
+        port: ACInfinityDevicePort,
+        data_key: str,
+        label: str,
+        device_class: str,
+        unit: str,
+        icon: str,
+    ) -> None:
+        super().__init__(coordinator, device, port, data_key, label, icon)
+
+        self._attr_device_class = device_class
+        self._attr_native_unit_of_measurement = unit
+        self._attr_native_value = self.get_setting_value(default=0)
+
     @callback
     def _handle_coordinator_update(self) -> None:
         self._attr_native_value = self.get_setting_value(default=0)
@@ -126,7 +147,7 @@ async def async_setup_entry(
             "label": "VPD",
             "deviceClass": SensorDeviceClass.PRESSURE,
             "unit": UnitOfPressure.KPA,
-            "icon": None,  # default
+            "icon": "mdi:water-thermometer",
         },
     }
 

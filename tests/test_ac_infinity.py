@@ -305,3 +305,22 @@ class TestACInfinity:
         await ac_infinity.set_device_port_setting(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)
 
         mocked_set.assert_called_with(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)
+
+    async def test_set_device_port_settings(self, mocker: MockFixture):
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_sets = mocker.patch.object(
+            ACInfinityClient, "set_device_port_settings", return_value=future
+        )
+
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        await ac_infinity.set_device_port_settings(
+            DEVICE_ID, 1, [(SETTING_KEY_AT_TYPE, 2)]
+        )
+
+        mocked_sets.assert_called_with(DEVICE_ID, 1, [(SETTING_KEY_AT_TYPE, 2)])

@@ -10,7 +10,6 @@ PLATFORMS = [
     Platform.SELECT,
     Platform.NUMBER,
     Platform.TIME,
-    Platform.TEXT,
 ]
 HOST = "http://www.acinfinityserver.com"
 
@@ -42,5 +41,9 @@ SETTING_KEY_OFF_SPEED = "offSpead"
 SETTING_KEY_AT_TYPE = "atType"
 SETTING_KEY_SCHEDULED_START_TIME = "schedStartTime"
 SETTING_KEY_SCHEDULED_END_TIME = "schedEndtTime"
-SETTING_KEY_ACTIVE_TIMER_ON = "acitveTimerOn"
-SETTING_KEY_ACTIVE_TIMER_OFF = "acitveTimerOff"
+SETTING_KEY_TIMER_DURATION_TO_ON = "acitveTimerOn"
+SETTING_KEY_TIMER_DURATION_TO_OFF = "acitveTimerOff"
+SETTING_KEY_VPD_HIGH_ENABLED = "activeHtVpd"
+SETTING_KEY_VPD_HIGH_TRIGGER = "activeHtVpdNums"
+SETTING_KEY_VPD_LOW_ENABLED = "activeLtVpd"
+SETTING_KEY_VPD_LOW_TRIGGER = "activeLtVpdNums"

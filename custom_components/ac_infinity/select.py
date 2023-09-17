@@ -7,7 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
+    ACInfinityPortSettingEntity,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityDevice,
@@ -18,7 +18,7 @@ from custom_components.ac_infinity.const import DOMAIN, SETTING_KEY_AT_TYPE
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
+class ACInfinityPortSelectEntity(ACInfinityPortSettingEntity, SelectEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
@@ -28,7 +28,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         label: str,
         options: list[str],
     ) -> None:
-        super().__init__(coordinator, device, port, data_key, label, "form-dropdown")
+        super().__init__(coordinator, device, port, data_key, label, "")
 
         self._attr_options = options
         self._attr_current_option = self.__get_option_from_setting_value()

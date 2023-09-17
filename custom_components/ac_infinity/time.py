@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
+    ACInfinityPortSettingEntity,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityDevice,
@@ -26,7 +26,7 @@ DEFAULT_TIME = datetime.time(0, 0)
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
+class ACInfinityPortTimeEntity(ACInfinityPortSettingEntity, TimeEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Tuple
 
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
@@ -44,7 +45,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 class ACInfinityEntity(CoordinatorEntity):
-    def __init__(self, coordinator: ACInfinityDataUpdateCoordinator, data_key: str):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        data_key: str,
+    ):
         super().__init__(coordinator)
         self._data_key = data_key
 
@@ -89,10 +94,23 @@ class ACInfinityPortEntity(ACInfinityEntity):
 
         self._attr_icon = icon
         self._attr_device_info = port.device_info
+        self._attr_name = f"{device.device_name} {port.port_name} {label}"
         self._attr_unique_id = (
             f"{DOMAIN}_{device.mac_addr}_port_{port.port_id}_{data_key}"
         )
-        self._attr_name = f"{device.device_name} {port.port_name} {label}"
+
+
+class ACInfinityPortPropertyEntity(ACInfinityPortEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        device: ACInfinityDevice,
+        port: ACInfinityDevicePort,
+        data_key: str,
+        label: str,
+        icon: str,
+    ) -> None:
+        super().__init__(coordinator, device, port, data_key, label, icon)
 
     def get_property_value(self):
         coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
@@ -100,17 +118,74 @@ class ACInfinityPortEntity(ACInfinityEntity):
             self._device.device_id, self._port.port_id, self._data_key
         )
 
-    def get_setting_value(self, default=None):
+
+class ACInfinityPortSettingEntity(ACInfinityPortEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        device: ACInfinityDevice,
+        port: ACInfinityDevicePort,
+        data_key: str,
+        label: str,
+        icon: str,
+    ) -> None:
+        super().__init__(coordinator, device, port, data_key, label, icon)
+
+    def get_setting_value(self, default=None) -> int:
         coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
         return coordinator.ac_infinity.get_device_port_setting(
             self._device.device_id, self._port.port_id, self._data_key, default
         )
 
-    async def set_setting_value(self, value) -> None:
+    async def set_setting_value(self, value: int) -> None:
         coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
         await coordinator.ac_infinity.set_device_port_setting(
             self._device.device_id, self._port.port_id, self._data_key, value
         )
+        await coordinator.async_request_refresh()
+
+
+class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        device: ACInfinityDevice,
+        port: ACInfinityDevicePort,
+        tuple_key: Tuple[str, str],
+        label: str,
+        icon: str,
+    ) -> None:
+        """The first tuple value will be used as the "primary" data key used for ids.
+        Values will be fetched from api using both keys.
+        """
+        (leftKey, _) = tuple_key
+        super().__init__(coordinator, device, port, leftKey, label, icon)
+        self._tuple_key = tuple_key
+
+    def get_setting_value(self, default=None) -> Tuple[int, int]:
+        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
+
+        (leftKey, rightKey) = self._tuple_key
+        leftValue = coordinator.ac_infinity.get_device_port_setting(
+            self._device.device_id, self._port.port_id, leftKey, default
+        )
+        rightValue = coordinator.ac_infinity.get_device_port_setting(
+            self._device.device_id, self._port.port_id, rightKey, default
+        )
+
+        return (leftValue, rightValue)
+
+    async def set_setting_value(self, value: Tuple[int, int]) -> None:
+        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
+
+        (leftKey, rightKey) = self._tuple_key
+        (leftValue, rightValue) = value
+        await coordinator.ac_infinity.set_device_port_settings(
+            self._device.device_id,
+            self._port.port_id,
+            [(leftKey, leftValue), (rightKey, rightValue)],
+        )
+
         await coordinator.async_request_refresh()
 
 

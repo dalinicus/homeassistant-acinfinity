@@ -135,7 +135,7 @@ class ACInfinity:
                             device_id, port_id
                         )
                 return
-            except Exception as ex:
+            except BaseException as ex:
                 if tryCount < 2:
                     tryCount += 1
                     _LOGGER.warning(
@@ -229,7 +229,7 @@ class ACInfinity:
                     device_id, port_id, keyValues
                 )
                 return
-            except Exception as ex:
+            except BaseException as ex:
                 if tryCount < 2:
                     tryCount += 1
                     _LOGGER.warning(

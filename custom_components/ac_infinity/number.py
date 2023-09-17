@@ -19,9 +19,7 @@ from custom_components.ac_infinity.const import (
     SETTING_KEY_ON_SPEED,
     SETTING_KEY_TIMER_DURATION_TO_OFF,
     SETTING_KEY_TIMER_DURATION_TO_ON,
-    SETTING_KEY_VPD_HIGH_ENABLED,
     SETTING_KEY_VPD_HIGH_TRIGGER,
-    SETTING_KEY_VPD_LOW_ENABLED,
     SETTING_KEY_VPD_LOW_TRIGGER,
 )
 
@@ -214,10 +212,7 @@ async def async_setup_entry(
             "mode": NumberMode.BOX,
             "data_factor": 60,
         },
-    }
-
-    tuple_entities = {
-        (SETTING_KEY_VPD_LOW_TRIGGER, SETTING_KEY_VPD_LOW_ENABLED): {
+        SETTING_KEY_VPD_LOW_TRIGGER: {
             "label": "VPD Low Trigger",
             "icon": "mdi:water-thermometer-outline",
             "deviceClass": NumberDeviceClass.PRESSURE,
@@ -227,7 +222,7 @@ async def async_setup_entry(
             "mode": NumberMode.BOX,
             "data_factor": 10,
         },
-        (SETTING_KEY_VPD_HIGH_TRIGGER, SETTING_KEY_VPD_HIGH_ENABLED): {
+        SETTING_KEY_VPD_HIGH_TRIGGER: {
             "label": "VPD High Trigger",
             "icon": "mdi:water-thermometer-outline",
             "deviceClass": NumberDeviceClass.PRESSURE,
@@ -238,6 +233,15 @@ async def async_setup_entry(
             "data_factor": 10,
         },
     }
+
+    # tuple_entities = {
+    #     (SETTING_KEY_VPD_LOW_TRIGGER, SETTING_KEY_VPD_LOW_ENABLED): {
+
+    #     },
+    #     (SETTING_KEY_VPD_HIGH_TRIGGER, SETTING_KEY_VPD_HIGH_ENABLED): {
+
+    #     },
+    # }
 
     devices = coordinator.ac_infinity.get_all_device_meta_data()
 
@@ -261,22 +265,22 @@ async def async_setup_entry(
                         descr["data_factor"],
                     )
                 )
-            for tupleKey, descr in tuple_entities.items():
-                entities.append(
-                    ACInfinityPortNumberTupleEntity(
-                        coordinator,
-                        device,
-                        port,
-                        tupleKey,
-                        descr["label"],
-                        descr["icon"],
-                        descr["deviceClass"],
-                        descr["min"],
-                        descr["max"],
-                        descr["step"],
-                        descr["mode"],
-                        descr["data_factor"],
-                    )
-                )
+            # for tupleKey, descr in tuple_entities.items():
+            #     entities.append(
+            #         ACInfinityPortNumberTupleEntity(
+            #             coordinator,
+            #             device,
+            #             port,
+            #             tupleKey,
+            #             descr["label"],
+            #             descr["icon"],
+            #             descr["deviceClass"],
+            #             descr["min"],
+            #             descr["max"],
+            #             descr["step"],
+            #             descr["mode"],
+            #             descr["data_factor"],
+            #         )
+            #     )
 
     add_entities_callback(entities)

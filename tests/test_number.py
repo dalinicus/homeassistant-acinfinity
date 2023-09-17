@@ -205,12 +205,12 @@ class TestNumbers:
         ],
     )
     @pytest.mark.parametrize(
-        "value,enabled,expected",
-        [(55, 1, 5.5), (55, 0, 0), (0, 0, 0), (0, 1, 0)],  # minutes to seconds
+        "value,expected",
+        [(55, 5.5), (0, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_value_vpd(
-        self, setup, setting, value, expected, port, enabled, enabled_setting
+        self, setup, setting, value, expected, port, enabled_setting
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -219,9 +219,6 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][
-            enabled_setting
-        ] = enabled
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
@@ -229,19 +226,19 @@ class TestNumbers:
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting, enabled",
+        "setting",
         [
-            (SETTING_KEY_VPD_LOW_TRIGGER, SETTING_KEY_VPD_LOW_ENABLED),
-            (SETTING_KEY_VPD_HIGH_TRIGGER, SETTING_KEY_VPD_HIGH_ENABLED),
+            SETTING_KEY_VPD_LOW_TRIGGER,
+            SETTING_KEY_VPD_HIGH_TRIGGER,
         ],
     )
     @pytest.mark.parametrize(
         "expected,value,prev_value",
-        [((55, 1), 5.5, 45), ((45, 0), 0, 45)],  # minutes to seconds
+        [(55, 5.5, 45), (0, 0, 45)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_vpd(
-        self, setup, setting, value, expected, port, prev_value, enabled
+        self, setup, setting, value, expected, port, prev_value
     ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()
@@ -257,10 +254,8 @@ class TestNumbers:
         )
         await sensor.async_set_native_value(value)
 
-        leftValue, rightValue = expected
-
-        test_objects.sets_mock.assert_called_with(
-            str(DEVICE_ID), port, [(setting, leftValue), (enabled, rightValue)]
+        test_objects.set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, expected
         )
 
     #

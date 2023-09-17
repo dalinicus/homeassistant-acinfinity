@@ -156,7 +156,9 @@ class TestACInfinityClient:
                 payload=ADD_DEV_MODE_PAYLOAD,
             )
 
-            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+            await client.set_device_port_settings(
+                DEVICE_ID, 4, [(SETTING_KEY_ON_SPEED, 2)]
+            )
 
             gen = (request for request in mocked.requests.values())
             _ = next(gen)
@@ -220,7 +222,9 @@ class TestACInfinityClient:
                 payload=ADD_DEV_MODE_PAYLOAD,
             )
 
-            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+            await client.set_device_port_settings(
+                DEVICE_ID, 4, [(SETTING_KEY_ON_SPEED, 2)]
+            )
 
             gen = (request for request in mocked.requests.values())
             _ = next(gen)
@@ -247,7 +251,9 @@ class TestACInfinityClient:
                 f"{HOST}{API_URL_ADD_DEV_MODE}", status=200, payload=request_payload
             )
 
-            await client.set_device_port_setting(DEVICE_ID, 4, SETTING_KEY_ON_SPEED, 2)
+            await client.set_device_port_settings(
+                DEVICE_ID, 4, [(SETTING_KEY_ON_SPEED, 2)]
+            )
 
             gen = (request for request in mocked.requests.values())
             _ = next(gen)

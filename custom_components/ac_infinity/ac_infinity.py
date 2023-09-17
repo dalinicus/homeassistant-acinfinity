@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import timedelta
 from typing import Any, Tuple
@@ -113,22 +114,41 @@ class ACInfinity:
         self._devices: dict[str, dict[str, Any]] = {}
         self._port_settings: dict[str, dict[int, Any]] = {}
 
-    async def update(self, tryNum=0):
+    async def update(self):
         """refreshes the values of properties and settings from the AC infinity API"""
+        tryCount = 0
+        while True:
+            try:
+                if not self._client.is_logged_in():
+                    await self._client.login()
 
-        if not self._client.is_logged_in():
-            await self._client.login()
-
-        device_list = await self._client.get_all_device_info()
-        for device in device_list:
-            device_id = device[PROPERTY_KEY_DEVICE_ID]
-            self._devices[device_id] = device
-            self._port_settings[device_id] = {}
-            for port in device[PROPERTY_KEY_DEVICE_INFO][PROPERTY_KEY_PORTS]:
-                port_id = port[PROPERTY_PORT_KEY_PORT]
-                self._port_settings[device_id][
-                    port_id
-                ] = await self._client.get_device_port_settings(device_id, port_id)
+                device_list = await self._client.get_all_device_info()
+                for device in device_list:
+                    device_id = device[PROPERTY_KEY_DEVICE_ID]
+                    self._devices[device_id] = device
+                    self._port_settings[device_id] = {}
+                    for port in device[PROPERTY_KEY_DEVICE_INFO][PROPERTY_KEY_PORTS]:
+                        port_id = port[PROPERTY_PORT_KEY_PORT]
+                        self._port_settings[device_id][
+                            port_id
+                        ] = await self._client.get_device_port_settings(
+                            device_id, port_id
+                        )
+                return
+            except Exception as ex:
+                if tryCount < 2:
+                    tryCount += 1
+                    _LOGGER.warning(
+                        "Unable to refresh from data update coordinator. Retry attempt %s/2",
+                        str(tryCount),
+                    )
+                    await asyncio.sleep(1)
+                else:
+                    _LOGGER.error(
+                        "Unable to refresh from data update coordinator. Retry attempt limit exceeded",
+                        exc_info=ex,
+                    )
+                    raise
 
     def get_all_device_meta_data(self) -> list[ACInfinityDevice]:
         """gets device metadata, such as ids, labels, macaddr, etc.. that are not expected to change"""
@@ -196,10 +216,29 @@ class ACInfinity:
         self, device_id: (str | int), port_id: int, setting: str, value: int
     ):
         """set a desired value for a given device setting"""
-        await self._client.set_device_port_setting(device_id, port_id, setting, value)
+        await self.set_device_port_settings(device_id, port_id, [(setting, value)])
 
     async def set_device_port_settings(
         self, device_id: (str | int), port_id: int, keyValues: list[Tuple[str, int]]
     ):
         """set a desired value for a given device setting"""
-        await self._client.set_device_port_settings(device_id, port_id, keyValues)
+        tryCount = 0
+        while True:
+            try:
+                await self._client.set_device_port_settings(
+                    device_id, port_id, keyValues
+                )
+                return
+            except Exception as ex:
+                if tryCount < 2:
+                    tryCount += 1
+                    _LOGGER.warning(
+                        "Unable to update settings. Retry attempt %s/2", str(tryCount)
+                    )
+                    await asyncio.sleep(1)
+                else:
+                    _LOGGER.error(
+                        "Unable to update settings. Retry attempt limit exceeded",
+                        exc_info=ex,
+                    )
+                    raise

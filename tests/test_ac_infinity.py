@@ -101,6 +101,33 @@ class TestACInfinity:
             == "Grow Tent"
         )
 
+    async def test_update_retried_on_failure(self, mocker: MockFixture):
+        """update should be tried 3 times before raising an exception"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        mocker.patch("asyncio.sleep", return_value=future)
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mock_get_all = mocker.patch.object(
+            ACInfinityClient,
+            "get_all_device_info",
+            return_value=DEVICE_INFO_LIST_ALL,
+            side_effect=Exception("unit-test"),
+        )
+        mocker.patch.object(
+            ACInfinityClient,
+            "get_device_port_settings",
+            return_value=DEVICE_SETTINGS_PAYLOAD,
+        )
+        mocker.patch.object(ACInfinityClient, "login")
+
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+
+        with pytest.raises(Exception):
+            await ac_infinity.update()
+
+        assert mock_get_all.call_count == 3
+
     @pytest.mark.parametrize(
         "property_key, value",
         [
@@ -295,7 +322,7 @@ class TestACInfinity:
 
         mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
         mocked_set = mocker.patch.object(
-            ACInfinityClient, "set_device_port_setting", return_value=future
+            ACInfinityClient, "set_device_port_settings", return_value=future
         )
 
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
@@ -304,7 +331,7 @@ class TestACInfinity:
 
         await ac_infinity.set_device_port_setting(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)
 
-        mocked_set.assert_called_with(DEVICE_ID, 1, SETTING_KEY_AT_TYPE, 2)
+        mocked_set.assert_called_with(DEVICE_ID, 1, [(SETTING_KEY_AT_TYPE, 2)])
 
     async def test_set_device_port_settings(self, mocker: MockFixture):
         future: Future = asyncio.Future()
@@ -324,3 +351,29 @@ class TestACInfinity:
         )
 
         mocked_sets.assert_called_with(DEVICE_ID, 1, [(SETTING_KEY_AT_TYPE, 2)])
+
+    async def test_set_device_port_settings_retried_on_failure(
+        self, mocker: MockFixture
+    ):
+        """updating settings should be tried 3 times before failing"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+        mocker.patch("asyncio.sleep", return_value=future)
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_sets = mocker.patch.object(
+            ACInfinityClient,
+            "set_device_port_settings",
+            return_value=future,
+            side_effect=Exception("unit-test"),
+        )
+
+        ac_infinity = ACInfinity(EMAIL, PASSWORD)
+        ac_infinity._devices = DEVICE_INFO_DATA
+        ac_infinity._port_settings = DEVICE_SETTINGS
+
+        with pytest.raises(Exception):
+            await ac_infinity.set_device_port_settings(
+                DEVICE_ID, 1, [(SETTING_KEY_AT_TYPE, 2)]
+            )
+
+        assert mocked_sets.call_count == 3

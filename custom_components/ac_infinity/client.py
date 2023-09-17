@@ -50,11 +50,6 @@ class ACInfinityClient:
         )
         return json["data"]
 
-    async def set_device_port_setting(
-        self, device_id: (str | int), port_id: int, key: str, value: int
-    ):
-        await self.set_device_port_settings(device_id, port_id, [(key, value)])
-
     async def set_device_port_settings(
         self, device_id: (str | int), port_id: int, keyValues: list[Tuple[str, int]]
     ):

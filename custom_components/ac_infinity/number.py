@@ -13,6 +13,8 @@ from custom_components.ac_infinity import (
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    SETTING_KEY_CYCLE_DURATION_OFF,
+    SETTING_KEY_CYCLE_DURATION_ON,
     SETTING_KEY_OFF_SPEED,
     SETTING_KEY_ON_SPEED,
     SETTING_KEY_TIMER_DURATION_TO_OFF,
@@ -184,6 +186,26 @@ async def async_setup_entry(
         },
         SETTING_KEY_TIMER_DURATION_TO_OFF: {
             "label": "Minutes to Off",
+            "icon": None,  # default
+            "deviceClass": NumberDeviceClass.DURATION,
+            "min": 0,
+            "max": 1440,
+            "step": 1,
+            "mode": NumberMode.BOX,
+            "data_factor": 60,
+        },
+        SETTING_KEY_CYCLE_DURATION_ON: {
+            "label": "Cycle Minutes On",
+            "icon": None,  # default
+            "deviceClass": NumberDeviceClass.DURATION,
+            "min": 0,
+            "max": 1440,
+            "step": 1,
+            "mode": NumberMode.BOX,
+            "data_factor": 60,
+        },
+        SETTING_KEY_CYCLE_DURATION_OFF: {
+            "label": "Cycle Minutes Off",
             "icon": None,  # default
             "deviceClass": NumberDeviceClass.DURATION,
             "min": 0,

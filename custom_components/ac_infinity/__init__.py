@@ -153,7 +153,7 @@ class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
         port: ACInfinityDevicePort,
         tuple_key: Tuple[str, str],
         label: str,
-        icon: str,
+        icon: str | None,
     ) -> None:
         """The first tuple value will be used as the "primary" data key used for ids.
         Values will be fetched from api using both keys.

@@ -180,11 +180,10 @@ class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
 
         (leftKey, rightKey) = self._tuple_key
         (leftValue, rightValue) = value
-        await coordinator.ac_infinity.set_device_port_setting(
-            self._device.device_id, self._port.port_id, leftKey, leftValue
-        )
-        await coordinator.ac_infinity.set_device_port_setting(
-            self._device.device_id, self._port.port_id, rightKey, rightValue
+        await coordinator.ac_infinity.set_device_port_settings(
+            self._device.device_id,
+            self._port.port_id,
+            [(leftKey, leftValue), (rightKey, rightValue)],
         )
 
         await coordinator.async_request_refresh()

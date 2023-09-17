@@ -1,5 +1,6 @@
+import logging
 from datetime import timedelta
-from typing import Any
+from typing import Any, Tuple
 
 from homeassistant.helpers.entity import DeviceInfo
 
@@ -19,6 +20,8 @@ from .const import (
     PROPERTY_PORT_KEY_NAME,
     PROPERTY_PORT_KEY_PORT,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ACInfinityDevice:
@@ -110,7 +113,7 @@ class ACInfinity:
         self._devices: dict[str, dict[str, Any]] = {}
         self._port_settings: dict[str, dict[int, Any]] = {}
 
-    async def update(self):
+    async def update(self, tryNum=0):
         """refreshes the values of properties and settings from the AC infinity API"""
 
         if not self._client.is_logged_in():
@@ -193,5 +196,10 @@ class ACInfinity:
         self, device_id: (str | int), port_id: int, setting: str, value: int
     ):
         """set a desired value for a given device setting"""
-        self._port_settings[str(device_id)][port_id][setting] = value
         await self._client.set_device_port_setting(device_id, port_id, setting, value)
+
+    async def set_device_port_settings(
+        self, device_id: (str | int), port_id: int, keyValues: list[Tuple[str, int]]
+    ):
+        """set a desired value for a given device setting"""
+        await self._client.set_device_port_settings(device_id, port_id, keyValues)

@@ -94,7 +94,7 @@ class ACInfinityPortSensorEntity(ACInfinityPortPropertyEntity, SensorEntity):
         )
 
 
-class ACInfinityPortSettingSensorEntity(ACInfinityPortSettingEntity):
+class ACInfinityPortSettingSensorEntity(ACInfinityPortSettingEntity, SensorEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
@@ -147,7 +147,7 @@ async def async_setup_entry(
             "label": "VPD",
             "deviceClass": SensorDeviceClass.PRESSURE,
             "unit": UnitOfPressure.KPA,
-            "icon": None,  # default
+            "icon": "mdi:water-thermometer",
         },
     }
 

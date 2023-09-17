@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
@@ -49,7 +51,12 @@ class ACInfinityClient:
         return json["data"]
 
     async def set_device_port_setting(
-        self, device_id: (str | int), port_id: int, setting: str, value: int
+        self, device_id: (str | int), port_id: int, key: str, value: int
+    ):
+        await self.set_device_port_settings(device_id, port_id, [(key, value)])
+
+    async def set_device_port_settings(
+        self, device_id: (str | int), port_id: int, keyValues: list[Tuple[str, int]]
     ):
         active_settings = await self.get_device_port_settings(device_id, port_id)
         payload = {
@@ -96,7 +103,9 @@ class ACInfinityClient:
             "vpdSettingMode": active_settings["vpdSettingMode"],
         }
 
-        payload[setting] = int(value)
+        for key, value in keyValues:
+            payload[key] = int(value)
+
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_ADD_DEV_MODE, payload, headers)
 

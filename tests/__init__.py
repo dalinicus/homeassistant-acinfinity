@@ -110,6 +110,9 @@ def setup_entity_mocks(mocker: MockFixture):
     set_mock = mocker.patch.object(
         ac_infinity, "set_device_port_setting", return_value=future
     )
+    sets_mock = mocker.patch.object(
+        ac_infinity, "set_device_port_settings", return_value=future
+    )
     mocker.patch.object(coordinator, "async_request_refresh", return_value=future)
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
@@ -120,17 +123,25 @@ def setup_entity_mocks(mocker: MockFixture):
     entities = EntitiesTracker()
 
     return ACTestObjects(
-        hass, configEntry, entities, ac_infinity, set_mock, write_ha_mock
+        hass, configEntry, entities, ac_infinity, set_mock, sets_mock, write_ha_mock
     )
 
 
 class ACTestObjects:
     def __init__(
-        self, hass, configEntry, entities, ac_infinity, set_mock, write_ha_mock
+        self,
+        hass,
+        configEntry,
+        entities,
+        ac_infinity,
+        set_mock,
+        sets_mock,
+        write_ha_mock,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.configEntry: ConfigEntry = configEntry
         self.entities: EntitiesTracker = entities
         self.ac_infinity: ACInfinity = ac_infinity
         self.set_mock: MockType = set_mock
+        self.sets_mock: MockType = sets_mock
         self.write_ha_mock: MockType = write_ha_mock

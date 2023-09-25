@@ -92,6 +92,6 @@ class TestInit:
 
         ac_infinity = ACInfinity(EMAIL, PASSWORD)
         mocker.patch.object(ac_infinity, "update", side_effect=Exception("unit test"))
-        coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity)
+        coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()

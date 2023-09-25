@@ -12,7 +12,18 @@
             "user": {
                 "data": {
                     "email": "Email",
-                    "password": "Password"
+                    "password": "Password",
+                    "polling_interval": "Polling Interval (Seconds)"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "AC Infinity Configuration",
+                "data": {
+                    "polling_interval": "Polling Interval (Seconds)"
                 }
             }
         }

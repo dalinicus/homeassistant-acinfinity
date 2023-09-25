@@ -13,6 +13,8 @@ PLATFORMS = [
     Platform.SWITCH,
 ]
 HOST = "http://www.acinfinityserver.com"
+CONF_POLLING_INTERVAL = "polling_interval"
+DEFAULT_POLLING_INTERVAL = 10
 
 # devInfoListAll ReadOnly Device Fields
 PROPERTY_KEY_DEVICE_ID = "devId"

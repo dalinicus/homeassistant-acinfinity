@@ -105,7 +105,7 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity = ACInfinity(EMAIL, PASSWORD)
     ac_infinity._devices = DEVICE_INFO_DATA
     ac_infinity._port_settings = DEVICE_SETTINGS
-    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity)
+    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
 
     set_mock = mocker.patch.object(
         ac_infinity, "set_device_port_setting", return_value=future

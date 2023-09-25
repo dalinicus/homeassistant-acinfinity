@@ -16,7 +16,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
-from .const import DOMAIN, PLATFORMS
+from .const import CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,9 +25,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up AC Infinity from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
+    polling_interval = (
+        int(entry.data[CONF_POLLING_INTERVAL])
+        if CONF_POLLING_INTERVAL in entry.data
+        else DEFAULT_POLLING_INTERVAL
+    )
 
     ac_infinity = ACInfinity(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity)
+    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, polling_interval)
+
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     await coordinator.async_config_entry_first_refresh()
@@ -192,10 +198,13 @@ class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
 class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
     """Handles updating data for the integration"""
 
-    def __init__(self, hass, ac_infinity: ACInfinity):
+    def __init__(self, hass, ac_infinity: ACInfinity, polling_interval: int):
         """Constructor"""
         super().__init__(
-            hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=10)
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=polling_interval),
         )
 
         self._ac_infinity = ac_infinity

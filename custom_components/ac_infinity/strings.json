@@ -16,5 +16,18 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AC Infinity Configuration",
+        "data": {
+          "polling_interval": "Polling Interval (Seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_polling_interval": "Polling interval cannot be less than 5 seconds"
+    }
   }
 }

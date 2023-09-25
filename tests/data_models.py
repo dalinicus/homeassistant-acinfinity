@@ -10,6 +10,7 @@ MAC_ADDR = "2B120D62DC00"
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
 ENTRY_ID = f"ac_infinity-{EMAIL}"
+POLLING_INTERVAL = 15
 
 LOGIN_PAYLOAD = {
     "msg": "Success",

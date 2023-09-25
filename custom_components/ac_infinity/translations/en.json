@@ -12,9 +12,23 @@
             "user": {
                 "data": {
                     "email": "Email",
-                    "password": "Password"
+                    "password": "Password",
+                    "polling_interval": "Polling Interval (Seconds)"
                 }
             }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "AC Infinity Configuration",
+                "data": {
+                    "polling_interval": "Polling Interval (Seconds)"
+                }
+            }
+        },
+        "error": {
+            "invalid_polling_interval": "Polling interval cannot be less than 5 seconds"
         }
     }
 }

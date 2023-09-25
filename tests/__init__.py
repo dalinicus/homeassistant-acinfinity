@@ -123,7 +123,14 @@ def setup_entity_mocks(mocker: MockFixture):
     entities = EntitiesTracker()
 
     return ACTestObjects(
-        hass, configEntry, entities, ac_infinity, set_mock, sets_mock, write_ha_mock
+        hass,
+        configEntry,
+        entities,
+        ac_infinity,
+        set_mock,
+        sets_mock,
+        write_ha_mock,
+        coordinator,
     )
 
 
@@ -137,6 +144,7 @@ class ACTestObjects:
         set_mock,
         sets_mock,
         write_ha_mock,
+        coordinator,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.configEntry: ConfigEntry = configEntry
@@ -145,3 +153,4 @@ class ACTestObjects:
         self.set_mock: MockType = set_mock
         self.sets_mock: MockType = sets_mock
         self.write_ha_mock: MockType = write_ha_mock
+        self.coordinator: ACInfinityDataUpdateCoordinator = coordinator

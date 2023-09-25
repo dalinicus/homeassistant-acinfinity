@@ -38,7 +38,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -74,7 +74,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
         )
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
+class OptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry
@@ -83,31 +83,38 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
+
+        errors: dict[str, str] = {}
         if user_input is not None:
             polling_interval = user_input[CONF_POLLING_INTERVAL]
-            new_data = self.config_entry.data.copy()
-            new_data[CONF_POLLING_INTERVAL] = polling_interval
-            self.hass.config_entries.async_update_entry(
-                self.config_entry,
-                data=new_data,
-            )
+            if polling_interval < 5:
+                errors["base"] = "invalid_polling_interval"
+            else:
+                new_data = self.config_entry.data.copy()
+                new_data[CONF_POLLING_INTERVAL] = polling_interval
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data=new_data,
+                )
 
-            coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
-                self.config_entry.entry_id
-            ]
-            coordinator.update_interval = timedelta(seconds=polling_interval)
+                coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+                    self.config_entry.entry_id
+                ]
+                coordinator.update_interval = timedelta(seconds=polling_interval)
 
-            _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
-            return self.async_create_entry(title="", data={})
+                _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
+                return self.async_create_entry(title="", data={})
 
         cur_value = (
             int(self.config_entry.data[CONF_POLLING_INTERVAL])
             if CONF_POLLING_INTERVAL in self.config_entry.data
             else DEFAULT_POLLING_INTERVAL
         )
+
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {vol.Optional(CONF_POLLING_INTERVAL, default=cur_value): int}
             ),
+            errors=errors,
         )

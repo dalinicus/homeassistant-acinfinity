@@ -28,6 +28,34 @@ Sensors will also be created for each ***PORT*** on a controller, even if no dev
 
 Integration is currently only read only, but triggering state changes on connected devices is planned.
 
+## Controls
+
+This integration adds a number of controls to modify settings via the AC Infinity API.  The following controls will be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.  
+
+Currently, controls can be added via the entities card.  The downside is that the controls will still be visible even if they are not applicable to the currently selected mode.  A custom lovelace card is in the works to show and hide controls based on selected mode.  Stay tuned!
+
+The mode can be changed via the mode control.  The following documentation is split into controls relevant to each mode.
+- **On**: Device is always set to the on speed
+- **Off**: Device is always set to the off speed
+- **Auto**: Device toggled based on temperature and/or humidity triggers
+- **Timer to On**: Device is turned on after a set duration
+- **Timer to Off**: Device is turned off after a set duration
+- **VPD**: Device is toggled based on VPD triggers
+- **Cycle**: Device is toggled after set intervals
+- **Schedule**: Device is toggled based on a schedule
+
+![Initial-Setup](/images/mode.png)
+
+### On Mode
+- **On Speed**: The speed/intensity of the device while in on mode
+
+![Initial-Setup](/images/mode-on.png)
+
+### Off Mode
+- **Off Speed**: The speed/intensity of the device while in off mode
+
+![Initial-Setup](/images/mode-off.png)
+
 ## Installation
 
 ### HACS

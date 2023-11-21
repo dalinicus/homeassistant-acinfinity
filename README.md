@@ -13,13 +13,13 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 
 ## Compatabiliy
 
-This integration is compatable with the following UIS Controllers
+This integration is compatible with the following UIS Controllers
 
 - Controller 69
 - Controller 69 Pro
 - Controller 69 Pro+
 
-As this integration has a cloud dependency on the UIS REST Api, it is currently not compatable with bluetooth only such as Controller 67
+As this integration has a cloud dependency on the UIS REST Api, it is currently not compatible with bluetooth only such as Controller 67
 
 ## Installation
 

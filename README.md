@@ -19,7 +19,7 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro
 - Controller 69 Pro+
 
-As this integration has a cloud dependency on the UIS REST Api, it is currently not compatible with bluetooth only such as Controller 67
+This integration is not compatible with bluetooth only devices such as Controller 67, as they do not sync to the UIS Cloud
 
 ## Installation
 

@@ -9,7 +9,17 @@
 [![Code Style](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml)
 [![CodeQL](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml)
 
-This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) ecosystem
+This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem. 
+
+## Compatabiliy
+
+This integration is compatable with the following UIS Controllers
+
+- Controller 69
+- Controller 69 Pro
+- Controller 69 Pro+
+
+As this integration has a cloud dependency on the UIS REST Api, it is currently not compatable with bluetooth only such as Controller 67
 
 ## Installation
 

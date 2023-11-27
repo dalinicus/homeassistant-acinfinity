@@ -88,7 +88,7 @@ class ACInfinityPort:
 
         self._device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{controller._device_id}_{self._port_id}")},
-            name=f"{controller._device_name} {self._port_name}",
+            name=f"{controller.device_name} {self.port_name}",
             manufacturer=MANUFACTURER,
             via_device=controller.identifier,
             model="UIS Enabled Device",

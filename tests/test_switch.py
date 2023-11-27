@@ -74,6 +74,7 @@ class TestSwitch:
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting,value,expected",

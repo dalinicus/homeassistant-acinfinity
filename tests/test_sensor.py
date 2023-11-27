@@ -62,6 +62,8 @@ class TestSensors:
             sensor.entity_description.native_unit_of_measurement
             == UnitOfTemperature.CELSIUS
         )
+        assert sensor.device_info is not None
+
 
     async def test_async_update_temperature_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
@@ -83,6 +85,8 @@ class TestSensors:
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
         assert sensor.entity_description.device_class == SensorDeviceClass.HUMIDITY
         assert sensor.entity_description.native_unit_of_measurement == PERCENTAGE
+
+        assert sensor.device_info is not None
 
     async def test_async_update_humidity_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
@@ -106,6 +110,8 @@ class TestSensors:
         assert (
             sensor.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
+        assert sensor.device_info is not None
+
 
     async def test_async_update_vpd_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
@@ -146,6 +152,7 @@ class TestSensors:
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_SETTING_KEY_SURPLUS}"
         )
         assert sensor.entity_description.device_class == SensorDeviceClass.DURATION
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "port,expected",

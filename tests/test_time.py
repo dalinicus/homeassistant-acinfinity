@@ -54,6 +54,7 @@ class TestTime:
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]

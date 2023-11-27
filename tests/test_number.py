@@ -80,6 +80,8 @@ class TestNumbers:
         assert entity.entity_description.native_min_value == 0
         assert entity.entity_description.native_max_value == 10
 
+        assert entity.device_info is not None
+
     @pytest.mark.parametrize(
         "setting,expected", [(SETTING_KEY_OFF_SPEED, 0), (SETTING_KEY_ON_SPEED, 5)]
     )
@@ -128,6 +130,7 @@ class TestNumbers:
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_TIMER_DURATION_TO_ON, SETTING_KEY_TIMER_DURATION_TO_OFF]
@@ -200,6 +203,7 @@ class TestNumbers:
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting,enabled_setting",
@@ -278,6 +282,7 @@ class TestNumbers:
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_CYCLE_DURATION_ON, SETTING_KEY_CYCLE_DURATION_OFF]

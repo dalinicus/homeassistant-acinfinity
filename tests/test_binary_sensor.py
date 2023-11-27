@@ -1,4 +1,5 @@
 import pytest
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
 )
@@ -10,6 +11,7 @@ from custom_components.ac_infinity.binary_sensor import (
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    MANUFACTURER,
     SENSOR_PORT_KEY_ONLINE,
 )
 from custom_components.ac_infinity.sensor import ACInfinityPortSensorEntity
@@ -53,6 +55,7 @@ class TestBinarySensors:
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_ONLINE}"
         )
         assert sensor.entity_description.device_class == BinarySensorDeviceClass.PLUG
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "port,expected",

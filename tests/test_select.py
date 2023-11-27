@@ -56,6 +56,7 @@ class TestNumbers:
             sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SETTING_KEY_AT_TYPE}"
         )
         assert len(sensor.entity_description.options) == 8
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "atType,expected",

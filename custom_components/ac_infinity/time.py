@@ -10,8 +10,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
     ACInfinityPortEntity,
+    ACInfinityPortReadWriteMixin,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityPort,
@@ -40,12 +40,12 @@ def __get_total_minutes_from_time(time: time):
     """UIS stores a schedule value as minutes from midnight. Midnight will result in a value of 0.
     If time is None, 65535 will be returned as it represents a value of disabled.
     """
-    SCHEDULE_DISABLED_VALUE if time is None else (time.hour * 60) + time.minute
+    return SCHEDULE_DISABLED_VALUE if time is None else (time.hour * 60) + time.minute
 
 
 @dataclass
 class ACInfinityPortTimeEntityDescription(
-    TimeEntityDescription, ACInfinityPortDescriptionMixin
+    TimeEntityDescription, ACInfinityPortReadWriteMixin
 ):
     """Describes ACInfinity Time Entities."""
 
@@ -107,17 +107,16 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
     @property
     def native_value(self) -> time | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
 
     async def async_set_value(self, value: time) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
-        await self.entity_description.set_value_fn(self.ac_infinity, self._port, value)
+        await self.entity_description.set_value_fn(self.ac_infinity, self.port, value)
         await self.coordinator.async_request_refresh()
 
 

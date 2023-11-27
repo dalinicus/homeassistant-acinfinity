@@ -387,9 +387,10 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortNumberEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, setting
         )
+
         await sensor.async_set_native_value(c)
 
         test_objects.sets_mock.assert_called_with(

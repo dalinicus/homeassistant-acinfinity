@@ -13,8 +13,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
     ACInfinityPortEntity,
+    ACInfinityPortReadWriteMixin,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityPort,
@@ -38,7 +38,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class ACInfinityPortSwitchDescriptionMixin:
+class ACInfinityPortSwitchEntityMixin:
     on_value: int
     off_value: int
 
@@ -46,8 +46,8 @@ class ACInfinityPortSwitchDescriptionMixin:
 @dataclass
 class ACInfinityPortSwitchEntityDescription(
     SwitchEntityDescription,
-    ACInfinityPortDescriptionMixin,
-    ACInfinityPortSwitchDescriptionMixin,
+    ACInfinityPortReadWriteMixin,
+    ACInfinityPortSwitchEntityMixin,
 ):
     """Describes ACInfinity Switch Entities."""
 
@@ -187,7 +187,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_START_TIME
-            )
+            ) < SCHEDULE_EOD_VALUE + 1
         ),
         set_value_fn=lambda ac_infinity, port, value: (
             ac_infinity.set_device_port_setting(
@@ -208,7 +208,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_END_TIME
-            )
+            ) < SCHEDULE_EOD_VALUE + 1
         ),
         set_value_fn=lambda ac_infinity, port, value: (
             ac_infinity.set_device_port_setting(
@@ -233,14 +233,17 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
+    @property
+    def is_on(self) -> bool | None:
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
+    
     async def async_turn_on(self) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "On"', self.unique_id
         )
         await self.entity_description.set_value_fn(
-            self.ac_infinity, self._port, self.entity_description.on_value
+            self.ac_infinity, self.port, self.entity_description.on_value
         )
         await self.coordinator.async_request_refresh()
 
@@ -249,7 +252,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
             'User requesting value update of entity "%s" to "Off"', self.unique_id
         )
         await self.entity_description.set_value_fn(
-            self.ac_infinity, self._port, self.entity_description.off_value
+            self.ac_infinity, self.port, self.entity_description.off_value
         )
         await self.coordinator.async_request_refresh()
 

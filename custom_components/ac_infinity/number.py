@@ -14,8 +14,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
+    ACInfinityEntity,
     ACInfinityPortEntity,
+    ACInfinityPortReadWriteMixin,
 )
 from custom_components.ac_infinity.ac_infinity import ACInfinityPort
 from custom_components.ac_infinity.const import (
@@ -41,7 +42,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class ACInfinityPortNumberEntityDescription(
-    NumberEntityDescription, ACInfinityPortDescriptionMixin
+    NumberEntityDescription, ACInfinityPortReadWriteMixin
 ):
     """Describes ACInfinity Number Entities."""
 
@@ -78,12 +79,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         translation_key="off_speed",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
-                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED
+                port.parent_device_id, port.port_id, SETTING_KEY_OFF_SPEED
             )
         ),
         set_value_fn=lambda ac_infinity, port, value: (
             ac_infinity.set_device_port_setting(
-                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED, value
+                port.parent_device_id, port.port_id, SETTING_KEY_OFF_SPEED, value
             )
         ),
     ),
@@ -307,7 +308,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
                 port.port_id,
-                SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+                SETTING_KEY_AUTO_TEMP_LOW_TRIGGER,
             )
         ),
         set_value_fn=lambda ac_infinity, port, value: (
@@ -368,17 +369,16 @@ class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
     @property
     def native_value(self) -> float | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
 
     async def async_set_native_value(self, value: float) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
-        await self.entity_description.set_value_fn(self.ac_infinity, self._port, value)
+        await self.entity_description.set_value_fn(self.ac_infinity, self.port, value)
         await self.coordinator.async_request_refresh()
 
 

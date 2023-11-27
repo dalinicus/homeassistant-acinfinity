@@ -7,6 +7,7 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    SCHEDULE_DISABLED_VALUE,
     SETTING_KEY_SCHEDULED_END_TIME,
     SETTING_KEY_SCHEDULED_START_TIME,
 )
@@ -109,7 +110,7 @@ class TestTime:
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "value, expected", [(None, None), (datetime.time(12, 30), 750)]
+        "value, expected", [(None, SCHEDULE_DISABLED_VALUE), (datetime.time(12, 30), 750)]
     )
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]

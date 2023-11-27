@@ -13,8 +13,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
     ACInfinityPortEntity,
+    ACInfinityPortReadOnlyMixin,
 )
 from custom_components.ac_infinity.const import DOMAIN, SENSOR_PORT_KEY_ONLINE
 
@@ -25,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class ACInfinityPortBinarySensorEntityDescription(
-    BinarySensorEntityDescription, ACInfinityPortDescriptionMixin
+    BinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Binary Sensor Entities."""
 
@@ -56,11 +56,10 @@ class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity)
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
     @property
     def is_on(self) -> bool | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
 
 
 async def async_setup_entry(

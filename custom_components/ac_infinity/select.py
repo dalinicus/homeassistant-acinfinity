@@ -9,8 +9,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
     ACInfinityPortEntity,
+    ACInfinityPortReadWriteMixin,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityPort,
@@ -22,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class ACInfinityPortSelectEntityDescription(
-    SelectEntityDescription, ACInfinityPortDescriptionMixin
+    SelectEntityDescription, ACInfinityPortReadWriteMixin
 ):
     """Describes ACInfinity Select Entities."""
 
@@ -76,11 +76,10 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
     @property
     def current_option(self) -> str | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
 
     async def async_select_option(self, option: str) -> None:
         _LOGGER.info(
@@ -88,7 +87,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
             self.unique_id,
             option,
         )
-        await self.entity_description.set_value_fn(self.ac_infinity, self._port, option)
+        await self.entity_description.set_value_fn(self.ac_infinity, self.port, option)
         await self.coordinator.async_request_refresh()
 
 

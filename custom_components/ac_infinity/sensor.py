@@ -21,11 +21,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from custom_components.ac_infinity import (
-    ACInfinityControllerDescriptionMixin,
     ACInfinityControllerEntity,
+    ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortDescriptionMixin,
     ACInfinityPortEntity,
+    ACInfinityPortReadOnlyMixin,
 )
 from custom_components.ac_infinity.ac_infinity import (
     ACInfinityController,
@@ -46,14 +46,14 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class ACInfinityControllerSensorEntityDescription(
-    SensorEntityDescription, ACInfinityControllerDescriptionMixin
+    SensorEntityDescription, ACInfinityControllerReadOnlyMixin
 ):
     """Describes ACInfinity Number Sensor Entities."""
 
 
 @dataclass
 class ACInfinityPortSensorEntityDescription(
-    SensorEntityDescription, ACInfinityPortDescriptionMixin
+    SensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Number Sensor Entities."""
 
@@ -138,10 +138,10 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
     ) -> None:
         super().__init__(coordinator, controller, description.key)
         self.entity_description = description
-        self._controller = controller
 
+    @property
     def native_value(self) -> StateType | date | datetime | Decimal:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._controller)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.controller)
 
 
 class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
@@ -155,10 +155,10 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
-        self._port = port
 
+    @property
     def native_value(self) -> StateType | date | datetime | Decimal:
-        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
+        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
 
 
 async def async_setup_entry(

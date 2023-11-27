@@ -7,11 +7,6 @@ from homeassistant.const import (
 )
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity import (
-    ACInfinityControllerEntity,
-    ACInfinityEntity,
-    ACInfinityPortEntity,
-)
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SENSOR_KEY_HUMIDITY,
@@ -21,6 +16,7 @@ from custom_components.ac_infinity.const import (
     SENSOR_SETTING_KEY_SURPLUS,
 )
 from custom_components.ac_infinity.sensor import (
+    ACInfinityControllerSensorEntity,
     ACInfinityPortSensorEntity,
     async_setup_entry,
 )
@@ -56,7 +52,7 @@ class TestSensors:
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
 
-        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
         )
 
@@ -70,7 +66,7 @@ class TestSensors:
     async def test_async_update_temperature_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
         )
         sensor._handle_coordinator_update()
@@ -80,7 +76,7 @@ class TestSensors:
     async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_HUMIDITY
         )
 
@@ -91,7 +87,7 @@ class TestSensors:
     async def test_async_update_humidity_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_HUMIDITY
         )
         sensor._handle_coordinator_update()
@@ -101,7 +97,7 @@ class TestSensors:
     async def test_async_setup_entry_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinityEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_VPD
         )
 
@@ -114,7 +110,7 @@ class TestSensors:
     async def test_async_update_vpd_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_VPD
         )
         sensor._handle_coordinator_update()
@@ -141,7 +137,7 @@ class TestSensors:
     async def test_async_setup_remaining_time_for_each_port(self, setup, port):
         """Sensor for device port surplus created on setup"""
 
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortSensorEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 
@@ -180,7 +176,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortSensorEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 

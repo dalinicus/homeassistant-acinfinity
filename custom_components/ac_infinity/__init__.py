@@ -55,14 +55,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def __raise_not_implemented(_0: ACInfinity, _1: ACInfinityPort, _2: StateType):
-    raise NotImplementedError(
-        "Entity is read-only; `set_value_fn` was not implemented in the entity's description."
-    )
-
-
 @dataclass
-class ACInfinityControllerDescriptionMixin:
+class ACInfinityControllerReadOnlyMixin:
     """Mixin for adding values for controller level sensors"""
 
     get_value_fn: Callable[[ACInfinity, ACInfinityController], StateType]
@@ -70,15 +64,18 @@ class ACInfinityControllerDescriptionMixin:
 
 
 @dataclass
-class ACInfinityPortDescriptionMixin:
+class ACInfinityPortReadOnlyMixin:
     """Mixin for adding values for port device level sensors"""
 
     get_value_fn: Callable[[ACInfinity, ACInfinityPort], StateType]
     """Input data object, device id, and port number; output the value."""
 
-    set_value_fn: Callable[
-        [ACInfinity, ACInfinityPort, StateType], Awaitable[None]
-    ] = __raise_not_implemented
+
+@dataclass
+class ACInfinityPortReadWriteMixin(ACInfinityPortReadOnlyMixin):
+    """Mixin for adding values for port device level sensors"""
+
+    set_value_fn: Callable[[ACInfinity, ACInfinityPort, StateType], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
 
 
@@ -156,6 +153,10 @@ class ACInfinityControllerEntity(ACInfinityEntity):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the controller entity"""
         return self._controller.device_info
+    
+    @property
+    def controller(self) -> ACInfinityController:
+        return self._controller
 
 
 class ACInfinityPortEntity(ACInfinityEntity):
@@ -177,3 +178,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
         return self._port.device_info
+    
+    @property
+    def port(self) -> ACInfinityPort:
+        return self._port

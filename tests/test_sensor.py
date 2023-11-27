@@ -52,8 +52,10 @@ class TestSensors:
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
+            )
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_TEMPERATURE}"
@@ -64,12 +66,13 @@ class TestSensors:
         )
         assert sensor.device_info is not None
 
-
     async def test_async_update_temperature_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
+            )
         )
         sensor._handle_coordinator_update()
 
@@ -78,8 +81,10 @@ class TestSensors:
     async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_HUMIDITY
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_HUMIDITY
+            )
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
@@ -91,8 +96,10 @@ class TestSensors:
     async def test_async_update_humidity_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_HUMIDITY
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_HUMIDITY
+            )
         )
         sensor._handle_coordinator_update()
 
@@ -101,8 +108,10 @@ class TestSensors:
     async def test_async_setup_entry_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_VPD
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_VPD
+            )
         )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
@@ -112,12 +121,13 @@ class TestSensors:
         )
         assert sensor.device_info is not None
 
-
     async def test_async_update_vpd_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinityControllerSensorEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, SENSOR_KEY_VPD
+        sensor: ACInfinityControllerSensorEntity = (
+            await execute_and_get_controller_entity(
+                setup, async_setup_entry, SENSOR_KEY_VPD
+            )
         )
         sensor._handle_coordinator_update()
 

@@ -1,5 +1,4 @@
 import pytest
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
 )
@@ -11,7 +10,6 @@ from custom_components.ac_infinity.binary_sensor import (
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    MANUFACTURER,
     SENSOR_PORT_KEY_ONLINE,
 )
 from custom_components.ac_infinity.sensor import ACInfinityPortSensorEntity

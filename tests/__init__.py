@@ -112,7 +112,9 @@ def setup_entity_mocks(mocker: MockFixture):
     sets_mock = mocker.patch.object(
         ac_infinity, "set_device_port_settings", return_value=future
     )
-    refresh_mock = mocker.patch.object(coordinator, "async_request_refresh", return_value=future)
+    refresh_mock = mocker.patch.object(
+        coordinator, "async_request_refresh", return_value=future
+    )
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
 

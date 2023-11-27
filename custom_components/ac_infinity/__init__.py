@@ -153,7 +153,7 @@ class ACInfinityControllerEntity(ACInfinityEntity):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the controller entity"""
         return self._controller.device_info
-    
+
     @property
     def controller(self) -> ACInfinityController:
         return self._controller
@@ -178,7 +178,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
         return self._port.device_info
-    
+
     @property
     def port(self) -> ACInfinityPort:
         return self._port

@@ -187,7 +187,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_START_TIME
-            ) < SCHEDULE_EOD_VALUE + 1
+            )
+            < SCHEDULE_EOD_VALUE + 1
         ),
         set_value_fn=lambda ac_infinity, port, value: (
             ac_infinity.set_device_port_setting(
@@ -208,7 +209,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_END_TIME
-            ) < SCHEDULE_EOD_VALUE + 1
+            )
+            < SCHEDULE_EOD_VALUE + 1
         ),
         set_value_fn=lambda ac_infinity, port, value: (
             ac_infinity.set_device_port_setting(
@@ -237,7 +239,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
     @property
     def is_on(self) -> bool | None:
         return self.entity_description.get_value_fn(self.ac_infinity, self.port)
-    
+
     async def async_turn_on(self) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "On"', self.unique_id

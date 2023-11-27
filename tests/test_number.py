@@ -5,7 +5,6 @@ import pytest
 from homeassistant.components.number import NumberDeviceClass
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity import ACInfinityPortEntity
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER,

@@ -14,7 +14,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntity,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
 )

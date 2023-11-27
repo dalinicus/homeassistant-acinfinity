@@ -24,7 +24,6 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.number import (
     ACInfinityPortNumberEntity,
-    ACInfinityPortTempTriggerEntity,
     async_setup_entry,
 )
 from tests import ACTestObjects, execute_and_get_port_entity, setup_entity_mocks
@@ -75,11 +74,12 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert "Speed" in entity._attr_name
-        assert entity._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
-        assert entity._attr_device_class == NumberDeviceClass.POWER_FACTOR
-        assert entity._attr_native_min_value == 0
-        assert entity._attr_native_max_value == 10
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert entity.entity_description.device_class == NumberDeviceClass.POWER_FACTOR
+        assert entity.entity_description.native_min_value == 0
+        assert entity.entity_description.native_max_value == 10
+
+        assert entity.device_info is not None
 
     @pytest.mark.parametrize(
         "setting,expected", [(SETTING_KEY_OFF_SPEED, 0), (SETTING_KEY_ON_SPEED, 5)]
@@ -95,7 +95,7 @@ class TestNumbers:
         )
         entity._handle_coordinator_update()
 
-        assert entity._attr_native_value == expected
+        assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize("setting", [SETTING_KEY_OFF_SPEED, SETTING_KEY_ON_SPEED])
@@ -115,6 +115,7 @@ class TestNumbers:
         await entity.async_set_native_value(4)
 
         test_objects.set_mock.assert_called_with(str(DEVICE_ID), port, setting, 4)
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key", [SETTING_KEY_TIMER_DURATION_TO_ON, SETTING_KEY_TIMER_DURATION_TO_OFF]
@@ -127,8 +128,8 @@ class TestNumbers:
             setup, async_setup_entry, port, key
         )
 
-        assert "Minutes to" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_TIMER_DURATION_TO_ON, SETTING_KEY_TIMER_DURATION_TO_OFF]
@@ -156,7 +157,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == expected
+        assert sensor.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -184,6 +185,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key,label",
@@ -199,8 +201,8 @@ class TestNumbers:
             setup, async_setup_entry, port, key
         )
 
-        assert f"VPD {label} Trigger" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting,enabled_setting",
@@ -227,7 +229,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == expected
+        assert sensor.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -262,6 +264,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     #
     @pytest.mark.parametrize(
@@ -277,8 +280,8 @@ class TestNumbers:
             setup, async_setup_entry, port, key
         )
 
-        assert "Cycle Minutes" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_CYCLE_DURATION_ON, SETTING_KEY_CYCLE_DURATION_OFF]
@@ -306,7 +309,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == expected
+        assert sensor.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -334,6 +337,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting, f_setting",
@@ -367,7 +371,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][f_setting] = f
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == c
+        assert sensor.native_value == c
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -391,11 +395,13 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        sensor: ACInfinityPortTempTriggerEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortNumberEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, setting
         )
+
         await sensor.async_set_native_value(c)
 
         test_objects.sets_mock.assert_called_with(
             str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
         )
+        test_objects.refresh_mock.assert_called()

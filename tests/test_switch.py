@@ -16,9 +16,9 @@ from custom_components.ac_infinity.const import (
     SETTING_KEY_VPD_LOW_ENABLED,
 )
 from custom_components.ac_infinity.switch import (
-    DISABLED_VALUE,
-    EOD_VALUE,
-    MIDNIGHT_VALUE,
+    SCHEDULE_DISABLED_VALUE,
+    SCHEDULE_EOD_VALUE,
+    SCHEDULE_MIDNIGHT_VALUE,
     ACInfinityPortSwitchEntity,
     async_setup_entry,
 )
@@ -73,8 +73,8 @@ class TestSwitch:
             setting,
         )
 
-        assert "Enabled" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert sensor.device_info is not None
 
     @pytest.mark.parametrize(
         "setting,value,expected",
@@ -86,8 +86,8 @@ class TestSwitch:
             (SETTING_KEY_AUTO_TEMP_LOW_ENABLED, 1, True),
             (SETTING_KEY_VPD_HIGH_ENABLED, 1, True),
             (SETTING_KEY_VPD_LOW_ENABLED, 1, True),
-            (SETTING_KEY_SCHEDULED_START_TIME, MIDNIGHT_VALUE, True),
-            (SETTING_KEY_SCHEDULED_END_TIME, MIDNIGHT_VALUE, True),
+            (SETTING_KEY_SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
+            (SETTING_KEY_SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
             # disabled
             (SETTING_KEY_AUTO_HUMIDITY_HIGH_ENABLED, 0, False),
             (SETTING_KEY_AUTO_HUMIDITY_LOW_ENABLED, 0, False),
@@ -95,8 +95,8 @@ class TestSwitch:
             (SETTING_KEY_AUTO_TEMP_LOW_ENABLED, 0, False),
             (SETTING_KEY_VPD_HIGH_ENABLED, 0, False),
             (SETTING_KEY_VPD_LOW_ENABLED, 0, False),
-            (SETTING_KEY_SCHEDULED_START_TIME, DISABLED_VALUE, False),
-            (SETTING_KEY_SCHEDULED_END_TIME, DISABLED_VALUE, False),
+            (SETTING_KEY_SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
+            (SETTING_KEY_SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -116,7 +116,7 @@ class TestSwitch:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_is_on == expected
+        assert sensor.is_on == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -129,8 +129,8 @@ class TestSwitch:
             (SETTING_KEY_AUTO_TEMP_LOW_ENABLED, 1),
             (SETTING_KEY_VPD_HIGH_ENABLED, 1),
             (SETTING_KEY_VPD_LOW_ENABLED, 1),
-            (SETTING_KEY_SCHEDULED_START_TIME, MIDNIGHT_VALUE),
-            (SETTING_KEY_SCHEDULED_END_TIME, EOD_VALUE),
+            (SETTING_KEY_SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
+            (SETTING_KEY_SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -151,6 +151,7 @@ class TestSwitch:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
@@ -161,8 +162,8 @@ class TestSwitch:
             (SETTING_KEY_AUTO_TEMP_LOW_ENABLED, 0),
             (SETTING_KEY_VPD_HIGH_ENABLED, 0),
             (SETTING_KEY_VPD_LOW_ENABLED, 0),
-            (SETTING_KEY_SCHEDULED_START_TIME, DISABLED_VALUE),
-            (SETTING_KEY_SCHEDULED_END_TIME, DISABLED_VALUE),
+            (SETTING_KEY_SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
+            (SETTING_KEY_SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -183,3 +184,4 @@ class TestSwitch:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()

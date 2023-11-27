@@ -9,7 +9,7 @@
 [![Code Style](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml)
 [![CodeQL](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml)
 
-This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem. 
+This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem.
 
 ## Compatabiliy
 
@@ -64,7 +64,7 @@ Sensors will also be created for each ***PORT*** on a controller, even if no dev
 
 ## Controls
 
-This integration adds a number of controls to modify settings via the AC Infinity API.  The following controls will be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.  
+This integration adds a number of controls to modify settings via the AC Infinity API.  The following controls will be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
 Currently, controls can be added via the entities card.  The downside is that the controls will still be visible even if they are not applicable to the currently selected mode.  A custom lovelace card is in the works to show and hide controls based on selected mode.  ***Stay tuned!***
 

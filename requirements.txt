@@ -2,3 +2,4 @@ homeassistant
 aiohttp
 voluptuous
 datetime
+async_timeout

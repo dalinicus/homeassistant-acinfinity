@@ -11,8 +11,8 @@ from homeassistant.helpers.entity import Entity
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity import (
+    ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
-    ACInfinityDeviceEntity,
     ACInfinityEntity,
     ACInfinityPortEntity,
 )
@@ -45,9 +45,9 @@ class EntitiesTracker:
         self._added_entities = new_entities
 
 
-async def execute_and_get_device_entity(
+async def execute_and_get_controller_entity(
     setup_fixture, async_setup_entry, property_key: str
-) -> ACInfinityDeviceEntity:
+) -> ACInfinityControllerEntity:
     test_objects: ACTestObjects = setup_fixture
 
     await async_setup_entry(
@@ -59,7 +59,7 @@ async def execute_and_get_device_entity(
     found = [
         sensor
         for sensor in test_objects.entities._added_entities
-        if property_key in sensor._attr_unique_id
+        if property_key in sensor.unique_id
     ]
     assert len(found) == 1
 
@@ -83,8 +83,7 @@ async def execute_and_get_port_entity(
     found = [
         sensor
         for sensor in test_objects.entities._added_entities
-        if sensor._attr_unique_id.endswith(data_key)
-        and f"port_{port}" in sensor._attr_unique_id
+        if sensor.unique_id.endswith(data_key) and f"port_{port}" in sensor.unique_id
     ]
     assert len(found) == 1
 
@@ -113,7 +112,9 @@ def setup_entity_mocks(mocker: MockFixture):
     sets_mock = mocker.patch.object(
         ac_infinity, "set_device_port_settings", return_value=future
     )
-    mocker.patch.object(coordinator, "async_request_refresh", return_value=future)
+    refresh_mock = mocker.patch.object(
+        coordinator, "async_request_refresh", return_value=future
+    )
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
 
@@ -131,6 +132,7 @@ def setup_entity_mocks(mocker: MockFixture):
         sets_mock,
         write_ha_mock,
         coordinator,
+        refresh_mock,
     )
 
 
@@ -145,6 +147,7 @@ class ACTestObjects:
         sets_mock,
         write_ha_mock,
         coordinator,
+        refresh_mock,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.configEntry: ConfigEntry = configEntry
@@ -154,3 +157,4 @@ class ACTestObjects:
         self.sets_mock: MockType = sets_mock
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
+        self.refresh_mock: MockType = refresh_mock

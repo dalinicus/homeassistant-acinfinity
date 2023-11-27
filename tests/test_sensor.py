@@ -189,7 +189,10 @@ class TestSensors:
         assert sensor.native_value == expected
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_update_duration_left_value_Correct(self, setup, port):
+    @pytest.mark.parametrize("value,expected", [(0, 0), (12345, 12345), (None, 0)])
+    async def test_async_update_duration_left_value_Correct(
+        self, setup, port, value, expected
+    ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
@@ -199,8 +202,8 @@ class TestSensors:
 
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][
             SENSOR_SETTING_KEY_SURPLUS
-        ] = 12345
+        ] = value
         sensor._handle_coordinator_update()
 
-        assert sensor.native_value == 12345
+        assert sensor.native_value == expected
         test_objects.write_ha_mock.assert_called()

@@ -122,6 +122,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SENSOR_SETTING_KEY_SURPLUS
             )
+            or 0
         ),
     ),
 ]

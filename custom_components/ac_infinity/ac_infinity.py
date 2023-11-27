@@ -25,7 +25,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityDevice:
+class ACInfinityController:
     def __init__(self, device_json) -> None:
         # device info
         self._device_id = str(device_json[PROPERTY_KEY_DEVICE_ID])
@@ -33,7 +33,7 @@ class ACInfinityDevice:
         self._device_name = device_json[PROPERTY_KEY_DEVICE_NAME]
         self._identifier = (DOMAIN, self._device_id)
         self._ports = [
-            ACInfinityDevicePort(self, port)
+            ACInfinityPort(self, port)
             for port in device_json[PROPERTY_KEY_DEVICE_INFO][PROPERTY_KEY_PORTS]
         ]
 
@@ -80,18 +80,27 @@ class ACInfinityDevice:
                 return f"UIS Controller Type {device_type}"
 
 
-class ACInfinityDevicePort:
-    def __init__(self, device: ACInfinityDevice, device_port_json) -> None:
+class ACInfinityPort:
+    def __init__(self, controller: ACInfinityController, device_port_json) -> None:
+        self._controller = controller
         self._port_id = device_port_json[PROPERTY_PORT_KEY_PORT]
         self._port_name = device_port_json[PROPERTY_PORT_KEY_NAME]
 
         self._device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{device._device_id}_{self._port_id}")},
-            name=f"{device._device_name} {self._port_name}",
+            identifiers={(DOMAIN, f"{controller._device_id}_{self._port_id}")},
+            name=f"{controller._device_name} {self._port_name}",
             manufacturer=MANUFACTURER,
-            via_device=device.identifier,
+            via_device=controller.identifier,
             model="UIS Enabled Device",
         )
+
+    @property
+    def parent_device_id(self):
+        return self._controller.device_id
+
+    @property
+    def parent_mac_addr(self):
+        return self._controller.mac_addr
 
     @property
     def port_id(self):
@@ -150,12 +159,12 @@ class ACInfinity:
                     )
                     raise
 
-    def get_all_device_meta_data(self) -> list[ACInfinityDevice]:
+    def get_all_device_meta_data(self) -> list[ACInfinityController]:
         """gets device metadata, such as ids, labels, macaddr, etc.. that are not expected to change"""
         if (self._devices) is None:
             return []
 
-        return [ACInfinityDevice(device) for device in self._devices.values()]
+        return [ACInfinityController(device) for device in self._devices.values()]
 
     def get_device_property(self, device_id: (str | int), property_key: str):
         """gets a property of a controller, if it exists, from a given device, if it exists"""

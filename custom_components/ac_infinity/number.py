@@ -1,17 +1,23 @@
 import logging
-from typing import Tuple
+from dataclasses import dataclass
 
-from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.const import Platform, UnitOfTemperature
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortSettingEntity,
-    ACInfinityPortTupleSettingEntity,
+    ACInfinityPortDescriptionMixin,
+    ACInfinityPortEntity,
 )
+from custom_components.ac_infinity.ac_infinity import ACInfinityPort
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
@@ -30,98 +36,350 @@ from custom_components.ac_infinity.const import (
     SETTING_KEY_VPD_LOW_TRIGGER,
 )
 
-from .ac_infinity import ACInfinityDevice, ACInfinityDevicePort
-
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortNumberEntity(ACInfinityPortSettingEntity, NumberEntity):
+@dataclass
+class ACInfinityPortNumberEntityDescription(
+    NumberEntityDescription, ACInfinityPortDescriptionMixin
+):
+    """Describes ACInfinity Number Entities."""
+
+
+PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_ON_SPEED,
+        device_class=NumberDeviceClass.POWER_FACTOR,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=10,
+        native_step=1,
+        icon="mdi:knob",
+        translation_key="on_speed",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED, value
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_OFF_SPEED,
+        device_class=NumberDeviceClass.POWER_FACTOR,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=10,
+        native_step=1,
+        icon="mdi:knob",
+        translation_key="off_speed",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED, value
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_TIMER_DURATION_TO_ON,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=1440,
+        native_step=1,
+        icon=None,  # default
+        translation_key="minutes_to_on",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_TIMER_DURATION_TO_ON
+            )
+            / 60
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_TIMER_DURATION_TO_ON,
+                value * 60,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_TIMER_DURATION_TO_OFF,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=1440,
+        native_step=1,
+        icon=None,  # default
+        translation_key="minutes_to_off",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_TIMER_DURATION_TO_OFF
+            )
+            / 60
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_TIMER_DURATION_TO_OFF,
+                value * 60,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_CYCLE_DURATION_ON,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=1440,
+        native_step=1,
+        icon=None,  # default
+        translation_key="cycle_minutes_on",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_CYCLE_DURATION_ON
+            )
+            / 60
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_CYCLE_DURATION_ON,
+                value * 60,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_CYCLE_DURATION_OFF,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=1440,
+        native_step=1,
+        icon=None,  # default
+        translation_key="cycle_minutes_off",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_CYCLE_DURATION_OFF
+            )
+            / 60
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as minutes but stored as seconds
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_CYCLE_DURATION_OFF,
+                value * 60,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_VPD_LOW_TRIGGER,
+        device_class=NumberDeviceClass.PRESSURE,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=9.9,
+        native_step=0.1,
+        icon="mdi:water-thermometer-outline",
+        translation_key="vpd_low_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as percent (10.2%) but stored as tenths of a percent (102)
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_VPD_LOW_TRIGGER
+            )
+            / 10
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as percent (10.2%) but stored as tenths of a percent (102)
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_VPD_LOW_TRIGGER,
+                value * 10,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_VPD_HIGH_TRIGGER,
+        device_class=NumberDeviceClass.PRESSURE,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=9.9,
+        native_step=0.1,
+        icon="mdi:water-thermometer-outline",
+        translation_key="vpd_high_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            # value configured as percent (10.2%) but stored as tenths of a percent (102)
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_VPD_HIGH_TRIGGER
+            )
+            / 10
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            # value configured as percent (10.2%) but stored as tenths of a percent (102)
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_VPD_HIGH_TRIGGER,
+                value * 10,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER,
+        device_class=NumberDeviceClass.HUMIDITY,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon="mdi:water-percent",
+        translation_key="humiditiy_low_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER,
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER,
+                value,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+        device_class=NumberDeviceClass.HUMIDITY,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon="mdi:water-percent",
+        translation_key="humiditiy_high_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+                value,
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_AUTO_TEMP_LOW_TRIGGER,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=90,
+        native_step=1,
+        icon=None,
+        translation_key="temp_low_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER,
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_settings(
+                port.parent_device_id,
+                port.port_id,
+                [
+                    # value is received from HA as C
+                    (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER, value),
+                    # degrees F must be calculated and set in addition to C
+                    (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F, round((value * 1.8) + 32, 0)),
+                ],
+            )
+        ),
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=90,
+        native_step=1,
+        icon=None,
+        translation_key="temp_high_trigger",
+        get_value_fn=lambda ac_infinity, port: (
+            ac_infinity.get_device_port_setting(
+                port.parent_device_id, port.port_id, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_settings(
+                port.parent_device_id,
+                port.port_id,
+                [
+                    # value is received from HA as C
+                    (SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER, value),
+                    # degrees F must be calculated and set in addition to C
+                    (
+                        SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F,
+                        round((value * 1.8) + 32, 0),
+                    ),
+                ],
+            )
+        ),
+    ),
+]
+
+
+class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
+    entity_description: ACInfinityPortNumberEntityDescription
+
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        data_key: str,
-        label: str,
-        icon: str,
-        device_class: str,
-        min_value: float,
-        max_value: float,
-        step_value: float,
-        mode: str,
-        data_factor: int,
+        description: ACInfinityPortNumberEntityDescription,
+        port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, device, port, data_key, label, icon)
-        self._data_facotr = data_factor
+        super().__init__(coordinator, port, description.key)
+        self.entity_description = description
+        self._port = port
 
-        self._attr_native_min_value = min_value
-        self._attr_native_max_value = max_value
-        self._attr_native_step = step_value
-        self._attr_mode = mode
-        self._attr_device_class = device_class
-        self._attr_native_value = self.__get_setting_value()
+    @property
+    def native_value(self) -> float | None:
+        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._attr_native_value = self.__get_setting_value()
-        self.async_write_ha_state()
-        _LOGGER.debug(
-            "%s._attr_native_value updated to %s",
-            self._attr_unique_id,
-            self._attr_native_value,
+    async def async_set_native_value(self, value: float) -> None:
+        _LOGGER.info(
+            'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
-
-    async def async_set_native_value(self, value: int) -> None:
-        await self.set_setting_value(value * self._data_facotr)
-        _LOGGER.debug(
-            "User updated value of %s.%s to %s",
-            self._attr_unique_id,
-            self._data_key,
-            value,
-        )
-
-    def __get_setting_value(self):
-        return self.get_setting_value() / self._data_facotr
-
-
-class ACInfinityPortTempTriggerEntity(ACInfinityPortTupleSettingEntity, NumberEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        tuple_key: Tuple[str, str],
-        label: str,
-    ) -> None:
-        super().__init__(coordinator, device, port, tuple_key, label, None)
-
-        self._attr_native_min_value = 0
-        self._attr_native_max_value = 90
-        self._attr_native_step = 1
-        self._attr_mode = NumberMode.AUTO
-        self._attr_device_class = NumberDeviceClass.TEMPERATURE
-        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-        self._attr_native_value, _ = self.get_setting_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._attr_native_value, _ = self.get_setting_value()
-        self.async_write_ha_state()
-        _LOGGER.debug(
-            "%s._attr_native_value updated to %s",
-            self._attr_unique_id,
-            self._attr_native_value,
-        )
-
-    async def async_set_native_value(self, value: int) -> None:
-        f = round((value * 1.8) + 32, 0)
-        await self.set_setting_value((value, int(f)))
-        _LOGGER.debug(
-            "User updated value of %s.%s to %s",
-            self._attr_unique_id,
-            self._data_key,
-            value,
-        )
+        await self.entity_description.set_value_fn(self.ac_infinity, self._port, value)
+        await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
@@ -130,150 +388,18 @@ async def async_setup_entry(
     """Setup the AC Infinity Platform."""
 
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
-
-    port_entities = {
-        SETTING_KEY_ON_SPEED: {
-            "label": "On Speed",
-            "icon": "mdi:knob",
-            "deviceClass": NumberDeviceClass.POWER_FACTOR,
-            "min": 0,
-            "max": 10,
-            "step": 1,
-            "mode": NumberMode.AUTO,
-            "data_factor": 1,
-        },
-        SETTING_KEY_OFF_SPEED: {
-            "label": "Off Speed",
-            "icon": "mdi:knob",
-            "deviceClass": NumberDeviceClass.POWER_FACTOR,
-            "min": 0,
-            "max": 10,
-            "step": 1,
-            "mode": NumberMode.AUTO,
-            "data_factor": 1,
-        },
-        SETTING_KEY_TIMER_DURATION_TO_ON: {
-            "label": "Minutes to On",
-            "icon": None,  # default
-            "deviceClass": NumberDeviceClass.DURATION,
-            "min": 0,
-            "max": 1440,
-            "step": 1,
-            "mode": NumberMode.BOX,
-            "data_factor": 60,
-        },
-        SETTING_KEY_TIMER_DURATION_TO_OFF: {
-            "label": "Minutes to Off",
-            "icon": None,  # default
-            "deviceClass": NumberDeviceClass.DURATION,
-            "min": 0,
-            "max": 1440,
-            "step": 1,
-            "mode": NumberMode.BOX,
-            "data_factor": 60,
-        },
-        SETTING_KEY_CYCLE_DURATION_ON: {
-            "label": "Cycle Minutes On",
-            "icon": None,  # default
-            "deviceClass": NumberDeviceClass.DURATION,
-            "min": 0,
-            "max": 1440,
-            "step": 1,
-            "mode": NumberMode.BOX,
-            "data_factor": 60,
-        },
-        SETTING_KEY_CYCLE_DURATION_OFF: {
-            "label": "Cycle Minutes Off",
-            "icon": None,  # default
-            "deviceClass": NumberDeviceClass.DURATION,
-            "min": 0,
-            "max": 1440,
-            "step": 1,
-            "mode": NumberMode.BOX,
-            "data_factor": 60,
-        },
-        SETTING_KEY_VPD_LOW_TRIGGER: {
-            "label": "VPD Low Trigger",
-            "icon": "mdi:water-thermometer-outline",
-            "deviceClass": NumberDeviceClass.PRESSURE,
-            "min": 0,
-            "max": 9.9,
-            "step": 0.1,
-            "mode": NumberMode.BOX,
-            "data_factor": 10,
-        },
-        SETTING_KEY_VPD_HIGH_TRIGGER: {
-            "label": "VPD High Trigger",
-            "icon": "mdi:water-thermometer-outline",
-            "deviceClass": NumberDeviceClass.PRESSURE,
-            "min": 0,
-            "max": 9.9,
-            "step": 0.1,
-            "mode": NumberMode.BOX,
-            "data_factor": 10,
-        },
-        SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER: {
-            "label": "Humidity High Trigger",
-            "icon": "mdi:water-percent",
-            "deviceClass": NumberDeviceClass.HUMIDITY,
-            "min": 0,
-            "max": 100,
-            "step": 1,
-            "mode": NumberMode.AUTO,
-            "data_factor": 1,
-        },
-        SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER: {
-            "label": "Humidity Low Trigger",
-            "icon": "mdi:water-percent",
-            "deviceClass": NumberDeviceClass.HUMIDITY,
-            "min": 0,
-            "max": 100,
-            "step": 1,
-            "mode": NumberMode.AUTO,
-            "data_factor": 1,
-        },
-    }
-
-    tuple_entities = {
-        (SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F): {
-            "label": "Auto High Temp Trigger",
-        },
-        (SETTING_KEY_AUTO_TEMP_LOW_TRIGGER, SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F): {
-            "label": "Auto Low Temp Trigger",
-        },
-    }
-
-    devices = coordinator.ac_infinity.get_all_device_meta_data()
+    controllers = coordinator.ac_infinity.get_all_device_meta_data()
 
     entities = []
-    for device in devices:
-        for port in device.ports:
-            for key, descr in port_entities.items():
-                entities.append(
-                    ACInfinityPortNumberEntity(
-                        coordinator,
-                        device,
-                        port,
-                        key,
-                        descr["label"],
-                        descr["icon"],
-                        descr["deviceClass"],
-                        descr["min"],
-                        descr["max"],
-                        descr["step"],
-                        descr["mode"],
-                        descr["data_factor"],
-                    )
-                )
-            for tupleKey, descr in tuple_entities.items():
-                entities.append(
-                    ACInfinityPortTempTriggerEntity(
-                        coordinator,
-                        device,
-                        port,
-                        tupleKey,
-                        descr["label"],
-                    )
+    for controller in controllers:
+        for port in controller.ports:
+            for description in PORT_DESCRIPTIONS:
+                entity = ACInfinityPortNumberEntity(coordinator, description, port)
+                entities.append(entity)
+                _LOGGER.info(
+                    'Initializing entity "%s" for platform "%s".',
+                    entity.unique_id,
+                    Platform.NUMBER,
                 )
 
     add_entities_callback(entities)

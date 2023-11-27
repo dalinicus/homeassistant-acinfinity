@@ -7,6 +7,11 @@ from homeassistant.const import (
 )
 from pytest_mock import MockFixture
 
+from custom_components.ac_infinity import (
+    ACInfinityControllerEntity,
+    ACInfinityEntity,
+    ACInfinityPortEntity,
+)
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SENSOR_KEY_HUMIDITY,
@@ -17,13 +22,11 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityPortSensorEntity,
-    ACInfinityPortSettingSensorEntity,
-    ACInfinitySensorEntity,
     async_setup_entry,
 )
 from tests import (
     ACTestObjects,
-    execute_and_get_device_entity,
+    execute_and_get_controller_entity,
     execute_and_get_port_entity,
     setup_entity_mocks,
 )
@@ -53,68 +56,70 @@ class TestSensors:
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
         )
 
-        assert "Temperature" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_TEMPERATURE}"
-        assert sensor._attr_device_class == SensorDeviceClass.TEMPERATURE
-        assert sensor._attr_native_unit_of_measurement == UnitOfTemperature.CELSIUS
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_TEMPERATURE}"
+        assert sensor.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+            sensor.entity_description.native_unit_of_measurement
+            == UnitOfTemperature.CELSIUS
+        )
 
     async def test_async_update_temperature_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_TEMPERATURE
         )
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == 24.17
+        assert sensor.native_value == 24.17
 
     async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_HUMIDITY
         )
 
-        assert "Humidity" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
-        assert sensor._attr_device_class == SensorDeviceClass.HUMIDITY
-        assert sensor._attr_native_unit_of_measurement == PERCENTAGE
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_HUMIDITY}"
+        assert sensor.entity_description.device_class == SensorDeviceClass.HUMIDITY
+        assert sensor.entity_description.native_unit_of_measurement == PERCENTAGE
 
     async def test_async_update_humidity_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_HUMIDITY
         )
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == 72
+        assert sensor.native_value == 72
 
     async def test_async_setup_entry_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_VPD
         )
 
-        assert "VPD" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
-        assert sensor._attr_device_class == SensorDeviceClass.PRESSURE
-        assert sensor._attr_native_unit_of_measurement == UnitOfPressure.KPA
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
+        assert sensor.entity_description.device_class == SensorDeviceClass.PRESSURE
+        assert (
+            sensor.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
+        )
 
     async def test_async_update_vpd_value_Correct(self, setup):
         """Reported sensor value matches the value in the json payload"""
 
-        sensor: ACInfinitySensorEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, SENSOR_KEY_VPD
         )
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == 0.83
+        assert sensor.native_value == 0.83
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_power_created_for_each_port(
@@ -126,27 +131,25 @@ class TestSensors:
             setup, async_setup_entry, port, SENSOR_PORT_KEY_SPEAK
         )
 
-        assert "Current Speed" in sensor._attr_name
         assert (
-            sensor._attr_unique_id
+            sensor.unique_id
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_SPEAK}"
         )
-        assert sensor._attr_device_class == SensorDeviceClass.POWER_FACTOR
+        assert sensor.entity_description.device_class == SensorDeviceClass.POWER_FACTOR
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_remaining_time_for_each_port(self, setup, port):
         """Sensor for device port surplus created on setup"""
 
-        sensor: ACInfinityPortSettingSensorEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 
-        assert "Remaining Time" in sensor._attr_name
         assert (
-            sensor._attr_unique_id
+            sensor.unique_id
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_SETTING_KEY_SURPLUS}"
         )
-        assert sensor._attr_device_class == SensorDeviceClass.DURATION
+        assert sensor.entity_description.device_class == SensorDeviceClass.DURATION
 
     @pytest.mark.parametrize(
         "port,expected",
@@ -170,14 +173,14 @@ class TestSensors:
         )
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == expected
+        assert sensor.native_value == expected
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_duration_left_value_Correct(self, setup, port):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        sensor: ACInfinityPortSettingSensorEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, SENSOR_SETTING_KEY_SURPLUS
         )
 
@@ -186,5 +189,5 @@ class TestSensors:
         ] = 12345
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value == 12345
+        assert sensor.native_value == 12345
         test_objects.write_ha_mock.assert_called()

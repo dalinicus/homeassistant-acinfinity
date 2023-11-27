@@ -52,9 +52,7 @@ class TestTime:
             setup, async_setup_entry, port, key
         )
 
-        assert "Scheduled" in sensor._attr_name
-        assert "Time" in sensor._attr_name
-        assert sensor._attr_unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
 
     @pytest.mark.parametrize(
         "setting", [SETTING_KEY_SCHEDULED_START_TIME, SETTING_KEY_SCHEDULED_END_TIME]
@@ -84,9 +82,9 @@ class TestTime:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value
-        assert sensor._attr_native_value.hour == expected_hour
-        assert sensor._attr_native_value.minute == expected_minute
+        assert sensor.native_value
+        assert sensor.native_value.hour == expected_hour
+        assert sensor.native_value.minute == expected_minute
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -107,7 +105,7 @@ class TestTime:
         test_objects.ac_infinity._port_settings[str(DEVICE_ID)][port][setting] = value
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_native_value is None
+        assert sensor.native_value is None
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(

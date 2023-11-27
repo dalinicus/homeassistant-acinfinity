@@ -62,3 +62,9 @@ SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F = "devLtf"
 SETTING_KEY_AUTO_TEMP_LOW_ENABLED = "activeLt"
 SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER = "devLh"
 SETTING_KEY_AUTO_HUMIDITY_LOW_ENABLED = "activeLh"
+
+# Schedules are not enabled or disabled by Booleans,
+# but rather disabled when schedule time is set to 65535
+SCHEDULE_DISABLED_VALUE = 65535  # Disabled
+SCHEDULE_MIDNIGHT_VALUE = 0  # 12:00am, default for start time
+SCHEDULE_EOD_VALUE = 1439  # 11:59pm, default for end time

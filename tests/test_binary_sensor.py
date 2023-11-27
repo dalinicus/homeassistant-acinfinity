@@ -48,12 +48,11 @@ class TestBinarySensors:
             setup, async_setup_entry, port, SENSOR_PORT_KEY_ONLINE
         )
 
-        assert "Status" in sensor._attr_name
         assert (
-            sensor._attr_unique_id
+            sensor.unique_id
             == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_ONLINE}"
         )
-        assert sensor._attr_device_class == BinarySensorDeviceClass.PLUG
+        assert sensor.entity_description.device_class == BinarySensorDeviceClass.PLUG
 
     @pytest.mark.parametrize(
         "port,expected",

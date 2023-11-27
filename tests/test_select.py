@@ -52,12 +52,10 @@ class TestNumbers:
             SETTING_KEY_AT_TYPE,
         )
 
-        assert "Mode" in sensor._attr_name
         assert (
-            sensor._attr_unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SETTING_KEY_AT_TYPE}"
+            sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SETTING_KEY_AT_TYPE}"
         )
-        assert len(sensor._attr_options) == 8
+        assert len(sensor.entity_description.options) == 8
 
     @pytest.mark.parametrize(
         "atType,expected",
@@ -91,7 +89,7 @@ class TestNumbers:
         ] = atType
         sensor._handle_coordinator_update()
 
-        assert sensor._attr_current_option == expected
+        assert sensor.current_option == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(

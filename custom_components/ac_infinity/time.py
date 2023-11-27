@@ -1,74 +1,124 @@
 import datetime
 import logging
+from dataclasses import dataclass
 from datetime import time
 
-from homeassistant.components.time import TimeEntity
+from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from custom_components.ac_infinity import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPortSettingEntity,
+    ACInfinityPortDescriptionMixin,
+    ACInfinityPortEntity,
 )
 from custom_components.ac_infinity.ac_infinity import (
-    ACInfinityDevice,
-    ACInfinityDevicePort,
+    ACInfinityPort,
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    SCHEDULE_DISABLED_VALUE,
     SETTING_KEY_SCHEDULED_END_TIME,
     SETTING_KEY_SCHEDULED_START_TIME,
 )
 
-DEFAULT_TIME = datetime.time(0, 0)
-
 _LOGGER = logging.getLogger(__name__)
 
 
-class ACInfinityPortTimeEntity(ACInfinityPortSettingEntity, TimeEntity):
+def __get_time_from_total_minutes(total_minutes: int) -> time | None:
+    """UIS stores a schedule value as minutes from midnight. A value of 0 is midnight.
+    Both 65535 and None could represent a value of disabled
+    """
+    if total_minutes is not None and total_minutes // 60 <= 23:
+        return datetime.time(hour=total_minutes // 60, minute=total_minutes % 60)
+
+    return None
+
+
+def __get_total_minutes_from_time(time: time):
+    """UIS stores a schedule value as minutes from midnight. Midnight will result in a value of 0.
+    If time is None, 65535 will be returned as it represents a value of disabled.
+    """
+    SCHEDULE_DISABLED_VALUE if time is None else (time.hour * 60) + time.minute
+
+
+@dataclass
+class ACInfinityPortTimeEntityDescription(
+    TimeEntityDescription, ACInfinityPortDescriptionMixin
+):
+    """Describes ACInfinity Time Entities."""
+
+
+PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
+    ACInfinityPortTimeEntityDescription(
+        key=SETTING_KEY_SCHEDULED_START_TIME,
+        icon=None,  # default
+        translation_key="schedule_on_time",
+        get_value_fn=lambda ac_infinity, port: (
+            __get_time_from_total_minutes(
+                ac_infinity.get_device_port_setting(
+                    port.parent_device_id,
+                    port.port_id,
+                    SETTING_KEY_SCHEDULED_START_TIME,
+                )
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_SCHEDULED_START_TIME,
+                __get_total_minutes_from_time(value),
+            )
+        ),
+    ),
+    ACInfinityPortTimeEntityDescription(
+        key=SETTING_KEY_SCHEDULED_END_TIME,
+        icon=None,  # default
+        translation_key="schedule_on_time",
+        get_value_fn=lambda ac_infinity, port: (
+            __get_time_from_total_minutes(
+                ac_infinity.get_device_port_setting(
+                    port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_END_TIME
+                )
+            )
+        ),
+        set_value_fn=lambda ac_infinity, port, value: (
+            ac_infinity.set_device_port_setting(
+                port.parent_device_id,
+                port.port_id,
+                SETTING_KEY_SCHEDULED_END_TIME,
+                __get_total_minutes_from_time(value),
+            )
+        ),
+    ),
+]
+
+
+class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
+    entity_description: ACInfinityPortTimeEntityDescription
+
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        data_key: str,
-        label: str,
+        description: ACInfinityPortTimeEntityDescription,
+        port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, device, port, data_key, label, "")
+        super().__init__(coordinator, port, description.key)
+        self.entity_description = description
+        self._port = port
 
-        self._attr_native_value = self.__get_time_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._attr_native_value = self.__get_time_value()
-
-        self.async_write_ha_state()
-        _LOGGER.debug(
-            "%s._attr_native_value updated to %s",
-            self._attr_unique_id,
-            self._attr_native_value,
-        )
-
-    def __get_time_value(self):
-        total_minutes = self.get_setting_value()
-
-        # UIS stores a schedule value as minutes from midnight. A value of 0 is midnight.
-        # Both 65535 and None could represent a value of "disabled"
-        if total_minutes is not None and total_minutes // 60 <= 23:
-            return datetime.time(hour=total_minutes // 60, minute=total_minutes % 60)
-
-        return None
+    @property
+    def native_value(self) -> time | None:
+        return self.entity_description.get_value_fn(self.ac_infinity, self._port)
 
     async def async_set_value(self, value: time) -> None:
-        total_minutes = None if value is None else (value.hour * 60) + value.minute
-        await self.set_setting_value(total_minutes)
-        _LOGGER.debug(
-            "User updated value of %s.%s to %s",
-            self._attr_unique_id,
-            self._data_key,
-            total_minutes,
+        _LOGGER.info(
+            'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
+        await self.entity_description.set_value_fn(self.ac_infinity, self._port, value)
+        await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
@@ -78,25 +128,14 @@ async def async_setup_entry(
 
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
-    select_entities = {
-        SETTING_KEY_SCHEDULED_START_TIME: {"label": "Scheduled Start Time"},
-        SETTING_KEY_SCHEDULED_END_TIME: {"label": "Scheduled End Time"},
-    }
-
     devices = coordinator.ac_infinity.get_all_device_meta_data()
 
     entities = []
     for device in devices:
         for port in device.ports:
-            for key, descr in select_entities.items():
+            for description in PORT_DESCRIPTIONS:
                 entities.append(
-                    ACInfinityPortTimeEntity(
-                        coordinator,
-                        device,
-                        port,
-                        key,
-                        str(descr["label"]),
-                    )
+                    ACInfinityPortTimeEntity(coordinator, description, port)
                 )
 
     add_entities_callback(entities)

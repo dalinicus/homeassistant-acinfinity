@@ -1,21 +1,26 @@
 """The AC Infinity integration."""
 from __future__ import annotations
 
+import abc
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Tuple
+from typing import Awaitable
 
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from .ac_infinity import ACInfinity, ACInfinityDevice, ACInfinityDevicePort
+from .ac_infinity import ACInfinity, ACInfinityController, ACInfinityPort
 from .const import CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,149 +55,31 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-class ACInfinityEntity(CoordinatorEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        data_key: str,
-    ):
-        super().__init__(coordinator)
-        self._data_key = data_key
+async def __raise_not_implemented(_0: ACInfinity, _1: ACInfinityPort, _2: StateType):
+    raise NotImplementedError(
+        "Entity is read-only; `set_value_fn` was not implemented in the entity's description."
+    )
 
 
-class ACInfinityDeviceEntity(ACInfinityEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        data_key: str,
-        label: str,
-        icon: str,
-    ) -> None:
-        super().__init__(coordinator, data_key)
-        self._device = device
+@dataclass
+class ACInfinityControllerDescriptionMixin:
+    """Mixin for adding values for controller level sensors"""
 
-        self._attr_icon = icon
-        self._attr_device_info = device.device_info
-        self._attr_unique_id = f"{DOMAIN}_{device.mac_addr}_{data_key}"
-        self._attr_name = f"{device.device_name} {label}"
-
-    def get_property_value(self):
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-        return coordinator.ac_infinity.get_device_property(
-            self._device.device_id, self._data_key
-        )
+    get_value_fn: Callable[[ACInfinity, ACInfinityController], StateType]
+    """Input data object and a device id; output the value."""
 
 
-class ACInfinityPortEntity(ACInfinityEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        data_key: str,
-        label: str,
-        icon: str | None,
-    ) -> None:
-        super().__init__(coordinator, data_key)
-        self._device = device
-        self._port = port
+@dataclass
+class ACInfinityPortDescriptionMixin:
+    """Mixin for adding values for port device level sensors"""
 
-        self._attr_icon = icon
-        self._attr_device_info = port.device_info
-        self._attr_name = f"{device.device_name} {port.port_name} {label}"
-        self._attr_unique_id = (
-            f"{DOMAIN}_{device.mac_addr}_port_{port.port_id}_{data_key}"
-        )
+    get_value_fn: Callable[[ACInfinity, ACInfinityPort], StateType]
+    """Input data object, device id, and port number; output the value."""
 
-
-class ACInfinityPortPropertyEntity(ACInfinityPortEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        data_key: str,
-        label: str,
-        icon: str,
-    ) -> None:
-        super().__init__(coordinator, device, port, data_key, label, icon)
-
-    def get_property_value(self):
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-        return coordinator.ac_infinity.get_device_port_property(
-            self._device.device_id, self._port.port_id, self._data_key
-        )
-
-
-class ACInfinityPortSettingEntity(ACInfinityPortEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        data_key: str,
-        label: str,
-        icon: str | None,
-    ) -> None:
-        super().__init__(coordinator, device, port, data_key, label, icon)
-
-    def get_setting_value(self, default=None) -> int:
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-        return coordinator.ac_infinity.get_device_port_setting(
-            self._device.device_id, self._port.port_id, self._data_key, default
-        )
-
-    async def set_setting_value(self, value: int) -> None:
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-        await coordinator.ac_infinity.set_device_port_setting(
-            self._device.device_id, self._port.port_id, self._data_key, value
-        )
-        await coordinator.async_request_refresh()
-
-
-class ACInfinityPortTupleSettingEntity(ACInfinityPortEntity):
-    def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        device: ACInfinityDevice,
-        port: ACInfinityDevicePort,
-        tuple_key: Tuple[str, str],
-        label: str,
-        icon: str | None,
-    ) -> None:
-        """The first tuple value will be used as the "primary" data key used for ids.
-        Values will be fetched from api using both keys.
-        """
-        (leftKey, _) = tuple_key
-        super().__init__(coordinator, device, port, leftKey, label, icon)
-        self._tuple_key = tuple_key
-
-    def get_setting_value(self, default=None) -> Tuple[int, int]:
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-
-        (leftKey, rightKey) = self._tuple_key
-        leftValue = coordinator.ac_infinity.get_device_port_setting(
-            self._device.device_id, self._port.port_id, leftKey, default
-        )
-        rightValue = coordinator.ac_infinity.get_device_port_setting(
-            self._device.device_id, self._port.port_id, rightKey, default
-        )
-
-        return (leftValue, rightValue)
-
-    async def set_setting_value(self, value: Tuple[int, int]) -> None:
-        coordinator: ACInfinityDataUpdateCoordinator = self.coordinator
-
-        (leftKey, rightKey) = self._tuple_key
-        (leftValue, rightValue) = value
-        await coordinator.ac_infinity.set_device_port_settings(
-            self._device.device_id,
-            self._port.port_id,
-            [(leftKey, leftValue), (rightKey, rightValue)],
-        )
-
-        await coordinator.async_request_refresh()
+    set_value_fn: Callable[
+        [ACInfinity, ACInfinityPort, StateType], Awaitable[None]
+    ] = __raise_not_implemented
+    """Input data object, device id, port number, and desired value."""
 
 
 class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
@@ -223,3 +110,70 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def ac_infinity(self) -> ACInfinity:
         return self._ac_infinity
+
+
+class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        data_key: str,
+    ):
+        super().__init__(coordinator)
+        self._data_key = data_key
+
+    @property
+    def ac_infinity(self) -> ACInfinity:
+        """Returns the underlying ac_infinity api object from the assigned coordinator"""
+        return self.coordinator.ac_infinity
+
+    @abc.abstractproperty
+    def unique_id(self) -> str:
+        """Return the unique ID for this entity."""
+
+    @abc.abstractproperty
+    def device_info(self) -> DeviceInfo:
+        """Returns the device info for the controller entity"""
+
+
+class ACInfinityControllerEntity(ACInfinityEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        controller: ACInfinityController,
+        data_key: str,
+    ):
+        super().__init__(coordinator, data_key)
+        self._controller = controller
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID for this entity."""
+        return f"{DOMAIN}_{self._controller.mac_addr}_{self._data_key}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Returns the device info for the controller entity"""
+        return self._controller.device_info
+
+
+class ACInfinityPortEntity(ACInfinityEntity):
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        port: ACInfinityPort,
+        data_key: str,
+    ):
+        super().__init__(coordinator, data_key)
+        self._port = port
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID for this entity."""
+        return f"{DOMAIN}_{self._port.parent_mac_addr}_port_{self._port.port_id}_{self._data_key}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Returns the device info for the port entity"""
+        return self._port.device_info

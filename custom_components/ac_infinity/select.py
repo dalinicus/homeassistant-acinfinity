@@ -41,7 +41,7 @@ MODE_OPTIONS = [
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
         key=SETTING_KEY_AT_TYPE,
-        translation_key="mode_type",
+        translation_key="active_mode",
         options=MODE_OPTIONS,
         get_value_fn=lambda ac_infinity, port: (
             MODE_OPTIONS[

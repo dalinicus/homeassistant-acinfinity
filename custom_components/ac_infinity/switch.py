@@ -59,7 +59,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="vpd_high_enabled",
+        translation_key="vpd_mode_high_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_VPD_HIGH_ENABLED
@@ -77,7 +77,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="vpd_low_enabled",
+        translation_key="vpd_mode_low_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_VPD_LOW_ENABLED
@@ -95,7 +95,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="auto_temp_high_enabled",
+        translation_key="auto_mode_temp_high_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_AUTO_TEMP_HIGH_ENABLED
@@ -116,7 +116,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="auto_temp_low_enabled",
+        translation_key="auto_mode_temp_low_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_AUTO_TEMP_LOW_ENABLED
@@ -137,7 +137,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="auto_humidity_high_enabled",
+        translation_key="auto_mode_humidity_high_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
@@ -160,7 +160,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=1,
         off_value=0,
         icon=None,  # default
-        translation_key="auto_humidity_low_enabled",
+        translation_key="auto_mode_humidity_low_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
@@ -183,7 +183,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=SCHEDULE_MIDNIGHT_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
-        translation_key="schedule_on_time",
+        translation_key="schedule_mode_on_time_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_START_TIME
@@ -205,7 +205,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         on_value=SCHEDULE_EOD_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
-        translation_key="schedule_off_time",
+        translation_key="schedule_mode_off_time_enabled",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_END_TIME

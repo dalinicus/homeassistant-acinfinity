@@ -55,7 +55,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=10,
         native_step=1,
         icon="mdi:knob",
-        translation_key="on_speed",
+        translation_key="on_power",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_ON_SPEED
@@ -75,7 +75,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=10,
         native_step=1,
         icon="mdi:knob",
-        translation_key="off_speed",
+        translation_key="off_power",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_OFF_SPEED
@@ -95,7 +95,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=1440,
         native_step=1,
         icon=None,  # default
-        translation_key="minutes_to_on",
+        translation_key="timer_mode_minutes_to_on",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as minutes but stored as seconds
             ac_infinity.get_device_port_setting(
@@ -121,7 +121,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=1440,
         native_step=1,
         icon=None,  # default
-        translation_key="minutes_to_off",
+        translation_key="timer_mode_minutes_to_off",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as minutes but stored as seconds
             ac_infinity.get_device_port_setting(
@@ -147,7 +147,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=1440,
         native_step=1,
         icon=None,  # default
-        translation_key="cycle_minutes_on",
+        translation_key="cycle_mode_minutes_on",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as minutes but stored as seconds
             ac_infinity.get_device_port_setting(
@@ -173,7 +173,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=1440,
         native_step=1,
         icon=None,  # default
-        translation_key="cycle_minutes_off",
+        translation_key="cycle_mode_minutes_off",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as minutes but stored as seconds
             ac_infinity.get_device_port_setting(
@@ -199,7 +199,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=9.9,
         native_step=0.1,
         icon="mdi:water-thermometer-outline",
-        translation_key="vpd_low_trigger",
+        translation_key="vpd_mode_low_trigger",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as percent (10.2%) but stored as tenths of a percent (102)
             ac_infinity.get_device_port_setting(
@@ -225,7 +225,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=9.9,
         native_step=0.1,
         icon="mdi:water-thermometer-outline",
-        translation_key="vpd_high_trigger",
+        translation_key="vpd_mode_high_trigger",
         get_value_fn=lambda ac_infinity, port: (
             # value configured as percent (10.2%) but stored as tenths of a percent (102)
             ac_infinity.get_device_port_setting(
@@ -251,7 +251,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=100,
         native_step=1,
         icon="mdi:water-percent",
-        translation_key="humiditiy_low_trigger",
+        translation_key="auto_mode_humidity_low_trigger",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
@@ -276,7 +276,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=100,
         native_step=1,
         icon="mdi:water-percent",
-        translation_key="humiditiy_high_trigger",
+        translation_key="auto_mode_humidity_high_trigger",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
@@ -302,7 +302,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=90,
         native_step=1,
         icon=None,
-        translation_key="temp_low_trigger",
+        translation_key="auto_mode_temp_low_trigger",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id,
@@ -332,7 +332,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_max_value=90,
         native_step=1,
         icon=None,
-        translation_key="temp_high_trigger",
+        translation_key="auto_mode_temp_high_trigger",
         get_value_fn=lambda ac_infinity, port: (
             ac_infinity.get_device_port_setting(
                 port.parent_device_id, port.port_id, SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER

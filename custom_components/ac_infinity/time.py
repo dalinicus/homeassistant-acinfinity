@@ -54,7 +54,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
     ACInfinityPortTimeEntityDescription(
         key=SETTING_KEY_SCHEDULED_START_TIME,
         icon=None,  # default
-        translation_key="schedule_on_time",
+        translation_key="schedule_mode_on_time",
         get_value_fn=lambda ac_infinity, port: (
             __get_time_from_total_minutes(
                 ac_infinity.get_device_port_setting(
@@ -76,7 +76,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
     ACInfinityPortTimeEntityDescription(
         key=SETTING_KEY_SCHEDULED_END_TIME,
         icon=None,  # default
-        translation_key="schedule_on_time",
+        translation_key="schedule_mode_off_time",
         get_value_fn=lambda ac_infinity, port: (
             __get_time_from_total_minutes(
                 ac_infinity.get_device_port_setting(

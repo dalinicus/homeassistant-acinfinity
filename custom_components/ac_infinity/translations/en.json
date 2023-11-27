@@ -1,34 +1,135 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Device is already configured"
-        },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "email": "Email",
-                    "password": "Password",
-                    "polling_interval": "Polling Interval (Seconds)"
-                }
-            }
-        }
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "AC Infinity Configuration",
-                "data": {
-                    "polling_interval": "Polling Interval (Seconds)"
-                }
-            }
-        },
-        "error": {
-            "invalid_polling_interval": "Polling interval cannot be less than 5 seconds"
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "polling_interval": "Polling Interval (Seconds)"
         }
+      }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AC Infinity Configuration",
+        "data": {
+          "polling_interval": "Polling Interval (Seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_polling_interval": "Polling interval cannot be less than 5 seconds"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "port_online": {
+        "name": "Status"
+      }
+    },
+    "number": {
+      "on_power": {
+        "name": "On Power"
+      },
+      "off_power": {
+        "name": "Off Power"
+      },
+      "timer_mode_minutes_to_on": {
+        "name": "Timer Minutes to On"
+      },
+      "timer_mode_minutes_to_off": {
+        "name": "Timer Minutes to Off"
+      },
+      "cycle_mode_minutes_on": {
+        "name": "Cycle Minutes On"
+      },
+      "cycle_mode_minutes_off": {
+        "name": "Cycle Minutes Off"
+      },
+      "vpd_mode_low_trigger": {
+        "name": "VPD Low Trigger"
+      },
+      "vpd_mode_high_trigger": {
+        "name": "VPD High Trigger"
+      },
+      "auto_mode_humidity_low_trigger": {
+        "name": "Humidity Low Trigger"
+      },
+      "auto_mode_humidity_high_trigger": {
+        "name": "Humidity High Trigger"
+      },
+      "auto_mode_temp_low_trigger": {
+        "name": "Temperature Low Trigger"
+      },
+      "auto_mode_temp_high_trigger": {
+        "name": "Temperature High Trigger"
+      }
+    },
+    "select": {
+      "active_mode": {
+        "name": "Active Mode"
+      }
+    },
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "vapor_pressure_deficit": {
+        "name": "VPD"
+      },
+      "current_power": {
+        "name": "Current Power"
+      },
+      "remaining_time": {
+        "name": "Remaining Time"
+      }
+    },
+    "switch": {
+      "vpd_mode_low_enabled": {
+        "name": "VPD Low Trigger Enabled"
+      },
+      "vpd_mode_high_enabled": {
+        "name": "VPD High Trigger Enabled"
+      },
+      "auto_mode_humidity_low_enabled": {
+        "name": "Humidity Low Trigger Enabled"
+      },
+      "auto_mode_humidity_high_enabled": {
+        "name": "Humidity High Trigger Enabled"
+      },
+      "auto_mode_temp_low_enabled": {
+        "name": "Temperature Low Trigger Enabled"
+      },
+      "auto_mode_temp_high_enabled": {
+        "name": "Temperature High Trigger Enabled"
+      },
+      "schedule_mode_on_time_enabled": {
+        "name": "Scheduled On-Time Enabled"
+      },
+      "schedule_mode_off_time_enabled": {
+        "name": "Scheduled Off-Time Enabled"
+      }
+    },
+    "time": {
+      "schedule_mode_on_time": {
+        "name": "Scheduled On-Time"
+      },
+      "schedule_mode_off_time": {
+        "name": "Scheduled Off-Time"
+      }
+    }
+  }
 }

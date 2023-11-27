@@ -125,3 +125,4 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, SETTING_KEY_AT_TYPE, expected
         )
+        test_objects.refresh_mock.assert_called()

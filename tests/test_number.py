@@ -114,6 +114,7 @@ class TestNumbers:
         await entity.async_set_native_value(4)
 
         test_objects.set_mock.assert_called_with(str(DEVICE_ID), port, setting, 4)
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key", [SETTING_KEY_TIMER_DURATION_TO_ON, SETTING_KEY_TIMER_DURATION_TO_OFF]
@@ -182,6 +183,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key,label",
@@ -259,6 +261,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     #
     @pytest.mark.parametrize(
@@ -330,6 +333,7 @@ class TestNumbers:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting, f_setting",
@@ -396,3 +400,4 @@ class TestNumbers:
         test_objects.sets_mock.assert_called_with(
             str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
         )
+        test_objects.refresh_mock.assert_called()

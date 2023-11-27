@@ -150,6 +150,7 @@ class TestSwitch:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
@@ -182,3 +183,4 @@ class TestSwitch:
         test_objects.set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
+        test_objects.refresh_mock.assert_called()

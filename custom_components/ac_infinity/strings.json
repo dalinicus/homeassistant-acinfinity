@@ -22,12 +22,27 @@
       "init": {
         "title": "AC Infinity Configuration",
         "data": {
-          "polling_interval": "Polling Interval (Seconds)"
+          "polling_interval": "Polling Interval (Seconds)",
+          "update_password": "Update Password"
+        },
+        "data_description": {
+          "update_password": "Updating password requires a restart of Home Assistant."
+        }
+      },
+      "notify_restart": {
+        "title": "Restart required",
+        "description": "Restart of Home Assistant is required for password change to take effect.",
+        "menu_options": {
+            "restart_yes": "Restart Now",
+            "restart_no": "Restart Later"
         }
       }
     },
     "error": {
-      "invalid_polling_interval": "Polling interval cannot be less than 5 seconds"
+      "invalid_polling_interval": "Polling interval cannot be less than 5 seconds",
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     }
   },
   "entity": {

@@ -44,6 +44,7 @@ Add an integration entry as normal from integration section of the home assistan
 After adding an integration entry, the following additional configurations can be modified via the configuration options dialog.
 
 - **Polling Interval (Seconds)**: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
+- **Update Password**: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
 
 ![Additional-Configuration](/images/additional-configuration.png)
 

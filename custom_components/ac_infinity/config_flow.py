@@ -18,7 +18,13 @@ from .client import (
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
-from .const import CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL, DOMAIN, HOST
+from .const import (
+    CONF_POLLING_INTERVAL,
+    CONF_UPDATE_PASSWORD,
+    DEFAULT_POLLING_INTERVAL,
+    DOMAIN,
+    HOST,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,12 +92,37 @@ class OptionsFlow(config_entries.OptionsFlow):
 
         errors: dict[str, str] = {}
         if user_input is not None:
-            polling_interval = user_input[CONF_POLLING_INTERVAL]
+            polling_interval = user_input.get(
+                CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
+            )
+            password = user_input.get(CONF_UPDATE_PASSWORD, None)
+
             if polling_interval < 5:
-                errors["base"] = "invalid_polling_interval"
-            else:
+                errors[CONF_POLLING_INTERVAL] = "invalid_polling_interval"
+
+            if password:
+                email = self.config_entry.data[CONF_EMAIL]
+                try:
+                    client = ACInfinityClient(
+                        HOST,
+                        email,
+                        password,
+                    )
+                    await client.login()
+                    _ = await client.get_all_device_info()
+                except ACInfinityClientCannotConnect:
+                    errors[CONF_UPDATE_PASSWORD] = "cannot_connect"
+                except ACInfinityClientInvalidAuth:
+                    errors[CONF_UPDATE_PASSWORD] = "invalid_auth"
+                except Exception:  # pylint: disable=broad-except
+                    _LOGGER.exception("Unexpected exception")
+                    errors[CONF_UPDATE_PASSWORD] = "unknown"
+
+            if not len(errors):
                 new_data = self.config_entry.data.copy()
                 new_data[CONF_POLLING_INTERVAL] = polling_interval
+                new_data[CONF_PASSWORD] = password
+
                 self.hass.config_entries.async_update_entry(
                     self.config_entry,
                     data=new_data,
@@ -103,6 +134,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                 coordinator.update_interval = timedelta(seconds=polling_interval)
 
                 _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
+                if password:
+                    return await self.async_step_notify_restart()
                 return self.async_create_entry(title="", data={})
 
         cur_value = (
@@ -114,7 +147,22 @@ class OptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
-                {vol.Optional(CONF_POLLING_INTERVAL, default=cur_value): int}
+                {
+                    vol.Optional(CONF_POLLING_INTERVAL, default=cur_value): int,
+                    vol.Optional(CONF_UPDATE_PASSWORD): str,
+                }
             ),
             errors=errors,
         )
+
+    async def async_step_notify_restart(self):
+        return self.async_show_menu(
+            step_id="notify_restart", menu_options=["restart_yes", "restart_no"]
+        )
+
+    async def async_step_restart_yes(self, _):
+        await self.hass.services.async_call("homeassistant", "restart")
+        return self.async_create_entry(title="", data={})
+
+    async def async_step_restart_no(self, _):
+        return self.async_create_entry(title="", data={})

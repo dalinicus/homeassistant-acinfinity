@@ -5,8 +5,9 @@ from asyncio import Future
 from typing import Union
 from unittest.mock import AsyncMock, MagicMock, NonCallableMagicMock
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntries, ConfigEntry
+from homeassistant.const import CONF_EMAIL
+from homeassistant.core import HomeAssistant, ServiceRegistry
 from homeassistant.helpers.entity import Entity
 from pytest_mock import MockFixture
 
@@ -17,6 +18,7 @@ from custom_components.ac_infinity import (
     ACInfinityPortEntity,
 )
 from custom_components.ac_infinity.ac_infinity import ACInfinity
+from custom_components.ac_infinity.config_flow import OptionsFlow
 from custom_components.ac_infinity.const import DOMAIN
 from tests.data_models import (
     DEVICE_INFO_DATA,
@@ -118,14 +120,27 @@ def setup_entity_mocks(mocker: MockFixture):
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
 
-    configEntry = ConfigEntry()
-    configEntry.entry_id = ENTRY_ID
+    config_entry = ConfigEntry()
+    config_entry.entry_id = ENTRY_ID
+    config_entry.data = {CONF_EMAIL: ENTRY_ID}
 
     entities = EntitiesTracker()
 
+    update_entry = mocker.patch.object(ConfigEntries, "async_update_entry")
+
+    async_call = mocker.patch.object(ServiceRegistry, "async_call")
+
+    options_flow = OptionsFlow(config_entry)
+    options_flow.config_entry = config_entry
+    options_flow.hass = hass
+    options_flow.hass.config_entries = MagicMock()
+    options_flow.hass.config_entries.async_update_entry = update_entry
+    options_flow.hass.services = MagicMock()
+    options_flow.hass.services.async_call = async_call
+
     return ACTestObjects(
         hass,
-        configEntry,
+        config_entry,
         entities,
         ac_infinity,
         set_mock,
@@ -133,6 +148,7 @@ def setup_entity_mocks(mocker: MockFixture):
         write_ha_mock,
         coordinator,
         refresh_mock,
+        options_flow,
     )
 
 
@@ -148,6 +164,7 @@ class ACTestObjects:
         write_ha_mock,
         coordinator,
         refresh_mock,
+        options_flow,
     ) -> None:
         self.hass: HomeAssistant = hass
         self.configEntry: ConfigEntry = configEntry
@@ -158,3 +175,4 @@ class ACTestObjects:
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
         self.refresh_mock: MockType = refresh_mock
+        self.options_flow: OptionsFlow = options_flow

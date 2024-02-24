@@ -59,6 +59,37 @@ class TestACInfinityClient:
 
             assert client._user_id is not None
 
+    @pytest.mark.parametrize(
+        "password,expected",
+        [
+            ("hunter2", "hunter2"),
+            ("!@DiFGQBRGapZ9MvDNU8AM6b", "!@DiFGQBRGapZ9MvDNU8AM6b"),
+            ("teU8a4HWC@*i2o!iMojRv9*#M7VmF8Zn", "teU8a4HWC@*i2o!iMojRv9*#M"),
+        ],
+    )
+    async def test_login_password_truncated_to_25_characters(self, password, expected):
+        """AC Infinity API does not accept passwords greater than 25 characters.
+        The Android/iOS app truncates passwords to accommodate for this.  We must do the same.
+        """
+
+        url = f"{HOST}{API_URL_LOGIN}"
+
+        with aioresponses() as mocked:
+            mocked.post(
+                url,
+                status=200,
+                payload=LOGIN_PAYLOAD,
+            )
+
+            client = ACInfinityClient(HOST, EMAIL, password)
+            await client.login()
+
+            mocked.assert_called_with(
+                url,
+                "POST",
+                data={"appEmail": "myemail@unittest.com", "appPasswordl": expected},
+            )
+
     @pytest.mark.parametrize("status_code", [400, 401, 403, 404, 500])
     async def test_login_api_connect_error_raised_on_http_error(self, status_code):
         """When login is called and returns a non-succesful status code, connect error should be raised"""

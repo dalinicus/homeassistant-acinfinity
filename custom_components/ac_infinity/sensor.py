@@ -88,6 +88,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
         key=SENSOR_KEY_VPD,
         device_class=SensorDeviceClass.PRESSURE,
+        suggested_unit_of_measurement=UnitOfPressure.KPA,
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
         translation_key="vapor_pressure_deficit",

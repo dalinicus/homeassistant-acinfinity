@@ -117,6 +117,10 @@ class TestSensors:
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{SENSOR_KEY_VPD}"
         assert sensor.entity_description.device_class == SensorDeviceClass.PRESSURE
         assert (
+            sensor.entity_description.suggested_unit_of_measurement
+            == UnitOfPressure.KPA
+        )
+        assert (
             sensor.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
         assert sensor.device_info is not None

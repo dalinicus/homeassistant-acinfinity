@@ -20,9 +20,14 @@ class ACInfinityClient:
 
     async def login(self):
         headers = self.__create_headers(use_auth_token=False)
+
+        # AC Infinity API does not accept passwords greater than 25 characters.
+        # The Android/iOS app truncates passwords to accommodate for this.  We must do the same.
+        normalized_password: str = self._password[0:25]
+
         response = await self.__post(
             API_URL_LOGIN,
-            {"appEmail": self._email, "appPasswordl": self._password},
+            {"appEmail": self._email, "appPasswordl": normalized_password},
             headers,
         )
         self._user_id = response["data"]["appId"]

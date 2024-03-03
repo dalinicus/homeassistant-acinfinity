@@ -14,6 +14,9 @@ from custom_components.ac_infinity.client import (
 from custom_components.ac_infinity.const import (
     SENSOR_SETTING_KEY_SURPLUS,
     SETTING_KEY_ON_SPEED,
+    SETTING_KEY_TARGET_HUMIDITY_SWITCH,
+    SETTING_KEY_TARGET_TEMPERATURE_SWITCH,
+    SETTING_KEY_TARGET_VPD_SWITCH,
 )
 from tests.data_models import (
     ADD_DEV_MODE_PAYLOAD,
@@ -264,8 +267,14 @@ class TestACInfinityClient:
 
             assert payload["onSpead"] == 2
 
-    async def test_set_device_port_setting_surplus_zero_even_when_null(self):
-        """When fetching existing settings before update, surplus should be set to 0 if existing is null"""
+    @pytest.mark.parametrize("surplus", [0, None])
+    @pytest.mark.parametrize("h_target", [0, None])
+    @pytest.mark.parametrize("t_target", [0, None])
+    @pytest.mark.parametrize("vpd_target", [0, None])
+    async def test_set_device_port_setting_zero_even_when_null(
+        self, surplus, h_target, t_target, vpd_target
+    ):
+        """When fetching existing settings before update, specified fields should be set to 0 if existing is null"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         client._user_id = USER_ID
         with aioresponses() as mocked:
@@ -276,7 +285,10 @@ class TestACInfinityClient:
             )
 
             request_payload = ADD_DEV_MODE_PAYLOAD
-            request_payload[SENSOR_SETTING_KEY_SURPLUS] = None
+            request_payload[SENSOR_SETTING_KEY_SURPLUS] = surplus
+            request_payload[SETTING_KEY_TARGET_HUMIDITY_SWITCH] = h_target
+            request_payload[SETTING_KEY_TARGET_TEMPERATURE_SWITCH] = t_target
+            request_payload[SETTING_KEY_TARGET_VPD_SWITCH] = vpd_target
 
             mocked.post(
                 f"{HOST}{API_URL_ADD_DEV_MODE}", status=200, payload=request_payload
@@ -292,3 +304,6 @@ class TestACInfinityClient:
             payload = found[0].kwargs["data"]
 
             assert payload[SENSOR_SETTING_KEY_SURPLUS] == 0
+            assert payload[SETTING_KEY_TARGET_HUMIDITY_SWITCH] == 0
+            assert payload[SETTING_KEY_TARGET_TEMPERATURE_SWITCH] == 0
+            assert payload[SETTING_KEY_TARGET_VPD_SWITCH] == 0

@@ -63,6 +63,9 @@ SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F = "devLtf"
 SETTING_KEY_AUTO_TEMP_LOW_ENABLED = "activeLt"
 SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER = "devLh"
 SETTING_KEY_AUTO_HUMIDITY_LOW_ENABLED = "activeLh"
+SETTING_KEY_TARGET_HUMIDITY_SWITCH = "targetHumiSwitch"
+SETTING_KEY_TARGET_TEMPERATURE_SWITCH = "targetTSwitch"
+SETTING_KEY_TARGET_VPD_SWITCH = "targetVpdSwitch"
 
 # Schedules are not enabled or disabled by Booleans,
 # but rather disabled when schedule time is set to 65535

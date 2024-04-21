@@ -141,6 +141,7 @@ class OptionsFlow(config_entries.OptionsFlow):
         cur_value = (
             int(self.config_entry.data[CONF_POLLING_INTERVAL])
             if CONF_POLLING_INTERVAL in self.config_entry.data
+            and self.config_entry.data[CONF_POLLING_INTERVAL] is not None
             else DEFAULT_POLLING_INTERVAL
         )
 

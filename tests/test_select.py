@@ -35,7 +35,7 @@ class TestNumbers:
 
         await async_setup_entry(
             test_objects.hass,
-            test_objects.configEntry,
+            test_objects.config_entry,
             test_objects.entities.add_entities_callback,
         )
 

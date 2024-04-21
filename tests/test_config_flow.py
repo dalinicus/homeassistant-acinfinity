@@ -6,6 +6,7 @@ from unittest.mock import ANY
 import pytest
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from pytest_mock import MockFixture
 
@@ -24,10 +25,11 @@ from custom_components.ac_infinity.const import (
     CONF_POLLING_INTERVAL,
     CONF_UPDATE_PASSWORD,
     DEFAULT_POLLING_INTERVAL,
+    DOMAIN,
 )
 from tests import ACTestObjects, setup_entity_mocks
 
-from .data_models import EMAIL, PASSWORD, POLLING_INTERVAL
+from .data_models import EMAIL, ENTRY_ID, PASSWORD, POLLING_INTERVAL
 
 CONFIG_FLOW_USER_INPUT = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
 OPTION_FLOW_USER_INPUT = {CONF_POLLING_INTERVAL: POLLING_INTERVAL}
@@ -141,8 +143,14 @@ class TestConfigFlow:
         self, mocker: MockFixture
     ):
         """options flow returned from static method"""
-        config_entry = mocker.patch.object(
-            config_entries.ConfigEntry, "data", return_value={}
+        config_entry = ConfigEntry(
+            entry_id=ENTRY_ID,
+            data={},
+            domain=DOMAIN,
+            minor_version=0,
+            source="",
+            title="",
+            version=0,
         )
         result = ConfigFlow.async_get_options_flow(config_entry)
 
@@ -157,11 +165,16 @@ class TestConfigFlow:
     ):
         """If no user input provided, async_setup_init should show form with correct value"""
 
-        config_entry = mocker.patch.object(
-            config_entries.ConfigEntry,
-            "data",
-            return_value={CONF_POLLING_INTERVAL: existing_value},
+        config_entry = ConfigEntry(
+            entry_id=ENTRY_ID,
+            data={CONF_POLLING_INTERVAL: existing_value},
+            domain=DOMAIN,
+            minor_version=0,
+            source="",
+            title="",
+            version=0,
         )
+
         flow = OptionsFlow(config_entry)
         await flow.async_step_init()
 
@@ -181,10 +194,16 @@ class TestConfigFlow:
         self, mocker: MockFixture, setup_options_flow
     ):
         """If no user input provided, and no interval exists in settings, async_setup_init should show form with default value"""
-
-        config_entry = mocker.patch.object(
-            config_entries.ConfigEntry, "data", return_value={}
+        config_entry = ConfigEntry(
+            entry_id=ENTRY_ID,
+            data={},
+            domain=DOMAIN,
+            minor_version=0,
+            source="",
+            title="",
+            version=0,
         )
+
         flow = OptionsFlow(config_entry)
         await flow.async_step_init()
 
@@ -208,8 +227,14 @@ class TestConfigFlow:
     ):
         """If provided polling interval is not valid, show form with error"""
 
-        config_entry = mocker.patch.object(
-            config_entries.ConfigEntry, "data", return_value={}
+        config_entry = ConfigEntry(
+            entry_id=ENTRY_ID,
+            data={},
+            domain=DOMAIN,
+            minor_version=0,
+            source="",
+            title="",
+            version=0,
         )
         flow = OptionsFlow(config_entry)
         await flow.async_step_init({CONF_POLLING_INTERVAL: user_input})

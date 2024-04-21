@@ -33,7 +33,6 @@ def setup(mocker: MockFixture):
     mocker.patch.object(ACInfinity, "update", return_value=future)
     mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
-    mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(ConfigEntries, "__init__", return_value=None)
     mocker.patch.object(
         ConfigEntries, "async_forward_entry_setups", return_value=future
@@ -42,28 +41,34 @@ def setup(mocker: MockFixture):
         ConfigEntries, "async_unload_platforms", return_value=boolFuture
     )
 
-    config_entry = ConfigEntry()
-    config_entry.entry_id = ENTRY_ID
-    config_entry.data = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
+    config_entry = ConfigEntry(
+        entry_id=ENTRY_ID,
+        data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD},
+        domain=DOMAIN,
+        minor_version=0,
+        source="",
+        title="",
+        version=0,
+    )
 
     hass = HomeAssistant("/path")
     hass.config_entries = ConfigEntries()
     hass.data = {}
 
-    return (hass, config_entry)
+    return hass, config_entry
 
 
 @pytest.mark.asyncio
 class TestInit:
-    async def test_async_setup_entry_aerogarden_init(self, setup):
-        """when setting up, aerogarden should be initialized and assigned to the hass object"""
+    async def test_async_setup_entry_ac_infinity_init(self, setup):
+        """when setting up, ac_infinity should be initialized and assigned to the hass object"""
         (hass, config_entry) = setup
 
         await async_setup_entry(hass, config_entry)
 
         assert hass.data[DOMAIN][ENTRY_ID] is not None
 
-    async def test_async_setup_entry_platforms_initalized(self, setup):
+    async def test_async_setup_entry_platforms_initialized(self, setup):
         """When setting up, all platforms should be initialized"""
         hass: HomeAssistant
         (hass, config_entry) = setup

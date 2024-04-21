@@ -7,6 +7,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -62,6 +63,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
         key=SENSOR_KEY_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon=None,  # default
         translation_key="temperature",
@@ -76,6 +78,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
         key=SENSOR_KEY_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         icon=None,  # default
         translation_key="humidity",
@@ -88,6 +91,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
         key=SENSOR_KEY_VPD,
         device_class=SensorDeviceClass.PRESSURE,
+        state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
@@ -104,6 +108,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
     ACInfinityPortSensorEntityDescription(
         key=SENSOR_PORT_KEY_SPEAK,
         device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=None,  # no units / bare integer value
         icon=None,  # default
         translation_key="current_power",

@@ -54,7 +54,7 @@ async def execute_and_get_controller_entity(
 
     await async_setup_entry(
         test_objects.hass,
-        test_objects.configEntry,
+        test_objects.config_entry,
         test_objects.entities.add_entities_callback,
     )
 
@@ -78,7 +78,7 @@ async def execute_and_get_port_entity(
 
     await async_setup_entry(
         test_objects.hass,
-        test_objects.configEntry,
+        test_objects.config_entry,
         test_objects.entities.add_entities_callback,
     )
 
@@ -96,7 +96,6 @@ def setup_entity_mocks(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 
-    mocker.patch.object(ConfigEntry, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     write_ha_mock = mocker.patch.object(
         Entity, "async_write_ha_state", return_value=None
@@ -120,9 +119,15 @@ def setup_entity_mocks(mocker: MockFixture):
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
 
-    config_entry = ConfigEntry()
-    config_entry.entry_id = ENTRY_ID
-    config_entry.data = {CONF_EMAIL: ENTRY_ID}
+    config_entry = ConfigEntry(
+        entry_id=ENTRY_ID,
+        data={CONF_EMAIL: ENTRY_ID},
+        domain=DOMAIN,
+        minor_version=0,
+        source="",
+        title="",
+        version=0,
+    )
 
     entities = EntitiesTracker()
 
@@ -156,7 +161,7 @@ class ACTestObjects:
     def __init__(
         self,
         hass,
-        configEntry,
+        config_entry,
         entities,
         ac_infinity,
         set_mock,
@@ -167,7 +172,7 @@ class ACTestObjects:
         options_flow,
     ) -> None:
         self.hass: HomeAssistant = hass
-        self.configEntry: ConfigEntry = configEntry
+        self.config_entry: ConfigEntry = config_entry
         self.entities: EntitiesTracker = entities
         self.ac_infinity: ACInfinity = ac_infinity
         self.set_mock: MockType = set_mock

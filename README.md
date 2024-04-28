@@ -19,7 +19,7 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro
 - Controller 69 Pro+
 
-This integration is not compatible with bluetooth only devices such as Controller 67, as they do not sync to the UIS Cloud
+This integration requires the controller to be connected to wifi, as it utilizes the UIS cloud to sync data. Bluetooth only devices such as Controller 67, or UIS controllers running bluetooth only mode, are not compatible with this integration as they do not sync data to the UIS Cloud
 
 ## Installation
 

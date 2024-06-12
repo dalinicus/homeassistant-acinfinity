@@ -11,21 +11,23 @@ from homeassistant.core import HomeAssistant, ServiceRegistry
 from homeassistant.helpers.entity import Entity
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity import (
+from custom_components.ac_infinity.config_flow import OptionsFlow
+from custom_components.ac_infinity.const import DOMAIN
+from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntity,
     ACInfinityPortEntity,
+    ACInfinityService,
 )
-from custom_components.ac_infinity.ac_infinity import ACInfinity
-from custom_components.ac_infinity.config_flow import OptionsFlow
-from custom_components.ac_infinity.const import DOMAIN
 from tests.data_models import (
-    DEVICE_INFO_DATA,
-    DEVICE_SETTINGS,
+    CONTROLLER_PROPERTIES_DATA,
+    CONTROLLER_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
     PASSWORD,
+    PORT_PROPERTIES_DATA,
+    PORT_SETTINGS_DATA,
 )
 
 MockType = Union[
@@ -46,6 +48,10 @@ class EntitiesTracker:
     ):
         self._added_entities = new_entities
 
+    @property
+    def added_entities(self):
+        return self._added_entities
+
 
 async def execute_and_get_controller_entity(
     setup_fixture, async_setup_entry, property_key: str
@@ -60,12 +66,14 @@ async def execute_and_get_controller_entity(
 
     found = [
         sensor
-        for sensor in test_objects.entities._added_entities
+        for sensor in test_objects.entities.added_entities
         if property_key in sensor.unique_id
     ]
     assert len(found) == 1
+    entity = found[0]
 
-    return found[0]
+    assert isinstance(entity, ACInfinityControllerEntity)
+    return entity
 
 
 async def execute_and_get_port_entity(
@@ -83,13 +91,15 @@ async def execute_and_get_port_entity(
     )
 
     found = [
-        sensor
-        for sensor in test_objects.entities._added_entities
-        if sensor.unique_id.endswith(data_key) and f"port_{port}" in sensor.unique_id
+        entity
+        for entity in test_objects.entities.added_entities
+        if entity.unique_id.endswith(data_key) and f"port_{port}" in entity.unique_id
     ]
     assert len(found) == 1
+    entity = found[0]
 
-    return found[0]
+    assert isinstance(entity, ACInfinityPortEntity)
+    return entity
 
 
 def setup_entity_mocks(mocker: MockFixture):
@@ -102,16 +112,26 @@ def setup_entity_mocks(mocker: MockFixture):
     )
 
     hass = HomeAssistant("/path")
-    ac_infinity = ACInfinity(EMAIL, PASSWORD)
-    ac_infinity._devices = DEVICE_INFO_DATA
-    ac_infinity._port_settings = DEVICE_SETTINGS
+    ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+
+    ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+    ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+    ac_infinity._port_properties = PORT_PROPERTIES_DATA
+    ac_infinity._port_settings = PORT_SETTINGS_DATA
+
     coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
 
-    set_mock = mocker.patch.object(
-        ac_infinity, "set_device_port_setting", return_value=future
+    port_set_mock = mocker.patch.object(
+        ac_infinity, "update_port_setting", return_value=future
     )
-    sets_mock = mocker.patch.object(
-        ac_infinity, "set_device_port_settings", return_value=future
+    port_sets_mock = mocker.patch.object(
+        ac_infinity, "update_port_settings", return_value=future
+    )
+    controller_set_mock = mocker.patch.object(
+        ac_infinity, "update_controller_setting", return_value=future
+    )
+    controller_sets_mock = mocker.patch.object(
+        ac_infinity, "update_controller_settings", return_value=future
     )
     refresh_mock = mocker.patch.object(
         coordinator, "async_request_refresh", return_value=future
@@ -127,6 +147,8 @@ def setup_entity_mocks(mocker: MockFixture):
         source="",
         title="",
         version=0,
+        unique_id=None,
+        options=None,
     )
 
     entities = EntitiesTracker()
@@ -148,8 +170,10 @@ def setup_entity_mocks(mocker: MockFixture):
         config_entry,
         entities,
         ac_infinity,
-        set_mock,
-        sets_mock,
+        controller_set_mock,
+        controller_sets_mock,
+        port_set_mock,
+        port_sets_mock,
         write_ha_mock,
         coordinator,
         refresh_mock,
@@ -164,8 +188,10 @@ class ACTestObjects:
         config_entry,
         entities,
         ac_infinity,
-        set_mock,
-        sets_mock,
+        controller_set_mock,
+        controller_sets_mock,
+        port_set_mock,
+        port_sets_mock,
         write_ha_mock,
         coordinator,
         refresh_mock,
@@ -174,9 +200,11 @@ class ACTestObjects:
         self.hass: HomeAssistant = hass
         self.config_entry: ConfigEntry = config_entry
         self.entities: EntitiesTracker = entities
-        self.ac_infinity: ACInfinity = ac_infinity
-        self.set_mock: MockType = set_mock
-        self.sets_mock: MockType = sets_mock
+        self.ac_infinity: ACInfinityService = ac_infinity
+        self.controller_set_mock: MockType = controller_set_mock
+        self.controller_sets_mock: MockType = controller_sets_mock
+        self.port_set_mock: MockType = port_set_mock
+        self.port_sets_mock: MockType = port_sets_mock
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
         self.refresh_mock: MockType = refresh_mock

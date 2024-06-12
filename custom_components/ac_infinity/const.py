@@ -17,55 +17,110 @@ CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
 DEFAULT_POLLING_INTERVAL = 10
 
-# devInfoListAll ReadOnly Device Fields
-PROPERTY_KEY_DEVICE_ID = "devId"
-PROPERTY_KEY_DEVICE_NAME = "devName"
-PROPERTY_KEY_MAC_ADDR = "devMacAddr"
-PROPERTY_KEY_DEVICE_INFO = "deviceInfo"
-PROPERTY_KEY_PORTS = "ports"
-PROPERTY_KEY_HW_VERSION = "hardwareVersion"
-PROPERTY_KEY_SW_VERSION = "firmwareVersion"
-PROPERTY_KEY_DEVICE_TYPE = "devType"
-PROPERTY_PORT_KEY_PORT = "port"
-PROPERTY_PORT_KEY_NAME = "portName"
 
-# devInfoListAll Sensor State Fields
-SENSOR_KEY_TEMPERATURE = "temperature"
-SENSOR_KEY_HUMIDITY = "humidity"
-SENSOR_KEY_VPD = "vpdnums"
-SENSOR_PORT_KEY_SPEAK = "speak"
-SENSOR_PORT_KEY_ONLINE = "online"
+# noinspection SpellCheckingInspection
+class ControllerPropertyKey:
+    # /api/dev/devInfoListAll
+    DEVICE_ID = "devId"
+    DEVICE_NAME = "devName"
+    MAC_ADDR = "devMacAddr"
+    DEVICE_INFO = "deviceInfo"
+    PORTS = "ports"
+    HW_VERSION = "hardwareVersion"
+    SW_VERSION = "firmwareVersion"
+    DEVICE_TYPE = "devType"
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
+    VPD = "vpdnums"
 
-# getdevModeSettingsList Sensor Fields
-SENSOR_SETTING_KEY_SURPLUS = "surplus"
 
-# getdevModeSettingList Setting Fields
-SETTING_KEY_ON_SPEED = "onSpead"
-SETTING_KEY_OFF_SPEED = "offSpead"
-SETTING_KEY_AT_TYPE = "atType"
-SETTING_KEY_SCHEDULED_START_TIME = "schedStartTime"
-SETTING_KEY_SCHEDULED_END_TIME = "schedEndtTime"
-SETTING_KEY_TIMER_DURATION_TO_ON = "acitveTimerOn"
-SETTING_KEY_TIMER_DURATION_TO_OFF = "acitveTimerOff"
-SETTING_KEY_CYCLE_DURATION_ON = "activeCycleOn"
-SETTING_KEY_CYCLE_DURATION_OFF = "activeCycleOff"
-SETTING_KEY_VPD_HIGH_ENABLED = "activeHtVpd"
-SETTING_KEY_VPD_HIGH_TRIGGER = "activeHtVpdNums"
-SETTING_KEY_VPD_LOW_ENABLED = "activeLtVpd"
-SETTING_KEY_VPD_LOW_TRIGGER = "activeLtVpdNums"
-SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER = "devHt"
-SETTING_KEY_AUTO_TEMP_HIGH_TRIGGER_F = "devHtf"
-SETTING_KEY_AUTO_TEMP_HIGH_ENABLED = "activeHt"
-SETTING_KEY_AUTO_HUMIDITY_HIGH_TRIGGER = "devHh"
-SETTING_KEY_AUTO_HUMIDITY_HIGH_ENABLED = "activeHh"
-SETTING_KEY_AUTO_TEMP_LOW_TRIGGER = "devLt"
-SETTING_KEY_AUTO_TEMP_LOW_TRIGGER_F = "devLtf"
-SETTING_KEY_AUTO_TEMP_LOW_ENABLED = "activeLt"
-SETTING_KEY_AUTO_HUMIDITY_LOW_TRIGGER = "devLh"
-SETTING_KEY_AUTO_HUMIDITY_LOW_ENABLED = "activeLh"
-SETTING_KEY_TARGET_HUMIDITY_SWITCH = "targetHumiSwitch"
-SETTING_KEY_TARGET_TEMPERATURE_SWITCH = "targetTSwitch"
-SETTING_KEY_TARGET_VPD_SWITCH = "targetVpdSwitch"
+# noinspection SpellCheckingInspection
+class PortPropertyKey:
+    # /api/dev/devInfoListAll
+    PORT = "port"
+    NAME = "portName"
+    SPEAK = "speak"
+    ONLINE = "online"
+
+
+# noinspection SpellCheckingInspection
+class ControllerSettingKey:
+    # /api/dev/getDevSetting
+    # /api/dev/updateAdvSetting
+    TEMP_UNIT = "devCompany"
+    CALIBRATE_TEMP = "devCt"
+    CALIBRATE_TEMP_F = "devCth"
+    CALIBRATE_HUMIDITY = "devCh"
+    VPD_LEAF_TEMP_OFFSET = "vpdCt"
+    VPD_LEAF_TEMP_OFFSET_F = "vpdCth"
+    CALIBRATION_TIME = "calibrationTime"
+    SENSOR_SETTING = "sensorSetting"
+    SENSOR_TRANS_BUFF = "sensorTransBuff"
+    OTA_UPDATING = "otaUpdating"
+    SUB_DEVICE_ID = "subDeviceId"
+    SUB_DEVICE_TYPE = "subDeviceType"
+    SUPPORT_OTA = "supportOta"
+    SET_ID = "setId"
+    DEV_MAC_ADDR = "devMacAddr"
+    DEV_NAME = "devName"
+    PORT_RESISTANCE = "portResistance"
+    DEV_TIME_ZONE = "devTimeZone"
+    PORT_PARAM_DATA = "portParamData"
+    SUB_DEVICE_VERSION = "subDeviceVersion"
+    SEC_FUC_REPORT_TIME = "secFucReportTime"
+    UPDATE_ALL_PORT = "updateAllPort"
+    SENSOR_TRANS_BUFF_STR = "sensorTransBuffStr"
+    SENSOR_SETTING_STR = "sensorSettingStr"
+    SENSOR_ONE_TYPE = "sensorOneType"
+    IS_SHARE = "isShare"
+    TARGET_VPD_SWITCH = "targetVpdSwitch"
+    SENSOR_TWO_TYPE = "sensorTwoType"
+    PARAM_SENSORS = "paramSensors"
+    ZONE_SENSOR_TYPE = "zoneSensorType"
+    DEV_ID = "devId"
+
+
+# noinspection SpellCheckingInspection
+class PortSettingKey:
+    # /api/dev/getdevModeSettingsList
+    # /api/dev/addDevMode
+    DEV_ID = "devId"
+    MODE_SET_ID = "modeSetid"
+    SURPLUS = "surplus"
+    ON_SPEED = "onSpead"
+    OFF_SPEED = "offSpead"
+    AT_TYPE = "atType"
+    SCHEDULED_START_TIME = "schedStartTime"
+    SCHEDULED_END_TIME = "schedEndtTime"
+    TIMER_DURATION_TO_ON = "acitveTimerOn"
+    TIMER_DURATION_TO_OFF = "acitveTimerOff"
+    CYCLE_DURATION_ON = "activeCycleOn"
+    CYCLE_DURATION_OFF = "activeCycleOff"
+    VPD_HIGH_ENABLED = "activeHtVpd"
+    VPD_HIGH_TRIGGER = "activeHtVpdNums"
+    VPD_LOW_ENABLED = "activeLtVpd"
+    VPD_LOW_TRIGGER = "activeLtVpdNums"
+    AUTO_TEMP_HIGH_TRIGGER = "devHt"
+    AUTO_TEMP_HIGH_TRIGGER_F = "devHtf"
+    AUTO_TEMP_HIGH_ENABLED = "activeHt"
+    AUTO_HUMIDITY_HIGH_TRIGGER = "devHh"
+    AUTO_HUMIDITY_HIGH_ENABLED = "activeHh"
+    AUTO_TEMP_LOW_TRIGGER = "devLt"
+    AUTO_TEMP_LOW_TRIGGER_F = "devLtf"
+    AUTO_TEMP_LOW_ENABLED = "activeLt"
+    AUTO_HUMIDITY_LOW_TRIGGER = "devLh"
+    AUTO_HUMIDITY_LOW_ENABLED = "activeLh"
+    TARGET_HUMIDITY_SWITCH = "targetHumiSwitch"
+    TARGET_TEMPERATURE_SWITCH = "targetTSwitch"
+    TARGET_VPD_SWITCH = "targetVpdSwitch"
+    EC_OR_TDS = "ecOrTds"
+    VPD_STATUS = "vpdstatus"
+    VPD_NUMS = "vpdnums"
+    MASTER_PORT = "masterPort"
+    DEVICE_MAC_ADDR = "devMacAddr"
+    DEV_SETTING = "devSetting"
+    IPC_SETTING = "ipcSetting"
+
 
 # Schedules are not enabled or disabled by Booleans,
 # but rather disabled when schedule time is set to 65535

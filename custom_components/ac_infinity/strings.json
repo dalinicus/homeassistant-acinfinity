@@ -87,6 +87,15 @@
       },
       "auto_mode_temp_high_trigger": {
         "name": "Temperature High Trigger"
+      },
+      "temperature_calibration": {
+        "name": "Temperature Calibration"
+      },
+      "humidity_calibration": {
+        "name": "Humidity Calibration"
+      },
+      "vpd_leaf_temperature_offset" : {
+        "name": "VPD Leaf Temperature Offset"
       }
     },
     "select": {

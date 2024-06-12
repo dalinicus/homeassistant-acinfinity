@@ -5,26 +5,33 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.ac_infinity import (
+from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
+from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
+    ACInfinityEntity,
+    ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
 )
-from custom_components.ac_infinity.ac_infinity import (
-    ACInfinityPort,
-)
-from custom_components.ac_infinity.const import DOMAIN, SETTING_KEY_AT_TYPE
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class ACInfinityPortSelectEntityDescription(
-    SelectEntityDescription, ACInfinityPortReadWriteMixin
-):
+class ACInfinitySelectEntityDescription(SelectEntityDescription):
     """Describes ACInfinity Select Entities."""
+
+    key: str
+    translation_key: str | None
+    options: list[str] | None
+
+
+@dataclass
+class ACInfinityPortSelectEntityDescription(
+    ACInfinitySelectEntityDescription, ACInfinityPortReadWriteMixin
+):
+    """Describes ACInfinity Select Port Entities."""
 
 
 MODE_OPTIONS = [
@@ -38,29 +45,36 @@ MODE_OPTIONS = [
     "VPD",
 ]
 
+
+def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
+    return MODE_OPTIONS[
+        # data is 1 based.  Adjust to 0 based enum by subtracting 1
+        entity.ac_infinity.get_port_setting(
+            port.controller.device_id, port.port_index, PortSettingKey.AT_TYPE
+        )
+        - 1
+    ]
+
+
+def __set_value_fn_active_mode(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        PortSettingKey.AT_TYPE,
+        # data is 1 based.  Adjust from 0 based enum by adding 1
+        MODE_OPTIONS.index(value) + 1,
+    )
+
+
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
-        key=SETTING_KEY_AT_TYPE,
+        key=PortSettingKey.AT_TYPE,
         translation_key="active_mode",
         options=MODE_OPTIONS,
-        get_value_fn=lambda ac_infinity, port: (
-            MODE_OPTIONS[
-                # data is 1 based.  Adjust to 0 based enum by subtracting 1
-                ac_infinity.get_device_port_setting(
-                    port.parent_device_id, port.port_id, SETTING_KEY_AT_TYPE
-                )
-                - 1
-            ]
-        ),
-        set_value_fn=lambda ac_infinity, port, value: (
-            ac_infinity.set_device_port_setting(
-                port.parent_device_id,
-                port.port_id,
-                SETTING_KEY_AT_TYPE,
-                # data is 1 based.  Adjust from 0 based enum by adding 1
-                MODE_OPTIONS.index(value) + 1,
-            )
-        ),
+        get_value_fn=__get_value_fn_active_mode,
+        set_value_fn=__set_value_fn_active_mode,
     )
 ]
 
@@ -79,7 +93,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
+        return self.entity_description.get_value_fn(self, self.port)
 
     async def async_select_option(self, option: str) -> None:
         _LOGGER.info(
@@ -87,24 +101,24 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
             self.unique_id,
             option,
         )
-        await self.entity_description.set_value_fn(self.ac_infinity, self.port, option)
+        await self.entity_description.set_value_fn(self, self.port, option)
         await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
+    hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
-    """Setup the AC Infinity Platform."""
+    """Set up the AC Infinity Platform."""
 
-    coordintator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordintator.ac_infinity.get_all_device_meta_data()
+    controllers = coordinator.ac_infinity.get_all_controller_properties()
 
     entities = []
     for controller in controllers:
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortSelectEntity(coordintator, description, port)
+                entity = ACInfinityPortSelectEntity(coordinator, description, port)
                 entities.append(entity)
                 _LOGGER.info(
                     'Initializing entity "%s" for platform "%s".',

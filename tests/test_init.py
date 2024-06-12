@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import Future
+from unittest.mock import AsyncMock
 
 import pytest
 from homeassistant.config_entries import ConfigEntries, ConfigEntry
@@ -13,9 +14,9 @@ from custom_components.ac_infinity import (
     async_setup_entry,
     async_unload_entry,
 )
-from custom_components.ac_infinity.ac_infinity import ACInfinity
 from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.const import DOMAIN, PLATFORMS
+from custom_components.ac_infinity.core import ACInfinityService
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -27,10 +28,10 @@ def setup(mocker: MockFixture):
     future: Future = asyncio.Future()
     future.set_result(None)
 
-    boolFuture: Future = asyncio.Future()
-    boolFuture.set_result(True)
+    bool_future: Future = asyncio.Future()
+    bool_future.set_result(True)
 
-    mocker.patch.object(ACInfinity, "update", return_value=future)
+    mocker.patch.object(ACInfinityService, "refresh", return_value=future)
     mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     mocker.patch.object(ConfigEntries, "__init__", return_value=None)
@@ -38,7 +39,7 @@ def setup(mocker: MockFixture):
         ConfigEntries, "async_forward_entry_setups", return_value=future
     )
     mocker.patch.object(
-        ConfigEntries, "async_unload_platforms", return_value=boolFuture
+        ConfigEntries, "async_unload_platforms", return_value=bool_future
     )
 
     config_entry = ConfigEntry(
@@ -49,10 +50,12 @@ def setup(mocker: MockFixture):
         source="",
         title="",
         version=0,
+        options=None,
+        unique_id=None,
     )
 
     hass = HomeAssistant("/path")
-    hass.config_entries = ConfigEntries()
+    hass.config_entries = ConfigEntries(hass, {})
     hass.data = {}
 
     return hass, config_entry
@@ -76,6 +79,8 @@ class TestInit:
         result = await async_setup_entry(hass, config_entry)
 
         assert result
+
+        assert isinstance(hass.config_entries.async_forward_entry_setups, AsyncMock)
         hass.config_entries.async_forward_entry_setups.assert_called_with(
             config_entry, PLATFORMS
         )
@@ -84,10 +89,12 @@ class TestInit:
         """When unloading, all platforms should be unloaded"""
         hass: HomeAssistant
         (hass, config_entry) = setup
-        hass.data = {DOMAIN: {ENTRY_ID: ACInfinity(EMAIL, PASSWORD)}}
+        hass.data = {DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}}
         result = await async_unload_entry(hass, config_entry)
 
         assert result
+
+        assert isinstance(hass.config_entries.async_unload_platforms, AsyncMock)
         hass.config_entries.async_unload_platforms.assert_called_with(
             config_entry, PLATFORMS
         )
@@ -95,8 +102,8 @@ class TestInit:
     async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
         (hass, _) = setup
 
-        ac_infinity = ACInfinity(EMAIL, PASSWORD)
-        mocker.patch.object(ac_infinity, "update", side_effect=Exception("unit test"))
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        mocker.patch.object(ac_infinity, "refresh", side_effect=Exception("unit test"))
         coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()

@@ -11,15 +11,15 @@
 
 This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem.
 
-## Compatabiliy
+## Compatibility
 
 This integration is compatible with the following UIS Controllers
 
-- Controller 69
+- Controller 69 Wifi
 - Controller 69 Pro
 - Controller 69 Pro+
 
-This integration requires the controller to be connected to wifi, as it utilizes the UIS cloud to sync data. Bluetooth only devices such as Controller 67, or UIS controllers running bluetooth only mode, are not compatible with this integration as they do not sync data to the UIS Cloud
+This integration requires the controller be connected to Wifi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 
 ## Installation
 
@@ -63,11 +63,21 @@ Sensors will also be created for each ***PORT*** on a controller, even if no dev
 
 ![AC-Infinity](/images/ac-infinity-device.png)
 
-## Controls
+## Controller Settings
 
-This integration adds a number of controls to modify settings via the AC Infinity API.  The following controls will be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
+The following controls will be created for each UIS Controller attached to the configured account.
 
-Currently, controls can be added via the entities card.  The downside is that the controls will still be visible even if they are not applicable to the currently selected mode.  A custom lovelace card is in the works to show and hide controls based on selected mode.  ***Stay tuned!***
+- **Calibrate Temperature**: Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
+- **Calibrate Humidity**: Adjusts the humidity reading from the sensor probe, up to ±10%
+- **VPD Leaf Temperature Offset**: Adjusts the leaf temperature in VPD calculation, up to ±10C or ±20F
+
+Note: If the preferred unit of temperature is changed on the UIS Controller, a reboot of Home Assistant is required to
+update the user interface controls with the correct min/max values.  That being said, these fields should still continue
+to function correctly when interfacing with the UIS API, even without a reboot.
+
+## Device Settings
+
+The following controls will be created for each ***PORT*** on each UIS controller, even if no device is attached to a given port.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
 The mode can be changed via the mode control.  The following documentation is split into controls relevant to each mode.
 - **On**: Device is always set to the on speed
@@ -81,7 +91,6 @@ The mode can be changed via the mode control.  The following documentation is sp
 
 ### On Mode
 - **On Speed**: The speed/intensity of the device while in on mode
-
 
 ### Off Mode
 - **Off Speed**: The speed/intensity of the device while in off mode

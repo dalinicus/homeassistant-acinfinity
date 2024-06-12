@@ -18,118 +18,130 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from custom_components.ac_infinity import (
+from custom_components.ac_infinity.core import (
+    ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
+    ACInfinityEntity,
+    ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
-)
-from custom_components.ac_infinity.ac_infinity import (
-    ACInfinityController,
-    ACInfinityPort,
+    get_value_fn_port_property_default,
 )
 
 from .const import (
     DOMAIN,
-    SENSOR_KEY_HUMIDITY,
-    SENSOR_KEY_TEMPERATURE,
-    SENSOR_KEY_VPD,
-    SENSOR_PORT_KEY_SPEAK,
-    SENSOR_SETTING_KEY_SURPLUS,
+    ControllerPropertyKey,
+    PortPropertyKey,
+    PortSettingKey,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class ACInfinitySensorEntityDescription(SensorEntityDescription):
+    """Describes ACInfinity Number Sensor Entities."""
+
+    key: str
+    icon: str | None
+    translation_key: str | None
+    device_class: SensorDeviceClass | None
+    native_unit_of_measurement: str | None
+    state_class: SensorStateClass | str | None
+    suggested_unit_of_measurement: str | None
+
+
+@dataclass
 class ACInfinityControllerSensorEntityDescription(
-    SensorEntityDescription, ACInfinityControllerReadOnlyMixin
+    ACInfinitySensorEntityDescription, ACInfinityControllerReadOnlyMixin
 ):
     """Describes ACInfinity Number Sensor Entities."""
 
 
 @dataclass
 class ACInfinityPortSensorEntityDescription(
-    SensorEntityDescription, ACInfinityPortReadOnlyMixin
+    ACInfinitySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Number Sensor Entities."""
 
 
+def __get_value_fn_floating_point_as_int(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    # value stored as an integer, but represents a 2 digit precision float
+    return (
+        entity.ac_infinity.get_controller_property(
+            controller.device_id, entity.entity_description.key
+        )
+        / 100
+    )
+
+
+def __get_value_fn_port_setting_default_zero(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
+    return entity.ac_infinity.get_port_setting(
+        port.controller.device_id, port.port_index, PortSettingKey.SURPLUS, 0
+    )
+
+
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
-        key=SENSOR_KEY_TEMPERATURE,
+        key=ControllerPropertyKey.TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon=None,  # default
         translation_key="temperature",
-        get_value_fn=lambda ac_infinity, controller: (
-            # value stored as an integer, but represents a 2 digit precision float
-            ac_infinity.get_device_property(
-                controller.device_id, SENSOR_KEY_TEMPERATURE
-            )
-            / 100
-        ),
+        suggested_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
-        key=SENSOR_KEY_HUMIDITY,
+        key=ControllerPropertyKey.HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         icon=None,  # default
         translation_key="humidity",
-        get_value_fn=lambda ac_infinity, controller: (
-            # value stored as an integer, but represents a 2 digit precision float
-            ac_infinity.get_device_property(controller.device_id, SENSOR_KEY_HUMIDITY)
-            / 100
-        ),
+        suggested_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
-        key=SENSOR_KEY_VPD,
+        key=ControllerPropertyKey.VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
         translation_key="vapor_pressure_deficit",
-        get_value_fn=lambda ac_infinity, controller: (
-            # value stored as an integer, but represents a 2 digit precision float
-            ac_infinity.get_device_property(controller.device_id, SENSOR_KEY_VPD)
-            / 100
-        ),
+        get_value_fn=__get_value_fn_floating_point_as_int,
     ),
 ]
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
     ACInfinityPortSensorEntityDescription(
-        key=SENSOR_PORT_KEY_SPEAK,
+        key=PortPropertyKey.SPEAK,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=None,  # no units / bare integer value
         icon=None,  # default
         translation_key="current_power",
-        get_value_fn=lambda ac_infinity, port: (
-            ac_infinity.get_device_port_property(
-                port.parent_device_id, port.port_id, SENSOR_PORT_KEY_SPEAK
-            )
-        ),
+        suggested_unit_of_measurement=None,
+        get_value_fn=get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
-        key=SENSOR_SETTING_KEY_SURPLUS,
+        key=PortSettingKey.SURPLUS,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         icon=None,  # default
         translation_key="remaining_time",
-        get_value_fn=lambda ac_infinity, port: (
-            ac_infinity.get_device_port_setting(
-                port.parent_device_id, port.port_id, SENSOR_SETTING_KEY_SURPLUS
-            )
-            or 0
-        ),
+        suggested_unit_of_measurement=None,
+        state_class=None,
+        get_value_fn=__get_value_fn_port_setting_default_zero,
     ),
 ]
 
@@ -148,7 +160,7 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
-        return self.entity_description.get_value_fn(self.ac_infinity, self.controller)
+        return self.entity_description.get_value_fn(self, self.controller)
 
 
 class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
@@ -165,17 +177,17 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
-        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
+        return self.entity_description.get_value_fn(self, self.port)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
+    hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
-    """Setup the AC Infinity Platform."""
+    """Set up the AC Infinity Platform."""
 
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_device_meta_data()
+    controllers = coordinator.ac_infinity.get_all_controller_properties()
 
     entities = []
     for controller in controllers:

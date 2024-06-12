@@ -12,12 +12,12 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
-
-from .client import (
+from custom_components.ac_infinity.client import (
     ACInfinityClient,
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
+
 from .const import (
     CONF_POLLING_INTERVAL,
     CONF_UPDATE_PASSWORD,
@@ -53,12 +53,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
 
         errors: dict[str, str] = {}
         if user_input is not None:
+            # noinspection PyBroadException
             try:
                 client = ACInfinityClient(
                     HOST, user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
                 )
                 await client.login()
-                _ = await client.get_all_device_info()
+                _ = await client.get_devices_list_all()
 
             except ACInfinityClientCannotConnect:
                 errors["base"] = "cannot_connect"
@@ -102,6 +103,7 @@ class OptionsFlow(config_entries.OptionsFlow):
 
             if password:
                 email = self.config_entry.data[CONF_EMAIL]
+                # noinspection PyBroadException
                 try:
                     client = ACInfinityClient(
                         HOST,
@@ -109,7 +111,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                         password,
                     )
                     await client.login()
-                    _ = await client.get_all_device_info()
+                    _ = await client.get_devices_list_all()
                 except ACInfinityClientCannotConnect:
                     errors[CONF_UPDATE_PASSWORD] = "cannot_connect"
                 except ACInfinityClientInvalidAuth:

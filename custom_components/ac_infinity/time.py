@@ -6,21 +6,18 @@ from datetime import time
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.ac_infinity import (
-    ACInfinityDataUpdateCoordinator,
-    ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin,
-)
-from custom_components.ac_infinity.ac_infinity import (
-    ACInfinityPort,
-)
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SCHEDULE_DISABLED_VALUE,
-    SETTING_KEY_SCHEDULED_END_TIME,
-    SETTING_KEY_SCHEDULED_START_TIME,
+    PortSettingKey,
+)
+from custom_components.ac_infinity.core import (
+    ACInfinityDataUpdateCoordinator,
+    ACInfinityEntity,
+    ACInfinityPort,
+    ACInfinityPortEntity,
+    ACInfinityPortReadWriteMixin,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,62 +33,66 @@ def __get_time_from_total_minutes(total_minutes: int) -> time | None:
     return None
 
 
-def __get_total_minutes_from_time(time: time):
+def __get_total_minutes_from_time(source_time: time):
     """UIS stores a schedule value as minutes from midnight. Midnight will result in a value of 0.
     If time is None, 65535 will be returned as it represents a value of disabled.
     """
-    return SCHEDULE_DISABLED_VALUE if time is None else (time.hour * 60) + time.minute
+    return (
+        SCHEDULE_DISABLED_VALUE
+        if source_time is None
+        else (source_time.hour * 60) + source_time.minute
+    )
+
+
+@dataclass
+class ACInfinityTimeEntityDescription(TimeEntityDescription):
+    """Describes ACInfinity Time Entities."""
+
+    key: str
+    icon: str | None
+    translation_key: str | None
 
 
 @dataclass
 class ACInfinityPortTimeEntityDescription(
-    TimeEntityDescription, ACInfinityPortReadWriteMixin
+    ACInfinityTimeEntityDescription, ACInfinityPortReadWriteMixin
 ):
     """Describes ACInfinity Time Entities."""
 
 
+def __get_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort):
+    return __get_time_from_total_minutes(
+        entity.ac_infinity.get_port_setting(
+            port.controller.device_id,
+            port.port_index,
+            entity.entity_description.key,
+        )
+    )
+
+
+def __set_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort, value: time):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        entity.entity_description.key,
+        __get_total_minutes_from_time(value),
+    )
+
+
 PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
     ACInfinityPortTimeEntityDescription(
-        key=SETTING_KEY_SCHEDULED_START_TIME,
+        key=PortSettingKey.SCHEDULED_START_TIME,
         icon=None,  # default
         translation_key="schedule_mode_on_time",
-        get_value_fn=lambda ac_infinity, port: (
-            __get_time_from_total_minutes(
-                ac_infinity.get_device_port_setting(
-                    port.parent_device_id,
-                    port.port_id,
-                    SETTING_KEY_SCHEDULED_START_TIME,
-                )
-            )
-        ),
-        set_value_fn=lambda ac_infinity, port, value: (
-            ac_infinity.set_device_port_setting(
-                port.parent_device_id,
-                port.port_id,
-                SETTING_KEY_SCHEDULED_START_TIME,
-                __get_total_minutes_from_time(value),
-            )
-        ),
+        get_value_fn=__get_value_fn_time,
+        set_value_fn=__set_value_fn_time,
     ),
     ACInfinityPortTimeEntityDescription(
-        key=SETTING_KEY_SCHEDULED_END_TIME,
+        key=PortSettingKey.SCHEDULED_END_TIME,
         icon=None,  # default
         translation_key="schedule_mode_off_time",
-        get_value_fn=lambda ac_infinity, port: (
-            __get_time_from_total_minutes(
-                ac_infinity.get_device_port_setting(
-                    port.parent_device_id, port.port_id, SETTING_KEY_SCHEDULED_END_TIME
-                )
-            )
-        ),
-        set_value_fn=lambda ac_infinity, port, value: (
-            ac_infinity.set_device_port_setting(
-                port.parent_device_id,
-                port.port_id,
-                SETTING_KEY_SCHEDULED_END_TIME,
-                __get_total_minutes_from_time(value),
-            )
-        ),
+        get_value_fn=__get_value_fn_time,
+        set_value_fn=__set_value_fn_time,
     ),
 ]
 
@@ -110,24 +111,24 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
 
     @property
     def native_value(self) -> time | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
+        return self.entity_description.get_value_fn(self, self.port)
 
     async def async_set_value(self, value: time) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
-        await self.entity_description.set_value_fn(self.ac_infinity, self.port, value)
+        await self.entity_description.set_value_fn(self, self.port, value)
         await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
+    hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
-    """Setup the AC Infinity Platform."""
+    """Set up the AC Infinity Platform."""
 
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
 
-    devices = coordinator.ac_infinity.get_all_device_meta_data()
+    devices = coordinator.ac_infinity.get_all_controller_properties()
 
     entities = []
     for device in devices:

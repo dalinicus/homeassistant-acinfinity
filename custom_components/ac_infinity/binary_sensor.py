@@ -9,43 +9,51 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.ac_infinity import (
+from custom_components.ac_infinity.const import DOMAIN, PortPropertyKey
+
+from .core import (
     ACInfinityDataUpdateCoordinator,
+    ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
+    get_value_fn_port_property_default,
 )
-from custom_components.ac_infinity.const import DOMAIN, SENSOR_PORT_KEY_ONLINE
-
-from .ac_infinity import ACInfinityPort
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class ACInfinityPortBinarySensorEntityDescription(
-    BinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
-):
+class ACInfinityBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes ACInfinity Binary Sensor Entities."""
+
+    key: str
+    device_class: str | None
+    icon: str | None
+    translation_key: str | None
+
+
+@dataclass
+class ACInfinityPortBinarySensorEntityDescription(
+    ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
+):
+    """Describes ACInfinity Binary Sensor Port Entities."""
 
 
 PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
     ACInfinityPortBinarySensorEntityDescription(
-        key=SENSOR_PORT_KEY_ONLINE,
+        key=PortPropertyKey.ONLINE,
         device_class=BinarySensorDeviceClass.PLUG,
         icon="mdi:power",
         translation_key="port_online",
-        get_value_fn=lambda ac_infinity, port: (
-            ac_infinity.get_device_port_property(
-                port.parent_device_id, port.port_id, SENSOR_PORT_KEY_ONLINE
-            )
-        ),
+        get_value_fn=get_value_fn_port_property_default,
     )
 ]
 
 
 class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity):
+    """Represents a binary sensor associated with an AC Infinity controller port"""
+
     entity_description: ACInfinityPortBinarySensorEntityDescription
 
     def __init__(
@@ -54,22 +62,28 @@ class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity)
         description: ACInfinityPortBinarySensorEntityDescription,
         port: ACInfinityPort,
     ) -> None:
+        """
+        Args:
+            coordinator: data coordinator responsible for updating the value of the entity.
+            description: haas description used to initialize the entity.
+            port: port object the entity is bound to
+        """
         super().__init__(coordinator, port, description.key)
         self.entity_description = description
 
     @property
     def is_on(self) -> bool | None:
-        return self.entity_description.get_value_fn(self.ac_infinity, self.port)
+        """returns true if on, false or none if off"""
+        return self.entity_description.get_value_fn(self, self.port)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, config: ConfigEntry, add_entities_callback: AddEntitiesCallback
+    hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
-    """Setup the AC Infinity Platform."""
+    """Set Up the AC Infinity BinarySensor Platform."""
 
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
-
-    controllers = coordinator.ac_infinity.get_all_device_meta_data()
+    controllers = coordinator.ac_infinity.get_all_controller_properties()
 
     entities: list[ACInfinityPortBinarySensorEntity] = []
     for controller in controllers:

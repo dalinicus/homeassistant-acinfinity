@@ -10,9 +10,9 @@ from custom_components.ac_infinity.binary_sensor import (
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    SENSOR_PORT_KEY_ONLINE,
+    PortPropertyKey,
 )
-from custom_components.ac_infinity.sensor import ACInfinityPortSensorEntity
+from custom_components.ac_infinity.core import ACInfinityPortEntity
 from tests import (
     ACTestObjects,
     execute_and_get_port_entity,
@@ -44,13 +44,13 @@ class TestBinarySensors:
     async def test_async_setup_entry_plug_created_for_each_port(self, setup, port):
         """Sensor for device port connected is created on setup"""
 
-        sensor: ACInfinityPortSensorEntity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, SENSOR_PORT_KEY_ONLINE
+        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, PortPropertyKey.ONLINE
         )
 
         assert (
             sensor.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{SENSOR_PORT_KEY_ONLINE}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortPropertyKey.ONLINE}"
         )
         assert sensor.entity_description.device_class == BinarySensorDeviceClass.PLUG
         assert sensor.device_info is not None
@@ -64,14 +64,16 @@ class TestBinarySensors:
             (4, False),
         ],
     )
-    async def test_async_update_plug_value_Correct(self, setup, port, expected):
+    async def test_async_update_plug_value_correct(self, setup, port, expected):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        sensor: ACInfinityPortBinarySensorEntity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, SENSOR_PORT_KEY_ONLINE
+        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, PortPropertyKey.ONLINE
         )
         sensor._handle_coordinator_update()
 
+        assert isinstance(sensor, ACInfinityPortBinarySensorEntity)
         assert sensor.is_on == expected
+
         test_objects.write_ha_mock.assert_called()

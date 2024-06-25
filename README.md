@@ -25,7 +25,11 @@ This integration requires the controller be connected to Wifi, and thus is not c
 
 ### HACS
 
-Follow [this guide](https://hacs.xyz/docs/faq/custom_repositories/) to add this git repository as a custom HACS repository. Then install from HACS as normal.
+This integration is made available through the Home Assistant Community Store default feed.  Simply search for "AC Infinity" and install it directly from HACS.
+
+![HACS-Instal](/images/hacs-install.png)
+
+Please see the [official HACS documentation](https://hacs.xyz) for information on how to install and use HACS.
 
 ### Manual Installation
 

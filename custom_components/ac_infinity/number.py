@@ -1,4 +1,5 @@
 import logging
+import math
 from dataclasses import dataclass
 
 from homeassistant.components.number import (
@@ -214,6 +215,83 @@ def __set_value_fn_temp_auto_high(
         ],
     )
 
+def __get_value_fn_dynamic_transition_temp(entity: ACInfinityEntity, port: ACInfinityPort):
+    temp_unit = entity.ac_infinity.get_controller_setting(
+        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+    )
+
+    return entity.ac_infinity.get_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        PortSettingKey.DYNAMIC_TRANSITION_TEMP
+        if temp_unit > 0
+        else PortSettingKey.DYNAMIC_TRANSITION_TEMP_F,
+    )
+
+def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinityPort):
+    temp_unit = entity.ac_infinity.get_controller_setting(
+        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+    )
+
+    return entity.ac_infinity.get_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        PortSettingKey.DYNAMIC_BUFFER_TEMP
+        if temp_unit > 0
+        else PortSettingKey.DYNAMIC_BUFFER_TEMP_F,
+    )
+
+def __set_value_fn_dynamic_transition_temp(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
+    temp_unit = entity.ac_infinity.get_controller_setting(
+        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+    )
+
+    # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
+    # we need to put bounds on the value since the entity max values will still be 20 instead of 10
+    if temp_unit > 0 and value > 10:
+        value = 10
+
+    return entity.ac_infinity.update_port_settings(
+        port.controller.device_id,
+        port.port_index,
+        [
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, value),
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP_F, value * 2),
+        ]
+        if temp_unit > 0
+        else [
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, math.floor(value / 2)),
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP_F, value),
+        ],
+    )
+
+def __set_value_fn_dynamic_buffer_temp(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
+    temp_unit = entity.ac_infinity.get_controller_setting(
+        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+    )
+
+    # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
+    # we need to put bounds on the value since the entity max values will still be 20 instead of 10
+    if temp_unit > 0 and value > 10:
+        value = 10
+
+    return entity.ac_infinity.update_port_settings(
+        port.controller.device_id,
+        port.port_index,
+        [
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP, value),
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP_F, value * 2),
+        ]
+        if temp_unit > 0
+        else [
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP, math.floor(value / 2)),
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP_F, value),
+        ],
+    )
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
     ACInfinityControllerNumberEntityDescription(
@@ -414,6 +492,84 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=__set_value_fn_temp_auto_high,
     ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=20,
+        native_step=1,
+        icon="mdi:thermometer-plus",
+        translation_key="dynamic_transition_temp",
+        native_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_dynamic_transition_temp,
+        set_value_fn=__set_value_fn_dynamic_transition_temp,
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=10,
+        native_step=1,
+        icon="mdi:cloud-percent-outline",
+        translation_key="dynamic_transition_humidity",
+        native_unit_of_measurement=None,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_TRANSITION_VPD,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=1,
+        native_step=0.1,
+        icon="mdi:leaf",
+        translation_key="dynamic_transition_vpd",
+        native_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_vpd,
+        set_value_fn=__set_value_fn_vpd,
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_BUFFER_TEMP,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=20,
+        native_step=1,
+        icon="mdi:thermometer-plus",
+        translation_key="dynamic_buffer_temp",
+        native_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_dynamic_buffer_temp,
+        set_value_fn=__set_value_fn_dynamic_buffer_temp,
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_BUFFER_HUMIDITY,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=10,
+        native_step=1,
+        icon="mdi:cloud-percent-outline",
+        translation_key="dynamic_buffer_humidity",
+        native_unit_of_measurement=None,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
+    ),
+    ACInfinityPortNumberEntityDescription(
+        key=PortSettingKey.DYNAMIC_BUFFER_VPD,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=1,
+        native_step=0.1,
+        icon="mdi:leaf",
+        translation_key="dynamic_buffer_vpd",
+        native_unit_of_measurement=None,
+        get_value_fn=__get_value_fn_vpd,
+        set_value_fn=__set_value_fn_vpd,
+    ),
 ]
 
 
@@ -486,7 +642,7 @@ async def async_setup_entry(
                 description.key == ControllerSettingKey.CALIBRATE_TEMP
                 or ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
             ):
-                # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20C
+                # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
                 entity.entity_description.native_max_value = 10
 
@@ -499,6 +655,14 @@ async def async_setup_entry(
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
+
+                if temp_unit > 0 and (
+                        description.key == PortSettingKey.DYNAMIC_TRANSITION_TEMP
+                        or PortSettingKey.DYNAMIC_BUFFER_TEMP
+                ):
+                    # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
+                    entity.entity_description.native_max_value = 10
+
                 entities.append(entity)
                 _LOGGER.info(
                     'Initializing entity "%s" for platform "%s".',

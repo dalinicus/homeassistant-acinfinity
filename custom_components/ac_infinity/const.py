@@ -120,6 +120,15 @@ class PortSettingKey:
     DEVICE_MAC_ADDR = "devMacAddr"
     DEV_SETTING = "devSetting"
     IPC_SETTING = "ipcSetting"
+    DYNAMIC_RESPONSE_TYPE = "isFlag"
+    DYNAMIC_TRANSITION_TEMP = "devTt"
+    DYNAMIC_TRANSITION_TEMP_F = "devTth"
+    DYNAMIC_TRANSITION_HUMIDITY = "devTh"
+    DYNAMIC_TRANSITION_VPD = "vpdTransition"
+    DYNAMIC_BUFFER_TEMP = "devBt"
+    DYNAMIC_BUFFER_TEMP_F = "devBth"
+    DYNAMIC_BUFFER_HUMIDITY = "devBh"
+    DYNAMIC_BUFFER_VPD = "devBvpd"
 
 
 # Schedules are not enabled or disabled by Booleans,

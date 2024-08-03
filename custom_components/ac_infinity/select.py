@@ -45,6 +45,10 @@ MODE_OPTIONS = [
     "VPD",
 ]
 
+DYNAMIC_RESPONSE_OPTIONS = [
+    "Transition",
+    "Buffer"
+]
 
 def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return MODE_OPTIONS[
@@ -54,7 +58,6 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
         )
         - 1
     ]
-
 
 def __set_value_fn_active_mode(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
@@ -67,6 +70,24 @@ def __set_value_fn_active_mode(
         MODE_OPTIONS.index(value) + 1,
     )
 
+def __get_value_fn_dynamic_response_type(entity: ACInfinityEntity, port: ACInfinityPort):
+    return DYNAMIC_RESPONSE_OPTIONS[
+        entity.ac_infinity.get_port_setting(
+            port.controller.device_id, port.port_index, PortSettingKey.DYNAMIC_RESPONSE_TYPE
+        )
+    ]
+
+def __set_value_fn_dynamic_response_type(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        PortSettingKey.DYNAMIC_RESPONSE_TYPE,
+        DYNAMIC_RESPONSE_OPTIONS.index(value),
+    )
+
+
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
@@ -75,6 +96,13 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         options=MODE_OPTIONS,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+    ),
+    ACInfinityPortSelectEntityDescription(
+        key=PortSettingKey.DYNAMIC_RESPONSE_TYPE,
+        translation_key="dynamic_response_type",
+        options=DYNAMIC_RESPONSE_OPTIONS,
+        get_value_fn=__get_value_fn_dynamic_response_type,
+        set_value_fn=__set_value_fn_dynamic_response_type,
     )
 ]
 

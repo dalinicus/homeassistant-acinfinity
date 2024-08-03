@@ -11,7 +11,33 @@
 
 This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem.
 
-## Compatibility
+- [Compatibility](#compatibility)
+- [Installation](#installation)
+  - [HACS](#hacs)
+  - [Manual Installation](#manual-installation)
+- [Initial Setup](#initial-setup)
+  - [Additional Configuration](#additional-configuration)
+- [Entities](#entities)
+  - [Controller Sensors](#controller-sensors)
+  - [Device Sensors](#device-sensors)
+  - [Device Controls](#device-controls)
+    - [On Mode](#on-mode)
+    - [Off Mode](#off-mode)
+    - [Auto Mode](#auto-mode)
+    - [Timer to On Mode](#timer-to-on-mode)
+    - [Timer to Off Mode](#timer-to-off-mode)
+    - [Cycle Mode](#cycle-mode)
+    - [Schedule Mode](#schedule-mode)
+    - [VPD Mode](#vpd-mode)
+  - [Controller Settings](#controller-settings)
+    - [Sensor / VPD Calibration](#sensor--vpd-calibration)
+  - [Device Settings](#device-settings)
+    - [Level Status](#level-status)
+    - [Dynamic Response](#dynamic-response)
+      - [Transition Mode](#transition-mode)
+      - [Buffer Mode](#buffer-mode)
+
+# Compatibility
 
 This integration is compatible with the following UIS Controllers
 
@@ -21,9 +47,9 @@ This integration is compatible with the following UIS Controllers
 
 This integration requires the controller be connected to Wifi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 
-## Installation
+# Installation
 
-### HACS
+## HACS
 
 This integration is made available through the Home Assistant Community Store default feed.  Simply search for "AC Infinity" and install it directly from HACS.
 
@@ -31,15 +57,15 @@ This integration is made available through the Home Assistant Community Store de
 
 Please see the [official HACS documentation](https://hacs.xyz) for information on how to install and use HACS.
 
-### Manual Installation
+## Manual Installation
 
 Copy `custom_components/acinfinity` into your Home Assistant `$HA_HOME/config` directory, then restart Home Assistant
 
-## Initial Setup
+# Initial Setup
 Add an integration entry as normal from integration section of the home assistant settings.  You'll need the following configuration items
 
-- **Email**: The e-mail registered with your AC Infinity account.
-- **Password**: The password for this account.
+- `Email`: The e-mail registered with your AC Infinity account.
+- `Password`: The password for this account.
 
 ![Initial-Setup](/images/initial-setup.png)
 
@@ -47,94 +73,126 @@ Add an integration entry as normal from integration section of the home assistan
 
 After adding an integration entry, the following additional configurations can be modified via the configuration options dialog.
 
-- **Polling Interval (Seconds)**: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
-- **Update Password**: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
+- `Polling Interval (Seconds)`: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
+- `Update Password`: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
 
 ![Additional-Configuration](/images/additional-configuration.png)
 
-## Data Available
+# Entities
 
-This integration will create a device for each AC Infinity Controller on the configured user account. Each device will have the following sensors created.
+Controller entities will be created for each AC Infinity Controller on the configured user account.
 
-- Humidity
-- Air Temperature
-- Vaper Pressure Deficit (VPD)
+Device entities will be created for each ***PORT*** on each UIS controller, even if no device is attached to a given port.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
-Sensors will also be created for each ***PORT*** on a controller, even if no device is attached.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
+## Controller Sensors
+Read Only sensors reported from the controller
+- `Air Temperature`: The air temperature as reported by the air probe.
+- `Humidity`: The humidity as reported by the air probe.
+- `Vaper Pressure Deficit (VPD)`: Calculated VPD based on air probe temperature and humidity readings.
 
-- Status - Is there a device plugged in on that port
-- Power - Current Power supplied to the connected device
+## Device Sensors
+Read Only sensors reported from each device
+- `Status`: Di there a device plugged in on that port
+- `Power`: Current Power supplied to the connected device
 
 ![AC-Infinity](/images/ac-infinity-device.png)
 
+## Device Controls
+Read/Write controls that define if a device runs in an ON or OFF state.  Each control is associated to a mode, and is only relevant when the device is operating in that mode.
+
+The mode can be changed via the `Active Mode` control, which provides the following options.  
+- `On`: Device is always set to the on speed
+- `Off`: Device is always set to the off speed
+- `Auto`: Device toggled based on temperature and/or humidity triggers
+- `Timer to On`: Device is turned on after a set duration
+- `Timer to Off`: Device is turned off after a set duration
+- `Cycle`: Device is toggled after set intervals
+- `Schedule`: Device is toggled based on a schedule
+- `VPD`: Device is toggled based on VPD triggers
+
+See [Level Status](#level-status) for information on how to set the power level of devices while in an ON or OFF state
+
+### On Mode
+Device is always set to the on speed . This mode has no unique controls.
+
+### Off Mode
+Device is always set to the off speed . This mode has no unique controls.
+
+### Auto Mode
+Device toggled based on temperature and/or humidity triggers
+- `Auto High Temp Enabled`: Enable or disable high temp trigger while in Auto mode
+- `Auto High Temp Trigger`: If trigger is enabled, device will be turned on if temp exceeds configured value.
+- `Auto Low Temp Enabled`: Enable or disable low temp trigger while in Auto mode
+- `Auto Low Temp Trigger`: If trigger is enabled, device will be turned on if temp drops below configured value.
+- `Auto High Humidity Enabled`: Enable or disable high humidity trigger while in Auto mode
+- `Auto High Humidity Trigger`: If trigger is enabled, device will be turned on if humidity exceeds configured value.
+- `Auto Low Humidity Enabled`: Enable or disable low humidity trigger while in Auto mode
+- `Auto Low Humidity Trigger`: If trigger is enabled, device will be turned on if humidity drops below configured value.
+
+### Timer to On Mode
+Device is turned on after a set duration
+- `Minutes to On`: Device will be turned on after the configured number of minutes
+
+### Timer to Off Mode
+Device is turned off after a set duration
+- `Minutes to On`: Device will be turned off after the configured number of minutes
+
+### Cycle Mode
+Device is toggled after set intervals
+- `Cycle Minutes On`: The amount of minutes the device will stay in on mode before switching to off mode
+- `Cycle Minutes Off`: The amount of minutes the device will stay in off mode before switching to on mode
+
+### Schedule Mode
+Device is toggled based on a schedule
+- `Schedule Start Time`: The time that the device will switch into on mode daily
+- `Schedule End Time`: The time that the device will switch into off mode daily
+
+### VPD Mode
+Device is toggled based on VPD triggers
+- `VPD High Enabled`: Enable or disable high VPD trigger while in VPD mode
+- `VPD High Trigger`: If trigger is enabled, device will be turned on if VPD exceeds configured value.
+- `VPD Low Enabled`: Enable or disable low VPD trigger while in VPD mode
+- `VPD Low Trigger`: If trigger is enabled, device will be turned on if VPD drops below configured value.
+
 ## Controller Settings
 
-The following controls will be created for each UIS Controller attached to the configured account.
+### Sensor / VPD Calibration
+These entities correspond to fields found in the `Controller` tab of the device settings in the AC Infinity App.
 
-- **Calibrate Temperature**: Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
-- **Calibrate Humidity**: Adjusts the humidity reading from the sensor probe, up to ±10%
-- **VPD Leaf Temperature Offset**: Adjusts the leaf temperature in VPD calculation, up to ±10C or ±20F
+- `Calibrate Temperature`:  Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
+- `Calibrate Humidity`:  Adjusts the humidity reading from the sensor probe, up to ±10%
+- `VPD Leaf Temperature Offset`:  Adjusts the leaf temperature in VPD calculation, up to ±10C or ±20F
 
+<sub>
 Note: If the preferred unit of temperature is changed on the UIS Controller, a reboot of Home Assistant is required to
 update the user interface controls with the correct min/max values.  That being said, these fields should still continue
 to function correctly when interfacing with the UIS API, even without a reboot.
+</sub>
 
 ## Device Settings
+These entities correspond to fields found in the `Port` tab of the device settings in the AC Infinity App.
 
-The following controls will be created for each ***PORT*** on each UIS controller, even if no device is attached to a given port.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
+### Level Status
+These settings control the power level of a device when in a given trigger state.
+- `On Speed`: Go to OFF MODE to set. The device will run at this level when triggered ON
+- `Off Speed`: Go to ON MODE to set.  The device will run at this level even when triggered OFF
 
-The mode can be changed via the mode control.  The following documentation is split into controls relevant to each mode.
-- **On**: Device is always set to the on speed
-- **Off**: Device is always set to the off speed
-- **Auto**: Device toggled based on temperature and/or humidity triggers
-- **Timer to On**: Device is turned on after a set duration
-- **Timer to Off**: Device is turned off after a set duration
-- **VPD**: Device is toggled based on VPD triggers
-- **Cycle**: Device is toggled after set intervals
-- **Schedule**: Device is toggled based on a schedule
+### Dynamic Response
 
-### On Mode
-- **On Speed**: The speed/intensity of the device while in on mode
+The dynamic response type can be changed via the `Dynamic Response` setting.
+- `Transition`: UIS Devices will ramp up in levels when trigger to run in AUTO and VPD Modes (see Device Controls section below).  Set a transition threshold X.  For every multiple of X that the probe temperature, humidity and VPD has surpassed your trigger points, the UIS Device will increase by one level.
+- `Buffer`: UIS and Outlet Devices will have a gap created on their temperature, humidity, and VPD triggers to prevent devices from turning on and off too frequently.
 
-### Off Mode
-- **Off Speed**: The speed/intensity of the device while in off mode
+#### Transition Mode
+- `Transition Temperature`: Set a transition threshold X.  For every multiple of X that the probe temperature has surpassed your trigger points, the UIS Device will increase by one level.
+- `Transition Humidity`: Set a transition threshold X.  For every multiple of X that the probe humidity has surpassed your trigger points, the UIS Device will increase by one level.
+- `Transition VPD`: Set a transition threshold X.  For every multiple of X that the probe VPD has surpassed your trigger points, the UIS Device will increase by one level.
 
-### Auto Mode
-- **On Speed**: The speed/intensity of the device while in on mode
-- **Off Speed**: The speed/intensity of the device while in off mode
-- **Auto High Temp Enabled**: Enable or disable high temp trigger while in Auto mode
-- **Auto High Temp Trigger**: If trigger is enabled, device will be turned on if temp exceeds configured value.
-- **Auto Low Temp Enabled**: Enable or disable low temp trigger while in Auto mode
-- **Auto Low Temp Trigger**: If trigger is enabled, device will be turned on if temp drops below configured value.
-- **Auto High Humidity Enabled**: Enable or disable high humidity trigger while in Auto mode
-- **Auto High Humidity Trigger**: If trigger is enabled, device will be turned on if humidity exceeds configured value.
-- **Auto Low Humidity Enabled**: Enable or disable low humidity trigger while in Auto mode
-- **Auto Low Humidity Trigger**: If trigger is enabled, device will be turned on if humidity drops below configured value.
+&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/transition-setting.html)</sub>
+#### Buffer Mode
 
-### Timer to On
-- **On Speed**: The speed/intensity of the device while in on mode
-- **Off Speed**: The speed/intensity of the device while in off mode
-- **Minutes to On**: Device will be turned on after the configured number of minutes
+- `Buffer Temperature`: Set a buffer X. Triggers won't deactivate until the temperature falls X degrees below the trigger temperature for high triggers, or X degrees above the trigger temperature for low triggers.
+- `Buffer Humidity`: Set a buffer X. Triggers won't deactivate until the humidity falls X percentage points below the trigger humidity for high triggers, or X percentage points above the trigger humidity for low triggers.
+- `Buffer VPD`: Set a buffer X. Triggers won't deactivate until the VPD falls X kPa below the trigger VPD for high triggers, or X kPa above the trigger VPD for low triggers.
 
-### Timer to Off
-- **On Speed**: The speed/intensity of the device while in on mode
-- **Off Speed**: The speed/intensity of the device while in off mode
-- **Minutes to On**: Device will be turned off after the configured number of minutes
-
-### Cycle Mode
-- **On Speed**: The speed/intensity of the device while in on mode
-- **Off Speed**: The speed/intensity of the device while in off mode
-- **Cycle Minutes On**: The amount of minutes the device will stay in on mode before switching to off mode
-- **Cycle Minutes Off**: The amounto f minutes the device will stay in off mode before switching to on mode
-
-### Schedule Mode
-- **On Speed**: The speed/intensity of the device while in on mode
-- **Off Speed**: The speed/intensity of the device while in off mode
-- **Schedule Start Time**: The time that the device will switch into on mode daily
-- **Schedule End Time**: The time that the device will switch into off mode daily
-
-### VPD Mode
-- **VPD High Enabled**: Enable or disable high VPD trigger while in VPD mode
-- **VPD High Trigger**: If trigger is enabled, device will be turned on if VPD exceeds configured value.
-- **VPD Low Enabled**: Enable or disable low VPD trigger while in VPD mode
-- **VPD Low Trigger**: If trigger is enabled, device will be turned on if VPD drops below configured value.
+&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/buffer-setting.html)</sub>

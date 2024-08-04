@@ -16,7 +16,7 @@ from homeassistant.helpers.update_coordinator import (
 
 from custom_components.ac_infinity.client import ACInfinityClient
 
-from .const import DOMAIN, HOST, MANUFACTURER, ControllerPropertyKey, PortPropertyKey
+from .const import DOMAIN, HOST, MANUFACTURER, ControllerPropertyKey, PortPropertyKey, PortSettingKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -203,7 +203,8 @@ class ACInfinityService:
         if normalized_id in self._controller_properties:
             result = self._controller_properties[normalized_id]
             if property_key in result:
-                return result[property_key]
+                value = result[property_key]
+                return value if value is not None else default_value
             elif property_key in result[ControllerPropertyKey.DEVICE_INFO]:
                 value = result[ControllerPropertyKey.DEVICE_INFO][property_key]
                 return value if value is not None else default_value
@@ -327,7 +328,13 @@ class ACInfinityService:
             setting_key: the setting to pull the value of
         """
         normalized_id = (str(controller_id), port_index)
-        return normalized_id in self._port_settings and setting_key in self._port_settings[normalized_id]
+        if normalized_id in self._port_settings:
+            found = self._port_settings[normalized_id]
+            if setting_key in found:
+                return True
+            return setting_key in found[PortSettingKey.DEV_SETTING]
+
+        return False
 
     def get_port_setting(
         self,
@@ -346,9 +353,12 @@ class ACInfinityService:
         """
         normalized_id = (str(controller_id), port_index)
         if normalized_id in self._port_settings:
-            found = self._port_settings[normalized_id]
-            if setting_key in found:
-                value = found[setting_key]
+            result = self._port_settings[normalized_id]
+            if setting_key in result:
+                value = result[setting_key]
+                return value if value is not None else default_value
+            elif setting_key in result[PortSettingKey.DEV_SETTING]:
+                value = result[PortSettingKey.DEV_SETTING][setting_key]
                 return value if value is not None else default_value
 
         return default_value

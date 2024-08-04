@@ -41,12 +41,14 @@ class TestNumbers:
 
         assert len(test_objects.entities._added_entities) == 8
 
-    @pytest.mark.parametrize("setting,option_count", [
-        (PortSettingKey.AT_TYPE, 8),
-        (PortSettingKey.DYNAMIC_RESPONSE_TYPE, 2)
-    ])
+    @pytest.mark.parametrize(
+        "setting,option_count",
+        [(PortSettingKey.AT_TYPE, 8), (PortSettingKey.DYNAMIC_RESPONSE_TYPE, 2)],
+    )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_setup_mode_created_for_each_port(self, setup, port, setting, option_count):
+    async def test_async_setup_mode_created_for_each_port(
+        self, setup, port, setting, option_count
+    ):
         """Sensor for device port mode created on setup"""
 
         entity = await execute_and_get_port_entity(
@@ -57,10 +59,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityPortSelectEntity)
-        assert (
-            entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
-        )
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
 
         assert entity.entity_description.options is not None
         assert len(entity.entity_description.options) == option_count
@@ -116,7 +115,9 @@ class TestNumbers:
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_set_native_value_at_type(self, setup, at_type_string, expected, port):
+    async def test_async_set_native_value_at_type(
+        self, setup, at_type_string, expected, port
+    ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()
         future.set_result(None)
@@ -136,7 +137,6 @@ class TestNumbers:
             str(DEVICE_ID), port, PortSettingKey.AT_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()
-
 
     @pytest.mark.parametrize(
         "at_type,expected",
@@ -176,7 +176,9 @@ class TestNumbers:
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_set_native_value_dynamic_response(self, setup, at_type_string, expected, port):
+    async def test_async_set_native_value_dynamic_response(
+        self, setup, at_type_string, expected, port
+    ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()
         future.set_result(None)

@@ -452,13 +452,8 @@ class TestNumbers:
 
         assert entity.device_info is not None
 
-
-    async def test_async_setup_entry_humidity_calibration_created(
-        self, setup
-    ):
+    async def test_async_setup_entry_humidity_calibration_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
-
-        test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerSettingKey.CALIBRATE_HUMIDITY
@@ -467,7 +462,10 @@ class TestNumbers:
         assert entity.device_info is not None
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
-        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_{ControllerSettingKey.CALIBRATE_HUMIDITY}"
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_{ControllerSettingKey.CALIBRATE_HUMIDITY}"
+        )
         assert entity.entity_description.device_class is None
         assert entity.entity_description.native_min_value == -10
         assert entity.entity_description.native_max_value == 10
@@ -617,15 +615,12 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [
-            PortSettingKey.DYNAMIC_TRANSITION_TEMP,
-            PortSettingKey.DYNAMIC_BUFFER_TEMP
-        ],
+        [PortSettingKey.DYNAMIC_TRANSITION_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP],
     )
     @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_dynamic_temp_setup_for_each_port(
-        self, setup, setting:str, port, temp_unit, expected
+        self, setup, setting: str, port, temp_unit, expected
     ):
         """Dynamic response temp controls setup for each port"""
         test_objects: ACTestObjects = setup
@@ -663,7 +658,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_dynamic_humidity_vpd_setup_for_each_port(
-        self, setup, port, setting:str, step, max_value
+        self, setup, port, setting: str, step, max_value
     ):
         """Dynamic response temp controls setup for each port"""
         entity = await execute_and_get_port_entity(
@@ -689,11 +684,13 @@ class TestNumbers:
             (PortSettingKey.DYNAMIC_TRANSITION_VPD, 8, 0.8),
             (PortSettingKey.DYNAMIC_BUFFER_TEMP, 8, 8),
             (PortSettingKey.DYNAMIC_BUFFER_HUMIDITY, 8, 8),
-            (PortSettingKey.DYNAMIC_BUFFER_VPD, 8, 0.8)
+            (PortSettingKey.DYNAMIC_BUFFER_VPD, 8, 0.8),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_update_dynamic_response(self, setup, setting:str, value, expected, port):
+    async def test_async_update_dynamic_response(
+        self, setup, setting: str, value, expected, port
+    ):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
@@ -711,8 +708,11 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting,f_setting",
         [
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, PortSettingKey.DYNAMIC_TRANSITION_TEMP_F),
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP_F)
+            (
+                PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+                PortSettingKey.DYNAMIC_TRANSITION_TEMP_F,
+            ),
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP_F),
         ],
     )
     @pytest.mark.parametrize(
@@ -728,7 +728,7 @@ class TestNumbers:
             (1, 5, 10, 5),
             (1, 6, 12, 6),
             (1, 10, 20, 10),
-            (1, 20, 20, 10)
+            (1, 20, 20, 10),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -753,7 +753,8 @@ class TestNumbers:
 
         if temp_unit > 0:
             test_objects.port_sets_mock.assert_called_with(
-                str(DEVICE_ID), port,
+                str(DEVICE_ID),
+                port,
                 [
                     (setting, expected),
                     (f_setting, f_expected),
@@ -761,7 +762,8 @@ class TestNumbers:
             )
         else:
             test_objects.port_sets_mock.assert_called_with(
-                str(DEVICE_ID), port,
+                str(DEVICE_ID),
+                port,
                 [
                     (setting, expected),
                     (f_setting, f_expected),
@@ -769,12 +771,11 @@ class TestNumbers:
             )
         test_objects.refresh_mock.assert_called()
 
-
     @pytest.mark.parametrize(
         "setting",
         [
             PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY,
-            PortSettingKey.DYNAMIC_BUFFER_HUMIDITY
+            PortSettingKey.DYNAMIC_BUFFER_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("value", [0, 5, 10])
@@ -803,10 +804,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [
-            PortSettingKey.DYNAMIC_TRANSITION_VPD,
-            PortSettingKey.DYNAMIC_BUFFER_VPD
-        ],
+        [PortSettingKey.DYNAMIC_TRANSITION_VPD, PortSettingKey.DYNAMIC_BUFFER_VPD],
     )
     @pytest.mark.parametrize("expected,value", [(0, 0), (5, 0.5), (10, 1)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

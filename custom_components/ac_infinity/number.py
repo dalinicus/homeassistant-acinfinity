@@ -215,7 +215,10 @@ def __set_value_fn_temp_auto_high(
         ],
     )
 
-def __get_value_fn_dynamic_transition_temp(entity: ACInfinityEntity, port: ACInfinityPort):
+
+def __get_value_fn_dynamic_transition_temp(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
     temp_unit = entity.ac_infinity.get_controller_setting(
         port.controller.device_id, ControllerSettingKey.TEMP_UNIT
     )
@@ -227,6 +230,7 @@ def __get_value_fn_dynamic_transition_temp(entity: ACInfinityEntity, port: ACInf
         if temp_unit > 0
         else PortSettingKey.DYNAMIC_TRANSITION_TEMP_F,
     )
+
 
 def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinityPort):
     temp_unit = entity.ac_infinity.get_controller_setting(
@@ -240,6 +244,7 @@ def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinit
         if temp_unit > 0
         else PortSettingKey.DYNAMIC_BUFFER_TEMP_F,
     )
+
 
 def __set_value_fn_dynamic_transition_temp(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
@@ -267,6 +272,7 @@ def __set_value_fn_dynamic_transition_temp(
         ],
     )
 
+
 def __set_value_fn_dynamic_buffer_temp(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
@@ -292,6 +298,7 @@ def __set_value_fn_dynamic_buffer_temp(
             (PortSettingKey.DYNAMIC_BUFFER_TEMP_F, value),
         ],
     )
+
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
     ACInfinityControllerNumberEntityDescription(
@@ -638,9 +645,9 @@ async def async_setup_entry(
             entity = ACInfinityControllerNumberEntity(
                 coordinator, description, controller
             )
-            if temp_unit > 0 and (
-                description.key == ControllerSettingKey.CALIBRATE_TEMP
-                or description.key == ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+            if temp_unit > 0 and description.key in (
+                ControllerSettingKey.CALIBRATE_TEMP,
+                ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
             ):
                 # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
@@ -656,9 +663,9 @@ async def async_setup_entry(
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
 
-                if temp_unit > 0 and (
-                    description.key == PortSettingKey.DYNAMIC_TRANSITION_TEMP
-                    or description.key == PortSettingKey.DYNAMIC_BUFFER_TEMP
+                if temp_unit > 0 and description.key in (
+                    PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+                    PortSettingKey.DYNAMIC_BUFFER_TEMP,
                 ):
                     # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
                     entity.entity_description.native_max_value = 10

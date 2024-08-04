@@ -100,7 +100,7 @@ Read Only sensors reported from each device
 ## Device Controls
 Read/Write controls that define if a device runs in an ON or OFF state.  Each control is associated to a mode, and is only relevant when the device is operating in that mode.
 
-The mode can be changed via the `Active Mode` control, which provides the following options.  
+The mode can be changed via the `Active Mode` control, which provides the following options.
 - `On`: Device is always set to the on speed
 - `Off`: Device is always set to the off speed
 - `Auto`: Device toggled based on temperature and/or humidity triggers

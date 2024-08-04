@@ -26,7 +26,7 @@ def setup(mocker: MockFixture):
 
 
 @pytest.mark.asyncio
-class TestNumbers:
+class TestSelectors:
     set_data_mode_value = 0
 
     async def test_async_setup_all_sensors_created(self, setup):

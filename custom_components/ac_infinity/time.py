@@ -5,6 +5,7 @@ from datetime import time
 
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
@@ -14,10 +15,10 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntity,
+    ACInfinityEntities, ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin,
+    ACInfinityPortReadWriteMixin, suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,6 +85,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         key=PortSettingKey.SCHEDULED_START_TIME,
         icon=None,  # default
         translation_key="schedule_mode_on_time",
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
     ),
@@ -91,6 +93,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         key=PortSettingKey.SCHEDULED_END_TIME,
         icon=None,  # default
         translation_key="schedule_mode_off_time",
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
     ),
@@ -106,7 +109,7 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
         description: ACInfinityPortTimeEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.key)
+        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.TIME)
         self.entity_description = description
 
     @property
@@ -130,11 +133,11 @@ async def async_setup_entry(
 
     devices = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = []
+    entities = ACInfinityEntities()
     for device in devices:
         for port in device.ports:
             for description in PORT_DESCRIPTIONS:
-                entities.append(
+                entities.append_if_suitable(
                     ACInfinityPortTimeEntity(coordinator, description, port)
                 )
 

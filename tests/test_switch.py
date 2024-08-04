@@ -26,7 +26,7 @@ def setup(mocker: MockFixture):
 
 
 @pytest.mark.asyncio
-class TestSwitch:
+class TestSwitches:
     async def test_async_setup_all_sensors_created(self, setup):
         """All sensors created"""
         test_objects: ACTestObjects = setup

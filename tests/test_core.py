@@ -32,7 +32,7 @@ from .data_models import (
 
 
 @pytest.mark.asyncio
-class TestACInfinity:
+class TestACInfinityCore:
     async def test_update_logged_in_should_be_called_if_not_logged_in(
         self, mocker: MockFixture
     ):

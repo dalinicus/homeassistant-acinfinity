@@ -22,14 +22,14 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityControllerReadWriteMixin,
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntity,
+    ACInfinityEntities, ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
     get_value_fn_controller_setting_default,
     get_value_fn_port_setting_default,
     set_value_fn_controller_setting_default,
-    set_value_fn_port_setting_default,
+    set_value_fn_port_setting_default, suitable_fn_controller_setting_default, suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -311,6 +311,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="temperature_calibration",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_controller_setting_default,
         get_value_fn=__get_value_fn_cal_temp,
         set_value_fn=__set_value_fn_cal_temp,
     ),
@@ -324,6 +325,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="humidity_calibration",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_controller_setting_default,
         get_value_fn=get_value_fn_controller_setting_default,
         set_value_fn=set_value_fn_controller_setting_default,
     ),
@@ -337,6 +339,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="vpd_leaf_temperature_offset",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_controller_setting_default,
         get_value_fn=__get_value_fn_vpd_leaf_temp_offset,
         set_value_fn=__set_value_fn_vpd_leaf_temp_offset,
     ),
@@ -353,6 +356,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:knob",
         translation_key="on_power",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -366,6 +370,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:knob",
         translation_key="off_power",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -379,6 +384,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="timer_mode_minutes_to_on",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
@@ -392,6 +398,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="timer_mode_minutes_to_off",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
@@ -405,6 +412,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="cycle_mode_minutes_on",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
@@ -418,6 +426,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="cycle_mode_minutes_off",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
@@ -431,6 +440,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-thermometer-outline",
         translation_key="vpd_mode_low_trigger",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
@@ -444,6 +454,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-thermometer-outline",
         translation_key="vpd_mode_high_trigger",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
@@ -457,6 +468,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-percent",
         translation_key="auto_mode_humidity_low_trigger",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -470,6 +482,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-percent",
         translation_key="auto_mode_humidity_high_trigger",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -483,6 +496,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="auto_mode_temp_low_trigger",
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=__set_value_fn_temp_auto_low,
     ),
@@ -496,6 +510,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="auto_mode_temp_high_trigger",
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=__set_value_fn_temp_auto_high,
     ),
@@ -509,6 +524,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_transition_temp",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_transition_temp,
         set_value_fn=__set_value_fn_dynamic_transition_temp,
     ),
@@ -522,6 +538,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_transition_humidity",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -535,6 +552,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_transition_vpd",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
@@ -548,6 +566,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_buffer_temp",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_buffer_temp,
         set_value_fn=__set_value_fn_dynamic_buffer_temp,
     ),
@@ -561,6 +580,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_buffer_humidity",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=get_value_fn_port_setting_default,
         set_value_fn=set_value_fn_port_setting_default,
     ),
@@ -574,6 +594,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_buffer_vpd",
         native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
@@ -589,7 +610,7 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
         description: ACInfinityControllerNumberEntityDescription,
         controller: ACInfinityController,
     ) -> None:
-        super().__init__(coordinator, controller, description.key)
+        super().__init__(coordinator, controller, description.suitable_fn, description.key, Platform.NUMBER)
         self.entity_description = description
 
     @property
@@ -613,7 +634,7 @@ class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
         description: ACInfinityPortNumberEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.key)
+        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.NUMBER)
         self.entity_description = description
 
     @property
@@ -636,7 +657,7 @@ async def async_setup_entry(
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = []
+    entities = ACInfinityEntities()
     for controller in controllers:
         temp_unit = coordinator.ac_infinity.get_controller_setting(
             controller.device_id, ControllerSettingKey.TEMP_UNIT
@@ -645,36 +666,28 @@ async def async_setup_entry(
             entity = ACInfinityControllerNumberEntity(
                 coordinator, description, controller
             )
+
+
             if temp_unit > 0 and description.key in (
-                ControllerSettingKey.CALIBRATE_TEMP,
-                ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
+                    ControllerSettingKey.CALIBRATE_TEMP,
+                    ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
             ):
                 # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
                 entity.entity_description.native_max_value = 10
 
-            entities.append(entity)
-            _LOGGER.info(
-                'Initializing entity "%s" for platform "%s".',
-                entity.unique_id,
-                Platform.NUMBER,
-            )
+            entities.append_if_suitable(entity)
+
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
-
                 if temp_unit > 0 and description.key in (
-                    PortSettingKey.DYNAMIC_TRANSITION_TEMP,
-                    PortSettingKey.DYNAMIC_BUFFER_TEMP,
+                        PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+                        PortSettingKey.DYNAMIC_BUFFER_TEMP,
                 ):
                     # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
                     entity.entity_description.native_max_value = 10
 
-                entities.append(entity)
-                _LOGGER.info(
-                    'Initializing entity "%s" for platform "%s".',
-                    entity.unique_id,
-                    Platform.NUMBER,
-                )
+                entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

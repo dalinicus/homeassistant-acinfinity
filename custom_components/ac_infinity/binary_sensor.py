@@ -14,9 +14,10 @@ from custom_components.ac_infinity.const import DOMAIN, PortPropertyKey
 
 from .core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityPort,
+    ACInfinityEntities, ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
+    suitable_fn_port_property_default,
     get_value_fn_port_property_default,
 )
 
@@ -46,6 +47,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
         device_class=BinarySensorDeviceClass.PLUG,
         icon="mdi:power",
         translation_key="port_online",
+        suitable_fn=suitable_fn_port_property_default,
         get_value_fn=get_value_fn_port_property_default,
     )
 ]
@@ -68,7 +70,7 @@ class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity)
             description: haas description used to initialize the entity.
             port: port object the entity is bound to
         """
-        super().__init__(coordinator, port, description.key)
+        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.BINARY_SENSOR)
         self.entity_description = description
 
     @property
@@ -85,18 +87,13 @@ async def async_setup_entry(
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities: list[ACInfinityPortBinarySensorEntity] = []
+    entities = ACInfinityEntities()
     for controller in controllers:
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortBinarySensorEntity(
                     coordinator, description, port
                 )
-                entities.append(entity)
-                _LOGGER.info(
-                    'Initializing entity "%s" for platform "%s".',
-                    entity.unique_id,
-                    Platform.BINARY_SENSOR,
-                )
+                entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

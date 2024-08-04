@@ -9,10 +9,11 @@ from homeassistant.core import HomeAssistant
 from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntity,
+    ACInfinityEntities, ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
+    suitable_fn_port_setting_default
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,7 +70,6 @@ def __set_value_fn_active_mode(
         MODE_OPTIONS.index(value) + 1,
     )
 
-
 def __get_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
@@ -98,6 +98,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=PortSettingKey.AT_TYPE,
         translation_key="active_mode",
         options=MODE_OPTIONS,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
     ),
@@ -105,6 +106,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=PortSettingKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
         options=DYNAMIC_RESPONSE_OPTIONS,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
     ),
@@ -120,7 +122,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         description: ACInfinityPortSelectEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.key)
+        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property
@@ -146,16 +148,11 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = []
+    entities = ACInfinityEntities()
     for controller in controllers:
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortSelectEntity(coordinator, description, port)
-                entities.append(entity)
-                _LOGGER.info(
-                    'Initializing entity "%s" for platform "%s".',
-                    entity.unique_id,
-                    Platform.SELECT,
-                )
+                entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

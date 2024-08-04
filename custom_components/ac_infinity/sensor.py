@@ -25,13 +25,15 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityEntity,
+    ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
     get_value_fn_port_property_default,
     suitable_fn_controller_property_default,
-    suitable_fn_port_property_default, suitable_fn_port_setting_default
+    suitable_fn_port_property_default,
+    suitable_fn_port_setting_default,
 )
 
 from .const import (
@@ -162,7 +164,13 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
         description: ACInfinityControllerSensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
-        super().__init__(coordinator, controller, description.suitable_fn, description.key, Platform.SENSOR)
+        super().__init__(
+            coordinator,
+            controller,
+            description.suitable_fn,
+            description.key,
+            Platform.SENSOR,
+        )
         self.entity_description = description
 
     @property
@@ -179,7 +187,9 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
         description: ACInfinityPortSensorEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SENSOR)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.SENSOR
+        )
         self.entity_description = description
 
     @property

@@ -15,10 +15,12 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityEntity,
+    ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin, suitable_fn_port_setting_default,
+    ACInfinityPortReadWriteMixin,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -109,7 +111,9 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
         description: ACInfinityPortTimeEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.TIME)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.TIME
+        )
         self.entity_description = description
 
     @property

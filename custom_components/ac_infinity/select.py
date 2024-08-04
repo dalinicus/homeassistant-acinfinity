@@ -9,11 +9,12 @@ from homeassistant.core import HomeAssistant
 from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityEntity,
+    ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    suitable_fn_port_setting_default
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ def __set_value_fn_active_mode(
         MODE_OPTIONS.index(value) + 1,
     )
 
+
 def __get_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
@@ -122,7 +124,9 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         description: ACInfinityPortSelectEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SELECT)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.SELECT
+        )
         self.entity_description = description
 
     @property

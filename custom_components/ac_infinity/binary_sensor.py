@@ -14,11 +14,12 @@ from custom_components.ac_infinity.const import DOMAIN, PortPropertyKey
 
 from .core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityPort,
+    ACInfinityEntities,
+    ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
-    suitable_fn_port_property_default,
     get_value_fn_port_property_default,
+    suitable_fn_port_property_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +71,13 @@ class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity)
             description: haas description used to initialize the entity.
             port: port object the entity is bound to
         """
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.BINARY_SENSOR)
+        super().__init__(
+            coordinator,
+            port,
+            description.suitable_fn,
+            description.key,
+            Platform.BINARY_SENSOR,
+        )
         self.entity_description = description
 
     @property

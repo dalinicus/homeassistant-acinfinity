@@ -19,12 +19,14 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityEntity,
+    ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
     get_value_fn_port_setting_default,
-    set_value_fn_port_setting_default, suitable_fn_port_property_default, suitable_fn_port_setting_default,
+    set_value_fn_port_setting_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -169,7 +171,9 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
         description: ACInfinityPortSwitchEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SWITCH)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.SWITCH
+        )
         self.entity_description = description
 
     @property

@@ -22,14 +22,17 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityControllerReadWriteMixin,
     ACInfinityDataUpdateCoordinator,
-    ACInfinityEntities, ACInfinityEntity,
+    ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
     get_value_fn_controller_setting_default,
     get_value_fn_port_setting_default,
     set_value_fn_controller_setting_default,
-    set_value_fn_port_setting_default, suitable_fn_controller_setting_default, suitable_fn_port_setting_default,
+    set_value_fn_port_setting_default,
+    suitable_fn_controller_setting_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -610,7 +613,13 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
         description: ACInfinityControllerNumberEntityDescription,
         controller: ACInfinityController,
     ) -> None:
-        super().__init__(coordinator, controller, description.suitable_fn, description.key, Platform.NUMBER)
+        super().__init__(
+            coordinator,
+            controller,
+            description.suitable_fn,
+            description.key,
+            Platform.NUMBER,
+        )
         self.entity_description = description
 
     @property
@@ -634,7 +643,9 @@ class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
         description: ACInfinityPortNumberEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.NUMBER)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.NUMBER
+        )
         self.entity_description = description
 
     @property
@@ -667,10 +678,9 @@ async def async_setup_entry(
                 coordinator, description, controller
             )
 
-
             if temp_unit > 0 and description.key in (
-                    ControllerSettingKey.CALIBRATE_TEMP,
-                    ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
+                ControllerSettingKey.CALIBRATE_TEMP,
+                ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
             ):
                 # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
@@ -682,8 +692,8 @@ async def async_setup_entry(
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
                 if temp_unit > 0 and description.key in (
-                        PortSettingKey.DYNAMIC_TRANSITION_TEMP,
-                        PortSettingKey.DYNAMIC_BUFFER_TEMP,
+                    PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+                    PortSettingKey.DYNAMIC_BUFFER_TEMP,
                 ):
                     # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
                     entity.entity_description.native_max_value = 10

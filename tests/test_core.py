@@ -2,6 +2,8 @@ import asyncio
 from asyncio import Future
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import UnitOfTemperature
 from pytest_mock import MockFixture
 from pytest_mock.plugin import MockType
 
@@ -14,9 +16,19 @@ from custom_components.ac_infinity.const import (
     PortPropertyKey,
     PortSettingKey,
 )
-from custom_components.ac_infinity.core import ACInfinityService
+from custom_components.ac_infinity.core import (
+    ACInfinityController,
+    ACInfinityEntities,
+    ACInfinityService,
+)
+from custom_components.ac_infinity.sensor import (
+    ACInfinityControllerSensorEntity,
+    ACInfinityControllerSensorEntityDescription,
+)
 
+from . import ACTestObjects, setup_entity_mocks
 from .data_models import (
+    CONTROLLER_PROPERTIES,
     CONTROLLER_PROPERTIES_DATA,
     CONTROLLER_SETTINGS_DATA,
     DEVICE_ID,
@@ -27,12 +39,18 @@ from .data_models import (
     GET_DEV_SETTINGS_PAYLOAD,
     MAC_ADDR,
     PASSWORD,
+    PORT_PROPERTIES_DATA,
     PORT_SETTINGS_DATA,
 )
 
 
+@pytest.fixture
+def setup(mocker: MockFixture):
+    return setup_entity_mocks(mocker)
+
+
 @pytest.mark.asyncio
-class TestACInfinityCore:
+class TestACInfinity:
     async def test_update_logged_in_should_be_called_if_not_logged_in(
         self, mocker: MockFixture
     ):
@@ -149,6 +167,27 @@ class TestACInfinityCore:
     @pytest.mark.parametrize(
         "property_key, value",
         [
+            (ControllerPropertyKey.DEVICE_NAME, True),
+            (ControllerPropertyKey.MAC_ADDR, True),
+            (ControllerPropertyKey.TEMPERATURE, True),
+            (ControllerPropertyKey.HUMIDITY, True),
+            ("keyNoExist", False),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
+    async def test_get_controller_property_exists_returns_correct_value(
+        self, device_id, property_key: str, value
+    ):
+        """getting a device property returns the correct value"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+
+        result = ac_infinity.get_controller_property_exists(device_id, property_key)
+        assert result == (value if device_id != "12345" else False)
+
+    @pytest.mark.parametrize(
+        "property_key, value",
+        [
             (ControllerPropertyKey.DEVICE_NAME, "Grow Tent"),
             (ControllerPropertyKey.MAC_ADDR, MAC_ADDR),
             (ControllerPropertyKey.TEMPERATURE, 2417),
@@ -185,6 +224,26 @@ class TestACInfinityCore:
         assert result is None
 
     @pytest.mark.parametrize(
+        "property_key, value",
+        [
+            (PortPropertyKey.SPEAK, True),
+            (PortPropertyKey.NAME, True),
+            ("keyNoExist", False),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
+    async def test_get_port_property_exists_returns_correct_value(
+        self, device_id, property_key: str, value
+    ):
+        """getting a port property gets the correct property from the correct port"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+
+        result = ac_infinity.get_port_property_exists(device_id, 1, property_key)
+        assert result == (value if device_id != "12345" else False)
+
+    @pytest.mark.parametrize(
         "property_key, port_num, value",
         [
             (PortPropertyKey.SPEAK, 1, 5),
@@ -200,6 +259,7 @@ class TestACInfinityCore:
         """getting a port property gets the correct property from the correct port"""
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_properties = PORT_PROPERTIES_DATA
 
         result = ac_infinity.get_port_property(device_id, port_num, property_key)
         assert result == value
@@ -220,6 +280,7 @@ class TestACInfinityCore:
         """the absence of a value should return None instead of keyerror"""
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_properties = PORT_PROPERTIES_DATA
 
         result = ac_infinity.get_port_property(device_id, port_num, property_key)
         assert result is None
@@ -274,16 +335,40 @@ class TestACInfinityCore:
     @pytest.mark.parametrize(
         "setting_key, value",
         [
+            (PortSettingKey.ON_SPEED, True),
+            (PortSettingKey.AT_TYPE, True),
+            (PortSettingKey.DYNAMIC_RESPONSE_TYPE, True),
+            (PortSettingKey.DYNAMIC_BUFFER_VPD, True),
+            ("keyNoExist", False),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
+    async def test_get_port_setting_exists_returns_correct_value(
+        self, device_id, setting_key, value
+    ):
+        """getting a port setting gets the correct setting from the correct port"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_settings = PORT_SETTINGS_DATA
+
+        result = ac_infinity.get_port_setting_exists(device_id, 1, setting_key)
+        assert result == (value if device_id != "12345" else False)
+
+    @pytest.mark.parametrize(
+        "setting_key, value",
+        [
             (PortSettingKey.ON_SPEED, 5),
             (
                 PortSettingKey.OFF_SPEED,
                 0,
             ),  # make sure 0 still returns 0 and not None or default
             (PortSettingKey.AT_TYPE, 2),
+            (PortSettingKey.DYNAMIC_RESPONSE_TYPE, 1),
+            (PortSettingKey.DYNAMIC_BUFFER_VPD, 6),
         ],
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
-    async def test_get_port_setting_gets_correct_property(
+    async def test_get_port_setting_gets_correct_setting(
         self, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
@@ -310,6 +395,27 @@ class TestACInfinityCore:
             device_id, 1, PortSettingKey.SURPLUS, default_value=default_value
         )
         assert result == default_value
+
+    @pytest.mark.parametrize(
+        "setting_key, value",
+        [
+            (ControllerSettingKey.CALIBRATE_HUMIDITY, True),
+            (ControllerSettingKey.TEMP_UNIT, True),
+            ("keyNoExist", False),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
+    async def test_get_controller_setting_exists_returns_correct_value(
+        self, device_id, setting_key, value
+    ):
+        """getting a port setting gets the correct setting from the correct port"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+        ac_infinity._port_settings = PORT_SETTINGS_DATA
+
+        result = ac_infinity.get_controller_setting_exists(device_id, setting_key)
+        assert result == (value if device_id != "12345" else False)
 
     @pytest.mark.parametrize(
         "setting_key, value",
@@ -501,3 +607,30 @@ class TestACInfinityCore:
             )
 
         assert mocked_sets.call_count == 3
+
+    @pytest.mark.parametrize("is_suitable", [True, False])
+    async def test_append_if_suitable_only_added_if_suitable(self, setup, is_suitable):
+        test_objects: ACTestObjects = setup
+
+        description = ACInfinityControllerSensorEntityDescription(
+            key=ControllerPropertyKey.TEMPERATURE,
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state_class=SensorStateClass.MEASUREMENT,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+            icon=None,  # default
+            translation_key="temperature",
+            suggested_unit_of_measurement=None,
+            suitable_fn=lambda e, c: is_suitable,
+            get_value_fn=lambda e, c: None,
+        )
+
+        entity = ACInfinityControllerSensorEntity(
+            test_objects.coordinator,
+            description,
+            ACInfinityController(CONTROLLER_PROPERTIES),
+        )
+
+        entities = ACInfinityEntities()
+        entities.append_if_suitable(entity)
+
+        assert len(entities) == (1 if is_suitable else 0)

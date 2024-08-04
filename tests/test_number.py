@@ -12,6 +12,7 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.number import (
     CONTROLLER_DESCRIPTIONS,
+    PORT_DESCRIPTIONS,
     ACInfinityControllerNumberEntity,
     ACInfinityPortNumberEntity,
     async_setup_entry,
@@ -42,7 +43,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 51
+        assert len(test_objects.entities._added_entities) == 75
 
     @pytest.mark.parametrize(
         "setting", [PortSettingKey.OFF_SPEED, PortSettingKey.ON_SPEED]
@@ -419,7 +420,6 @@ class TestNumbers:
         [
             ControllerSettingKey.CALIBRATE_TEMP,
             ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
-            ControllerSettingKey.CALIBRATE_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
@@ -427,9 +427,6 @@ class TestNumbers:
         self, setup, setting, temp_unit, expected
     ):
         """Sensor for device reported temperature is created on setup"""
-        if setting == ControllerSettingKey.CALIBRATE_HUMIDITY:
-            expected = 10
-
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
             ControllerSettingKey.TEMP_UNIT
@@ -452,6 +449,28 @@ class TestNumbers:
         assert entity.entity_description.device_class is None
         assert entity.entity_description.native_min_value == expected * -1
         assert entity.entity_description.native_max_value == expected
+
+        assert entity.device_info is not None
+
+
+    async def test_async_setup_entry_humidity_calibration_created(
+        self, setup
+    ):
+        """Sensor for device reported humidity is created on setup"""
+
+        test_objects: ACTestObjects = setup
+
+        entity = await execute_and_get_controller_entity(
+            setup, async_setup_entry, ControllerSettingKey.CALIBRATE_HUMIDITY
+        )
+
+        assert entity.device_info is not None
+
+        assert isinstance(entity, ACInfinityControllerNumberEntity)
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_{ControllerSettingKey.CALIBRATE_HUMIDITY}"
+        assert entity.entity_description.device_class is None
+        assert entity.entity_description.native_min_value == -10
+        assert entity.entity_description.native_max_value == 10
 
         assert entity.device_info is not None
 
@@ -592,6 +611,223 @@ class TestNumbers:
 
         test_objects.controller_set_mock.assert_called_with(
             str(DEVICE_ID), ControllerSettingKey.CALIBRATE_HUMIDITY, value
+        )
+
+        test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+            PortSettingKey.DYNAMIC_BUFFER_TEMP
+        ],
+    )
+    @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_dynamic_temp_setup_for_each_port(
+        self, setup, setting:str, port, temp_unit, expected
+    ):
+        """Dynamic response temp controls setup for each port"""
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+            ControllerSettingKey.TEMP_UNIT
+        ] = temp_unit
+
+        # reset statistics
+        for description in PORT_DESCRIPTIONS:
+            if description.key == setting:
+                description.native_max_value = 20
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert entity.device_info is not None
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert entity.entity_description.device_class is None
+        assert entity.entity_description.native_min_value == 0
+        assert entity.entity_description.native_max_value == expected
+
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize(
+        "setting,step,max_value",
+        [
+            (PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY, 1, 10),
+            (PortSettingKey.DYNAMIC_BUFFER_HUMIDITY, 1, 10),
+            (PortSettingKey.DYNAMIC_TRANSITION_VPD, 0.1, 1),
+            (PortSettingKey.DYNAMIC_BUFFER_VPD, 0.1, 1),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_dynamic_humidity_vpd_setup_for_each_port(
+        self, setup, port, setting:str, step, max_value
+    ):
+        """Dynamic response temp controls setup for each port"""
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert entity.device_info is not None
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
+        assert entity.entity_description.device_class is None
+        assert entity.entity_description.native_step == step
+        assert entity.entity_description.native_min_value == 0
+        assert entity.entity_description.native_max_value == max_value
+
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize(
+        "setting,value,expected",
+        [
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, 8, 8),
+            (PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY, 8, 8),
+            (PortSettingKey.DYNAMIC_TRANSITION_VPD, 8, 0.8),
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP, 8, 8),
+            (PortSettingKey.DYNAMIC_BUFFER_HUMIDITY, 8, 8),
+            (PortSettingKey.DYNAMIC_BUFFER_VPD, 8, 0.8)
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_dynamic_response(self, setup, setting:str, value, expected, port):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert entity.native_value == expected
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting,f_setting",
+        [
+            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, PortSettingKey.DYNAMIC_TRANSITION_TEMP_F),
+            (PortSettingKey.DYNAMIC_BUFFER_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP_F)
+        ],
+    )
+    @pytest.mark.parametrize(
+        "temp_unit,value,f_expected,expected",
+        [
+            # F max is 20
+            (0, 0, 0, 0),
+            (0, 10, 10, 5),
+            (0, 11, 11, 5),
+            (0, 20, 20, 10),
+            # C max is 10
+            (1, 0, 0, 0),
+            (1, 5, 10, 5),
+            (1, 6, 12, 6),
+            (1, 10, 20, 10),
+            (1, 20, 20, 10)
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_dynamic_response_temp(
+        self, setup, temp_unit, value, expected, f_expected, setting, f_setting, port
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+            ControllerSettingKey.TEMP_UNIT
+        ] = temp_unit
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        await entity.async_set_native_value(value)
+
+        if temp_unit > 0:
+            test_objects.port_sets_mock.assert_called_with(
+                str(DEVICE_ID), port,
+                [
+                    (setting, expected),
+                    (f_setting, f_expected),
+                ],
+            )
+        else:
+            test_objects.port_sets_mock.assert_called_with(
+                str(DEVICE_ID), port,
+                [
+                    (setting, expected),
+                    (f_setting, f_expected),
+                ],
+            )
+        test_objects.refresh_mock.assert_called()
+
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY,
+            PortSettingKey.DYNAMIC_BUFFER_HUMIDITY
+        ],
+    )
+    @pytest.mark.parametrize("value", [0, 5, 10])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_dynamic_response_humidity(
+        self, setup, value, port, setting
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        await entity.async_set_native_value(value)
+
+        test_objects.port_set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, value
+        )
+
+        test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortSettingKey.DYNAMIC_TRANSITION_VPD,
+            PortSettingKey.DYNAMIC_BUFFER_VPD
+        ],
+    )
+    @pytest.mark.parametrize("expected,value", [(0, 0), (5, 0.5), (10, 1)])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_dynamic_response_vpd(
+        self, setup, value, expected, port, setting
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        await entity.async_set_native_value(value)
+
+        test_objects.port_set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()

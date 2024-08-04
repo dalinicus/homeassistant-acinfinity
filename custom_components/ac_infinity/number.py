@@ -640,7 +640,7 @@ async def async_setup_entry(
             )
             if temp_unit > 0 and (
                 description.key == ControllerSettingKey.CALIBRATE_TEMP
-                or ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+                or description.key == ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
             ):
                 # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
@@ -657,8 +657,8 @@ async def async_setup_entry(
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
 
                 if temp_unit > 0 and (
-                        description.key == PortSettingKey.DYNAMIC_TRANSITION_TEMP
-                        or PortSettingKey.DYNAMIC_BUFFER_TEMP
+                    description.key == PortSettingKey.DYNAMIC_TRANSITION_TEMP
+                    or description.key == PortSettingKey.DYNAMIC_BUFFER_TEMP
                 ):
                     # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
                     entity.entity_description.native_max_value = 10

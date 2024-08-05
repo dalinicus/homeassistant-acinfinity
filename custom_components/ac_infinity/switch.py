@@ -15,7 +15,7 @@ from custom_components.ac_infinity.const import (
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
     SCHEDULE_MIDNIGHT_VALUE,
-    PortSettingKey,
+    PortControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
@@ -24,9 +24,9 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    get_value_fn_port_setting_default,
-    set_value_fn_port_setting_default,
-    suitable_fn_port_setting_default,
+    get_value_fn_port_control_default,
+    set_value_fn_port_control_default,
+    suitable_fn_port_control_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ class ACInfinityPortSwitchEntityDescription(
 
 def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPort):
     return (
-        entity.ac_infinity.get_port_setting(
+        entity.ac_infinity.get_port_control(
             port.controller.device_id, port.port_index, entity.entity_description.key
         )
         < SCHEDULE_EOD_VALUE + 1
@@ -72,92 +72,92 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPo
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.VPD_HIGH_ENABLED,
+        key=PortControlKey.VPD_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_high_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.VPD_LOW_ENABLED,
+        key=PortControlKey.VPD_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_low_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.AUTO_TEMP_HIGH_ENABLED,
+        key=PortControlKey.AUTO_TEMP_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_high_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.AUTO_TEMP_LOW_ENABLED,
+        key=PortControlKey.AUTO_TEMP_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_low_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED,
+        key=PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_high_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED,
+        key=PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.SCHEDULED_START_TIME,
+        key=PortControlKey.SCHEDULED_START_TIME,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_MIDNIGHT_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_on_time_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=set_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
-        key=PortSettingKey.SCHEDULED_END_TIME,
+        key=PortControlKey.SCHEDULED_END_TIME,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_EOD_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_off_time_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=set_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
 ]
 

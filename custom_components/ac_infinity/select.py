@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
+from custom_components.ac_infinity.const import AdvancedSettingsKey, DOMAIN, PortControlKey
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
@@ -14,7 +14,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    suitable_fn_port_setting_default,
+    suitable_fn_port_control_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,8 +53,8 @@ DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
 def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return MODE_OPTIONS[
         # data is 1 based.  Adjust to 0 based enum by subtracting 1
-        entity.ac_infinity.get_port_setting(
-            port.controller.device_id, port.port_index, PortSettingKey.AT_TYPE
+        entity.ac_infinity.get_port_control(
+            port.controller.device_id, port.port_index, PortControlKey.AT_TYPE
         )
         - 1
     ]
@@ -63,10 +63,10 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
 def __set_value_fn_active_mode(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
 ):
-    return entity.ac_infinity.update_port_setting(
+    return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        PortSettingKey.AT_TYPE,
+        PortControlKey.AT_TYPE,
         # data is 1 based.  Adjust from 0 based enum by adding 1
         MODE_OPTIONS.index(value) + 1,
     )
@@ -76,10 +76,10 @@ def __get_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     return DYNAMIC_RESPONSE_OPTIONS[
-        entity.ac_infinity.get_port_setting(
+        entity.ac_infinity.get_port_control(
             port.controller.device_id,
             port.port_index,
-            PortSettingKey.DYNAMIC_RESPONSE_TYPE,
+            AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         )
     ]
 
@@ -87,28 +87,28 @@ def __get_value_fn_dynamic_response_type(
 def __set_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
 ):
-    return entity.ac_infinity.update_port_setting(
+    return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        PortSettingKey.DYNAMIC_RESPONSE_TYPE,
+        AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         DYNAMIC_RESPONSE_OPTIONS.index(value),
     )
 
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
-        key=PortSettingKey.AT_TYPE,
+        key=PortControlKey.AT_TYPE,
         translation_key="active_mode",
         options=MODE_OPTIONS,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
     ),
     ACInfinityPortSelectEntityDescription(
-        key=PortSettingKey.DYNAMIC_RESPONSE_TYPE,
+        key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
         options=DYNAMIC_RESPONSE_OPTIONS,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
     ),

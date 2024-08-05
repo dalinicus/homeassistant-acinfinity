@@ -27,7 +27,7 @@ from tests.data_models import (
     ENTRY_ID,
     PASSWORD,
     PORT_PROPERTIES_DATA,
-    PORT_SETTINGS_DATA,
+    PORT_CONTROLS_DATA,
 )
 
 MockType = Union[
@@ -117,15 +117,15 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
     ac_infinity._port_properties = PORT_PROPERTIES_DATA
-    ac_infinity._port_settings = PORT_SETTINGS_DATA
+    ac_infinity._port_controls = PORT_CONTROLS_DATA
 
     coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
 
     port_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_setting", return_value=future
+        ac_infinity, "update_port_control", return_value=future
     )
     port_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_settings", return_value=future
+        ac_infinity, "update_port_controls", return_value=future
     )
     controller_set_mock = mocker.patch.object(
         ac_infinity, "update_controller_setting", return_value=future

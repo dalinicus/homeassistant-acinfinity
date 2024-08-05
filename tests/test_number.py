@@ -7,8 +7,8 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    ControllerSettingKey,
-    PortSettingKey,
+    AdvancedSettingsKey,
+    PortControlKey,
 )
 from custom_components.ac_infinity.number import (
     CONTROLLER_DESCRIPTIONS,
@@ -46,7 +46,7 @@ class TestNumbers:
         assert len(test_objects.entities._added_entities) == 75
 
     @pytest.mark.parametrize(
-        "setting", [PortSettingKey.OFF_SPEED, PortSettingKey.ON_SPEED]
+        "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_speed_created_for_each_port(
@@ -68,7 +68,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting,expected",
-        [(PortSettingKey.OFF_SPEED, 0), (PortSettingKey.ON_SPEED, 5)],
+        [(PortControlKey.OFF_SPEED, 0), (PortControlKey.ON_SPEED, 5)],
     )
     async def test_async_update_current_speed_value_correct(
         self, setup, setting, expected
@@ -84,7 +84,7 @@ class TestNumbers:
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting", [PortSettingKey.OFF_SPEED, PortSettingKey.ON_SPEED]
+        "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value(self, setup, setting, port):
@@ -105,7 +105,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "key",
-        [PortSettingKey.TIMER_DURATION_TO_ON, PortSettingKey.TIMER_DURATION_TO_OFF],
+        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_timer_created_for_each_port(self, setup, key, port):
@@ -118,7 +118,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.TIMER_DURATION_TO_ON, PortSettingKey.TIMER_DURATION_TO_OFF],
+        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize(
         "value,expected",
@@ -140,7 +140,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -153,7 +153,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.TIMER_DURATION_TO_ON, PortSettingKey.TIMER_DURATION_TO_OFF],
+        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_timer(
@@ -180,8 +180,8 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "key,label",
         [
-            (PortSettingKey.VPD_HIGH_TRIGGER, "High"),
-            (PortSettingKey.VPD_LOW_TRIGGER, "Low"),
+            (PortControlKey.VPD_HIGH_TRIGGER, "High"),
+            (PortControlKey.VPD_LOW_TRIGGER, "Low"),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -198,8 +198,8 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting,enabled_setting",
         [
-            (PortSettingKey.VPD_LOW_TRIGGER, PortSettingKey.VPD_LOW_ENABLED),
-            (PortSettingKey.VPD_HIGH_TRIGGER, PortSettingKey.VPD_HIGH_ENABLED),
+            (PortControlKey.VPD_LOW_TRIGGER, PortControlKey.VPD_LOW_ENABLED),
+            (PortControlKey.VPD_HIGH_TRIGGER, PortControlKey.VPD_HIGH_ENABLED),
         ],
     )
     @pytest.mark.parametrize(
@@ -217,7 +217,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -227,8 +227,8 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting",
         [
-            PortSettingKey.VPD_LOW_TRIGGER,
-            PortSettingKey.VPD_HIGH_TRIGGER,
+            PortControlKey.VPD_LOW_TRIGGER,
+            PortControlKey.VPD_HIGH_TRIGGER,
         ],
     )
     @pytest.mark.parametrize(
@@ -245,7 +245,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
         entity = await execute_and_get_port_entity(
@@ -262,7 +262,7 @@ class TestNumbers:
 
     #
     @pytest.mark.parametrize(
-        "key", [PortSettingKey.CYCLE_DURATION_ON, PortSettingKey.CYCLE_DURATION_OFF]
+        "key", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_cycle_timer_created_for_each_port(
@@ -276,7 +276,7 @@ class TestNumbers:
         assert entity.device_info is not None
 
     @pytest.mark.parametrize(
-        "setting", [PortSettingKey.CYCLE_DURATION_ON, PortSettingKey.CYCLE_DURATION_OFF]
+        "setting", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize(
         "value,expected",
@@ -298,7 +298,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -310,7 +310,7 @@ class TestNumbers:
         [(86400, 1440), (1440, 24), (0, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize(
-        "setting", [PortSettingKey.CYCLE_DURATION_ON, PortSettingKey.CYCLE_DURATION_OFF]
+        "setting", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_cycle_timer(
@@ -338,12 +338,12 @@ class TestNumbers:
         "setting, f_setting",
         [
             (
-                PortSettingKey.AUTO_TEMP_HIGH_TRIGGER,
-                PortSettingKey.AUTO_TEMP_HIGH_TRIGGER_F,
+                PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
+                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
             ),
             (
-                PortSettingKey.AUTO_TEMP_LOW_TRIGGER,
-                PortSettingKey.AUTO_TEMP_LOW_TRIGGER_F,
+                PortControlKey.AUTO_TEMP_LOW_TRIGGER,
+                PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
         ],
     )
@@ -368,8 +368,8 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = c
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][f_setting] = f
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = c
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][f_setting] = f
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -384,12 +384,12 @@ class TestNumbers:
         "setting, f_setting",
         [
             (
-                PortSettingKey.AUTO_TEMP_HIGH_TRIGGER,
-                PortSettingKey.AUTO_TEMP_HIGH_TRIGGER_F,
+                PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
+                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
             ),
             (
-                PortSettingKey.AUTO_TEMP_LOW_TRIGGER,
-                PortSettingKey.AUTO_TEMP_LOW_TRIGGER_F,
+                PortControlKey.AUTO_TEMP_LOW_TRIGGER,
+                PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
         ],
     )
@@ -418,8 +418,8 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting",
         [
-            ControllerSettingKey.CALIBRATE_TEMP,
-            ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
+            AdvancedSettingsKey.CALIBRATE_TEMP,
+            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET,
         ],
     )
     @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
@@ -429,12 +429,12 @@ class TestNumbers:
         """Sensor for device reported temperature is created on setup"""
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
-            ControllerSettingKey.TEMP_UNIT
+            AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
         # reset statistics
         for description in CONTROLLER_DESCRIPTIONS:
-            if description.key != ControllerSettingKey.CALIBRATE_HUMIDITY:
+            if description.key != AdvancedSettingsKey.CALIBRATE_HUMIDITY:
                 description.native_min_value = -20
                 description.native_max_value = 20
 
@@ -456,7 +456,7 @@ class TestNumbers:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, ControllerSettingKey.CALIBRATE_HUMIDITY
+            setup, async_setup_entry, AdvancedSettingsKey.CALIBRATE_HUMIDITY
         )
 
         assert entity.device_info is not None
@@ -464,7 +464,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityControllerNumberEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_{ControllerSettingKey.CALIBRATE_HUMIDITY}"
+            == f"{DOMAIN}_{MAC_ADDR}_{AdvancedSettingsKey.CALIBRATE_HUMIDITY}"
         )
         assert entity.entity_description.device_class is None
         assert entity.entity_description.native_min_value == -10
@@ -475,9 +475,9 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting",
         [
-            ControllerSettingKey.CALIBRATE_TEMP,
-            ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
-            ControllerSettingKey.CALIBRATE_HUMIDITY,
+            AdvancedSettingsKey.CALIBRATE_TEMP,
+            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET,
+            AdvancedSettingsKey.CALIBRATE_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("value", [-10, 0, 5])
@@ -518,11 +518,11 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
-            ControllerSettingKey.TEMP_UNIT
+            AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
         entity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, ControllerSettingKey.CALIBRATE_TEMP
+            setup, async_setup_entry, AdvancedSettingsKey.CALIBRATE_TEMP
         )
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
@@ -532,16 +532,16 @@ class TestNumbers:
             test_objects.controller_sets_mock.assert_called_with(
                 str(DEVICE_ID),
                 [
-                    (ControllerSettingKey.CALIBRATE_TEMP, expected),
-                    (ControllerSettingKey.CALIBRATE_TEMP_F, 0),
+                    (AdvancedSettingsKey.CALIBRATE_TEMP, expected),
+                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
                 ],
             )
         else:
             test_objects.controller_sets_mock.assert_called_with(
                 str(DEVICE_ID),
                 [
-                    (ControllerSettingKey.CALIBRATE_TEMP, 0),
-                    (ControllerSettingKey.CALIBRATE_TEMP_F, expected),
+                    (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
+                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, expected),
                 ],
             )
         test_objects.refresh_mock.assert_called()
@@ -568,11 +568,11 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
-            ControllerSettingKey.TEMP_UNIT
+            AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
         entity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+            setup, async_setup_entry, AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
         )
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
@@ -580,9 +580,9 @@ class TestNumbers:
 
         test_objects.controller_set_mock.assert_called_with(
             str(DEVICE_ID),
-            ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
             if temp_unit > 0
-            else ControllerSettingKey.VPD_LEAF_TEMP_OFFSET_F,
+            else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
             expected,
         )
 
@@ -601,21 +601,21 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, ControllerSettingKey.CALIBRATE_HUMIDITY
+            setup, async_setup_entry, AdvancedSettingsKey.CALIBRATE_HUMIDITY
         )
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.controller_set_mock.assert_called_with(
-            str(DEVICE_ID), ControllerSettingKey.CALIBRATE_HUMIDITY, value
+            str(DEVICE_ID), AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
         )
 
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.DYNAMIC_TRANSITION_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP],
+        [AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP],
     )
     @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -625,7 +625,7 @@ class TestNumbers:
         """Dynamic response temp controls setup for each port"""
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
-            ControllerSettingKey.TEMP_UNIT
+            AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
         # reset statistics
@@ -650,10 +650,10 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting,step,max_value",
         [
-            (PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY, 1, 10),
-            (PortSettingKey.DYNAMIC_BUFFER_HUMIDITY, 1, 10),
-            (PortSettingKey.DYNAMIC_TRANSITION_VPD, 0.1, 1),
-            (PortSettingKey.DYNAMIC_BUFFER_VPD, 0.1, 1),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 1, 10),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY, 1, 10),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, 0.1, 1),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, 0.1, 1),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -679,12 +679,12 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting,value,expected",
         [
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, 8, 8),
-            (PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY, 8, 8),
-            (PortSettingKey.DYNAMIC_TRANSITION_VPD, 8, 0.8),
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP, 8, 8),
-            (PortSettingKey.DYNAMIC_BUFFER_HUMIDITY, 8, 8),
-            (PortSettingKey.DYNAMIC_BUFFER_VPD, 8, 0.8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, 8, 0.8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, 8, 0.8),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -698,7 +698,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -709,10 +709,10 @@ class TestNumbers:
         "setting,f_setting",
         [
             (
-                PortSettingKey.DYNAMIC_TRANSITION_TEMP,
-                PortSettingKey.DYNAMIC_TRANSITION_TEMP_F,
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F,
             ),
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP, PortSettingKey.DYNAMIC_BUFFER_TEMP_F),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F),
         ],
     )
     @pytest.mark.parametrize(
@@ -741,7 +741,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
-            ControllerSettingKey.TEMP_UNIT
+            AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
         entity = await execute_and_get_port_entity(
@@ -774,8 +774,8 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting",
         [
-            PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY,
-            PortSettingKey.DYNAMIC_BUFFER_HUMIDITY,
+            AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY,
+            AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("value", [0, 5, 10])
@@ -804,7 +804,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.DYNAMIC_TRANSITION_VPD, PortSettingKey.DYNAMIC_BUFFER_VPD],
+        [AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, AdvancedSettingsKey.DYNAMIC_BUFFER_VPD],
     )
     @pytest.mark.parametrize("expected,value", [(0, 0), (5, 0.5), (10, 1)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

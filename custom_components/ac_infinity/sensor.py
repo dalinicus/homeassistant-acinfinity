@@ -33,14 +33,14 @@ from custom_components.ac_infinity.core import (
     get_value_fn_port_property_default,
     suitable_fn_controller_property_default,
     suitable_fn_port_property_default,
-    suitable_fn_port_setting_default,
+    suitable_fn_port_control_default,
 )
 
 from .const import (
     DOMAIN,
     ControllerPropertyKey,
     PortPropertyKey,
-    PortSettingKey,
+    PortControlKey,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -88,8 +88,8 @@ def __get_value_fn_floating_point_as_int(
 def __get_value_fn_port_setting_default_zero(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
-    return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, PortSettingKey.SURPLUS, 0
+    return entity.ac_infinity.get_port_control(
+        port.controller.device_id, port.port_index, PortControlKey.SURPLUS, 0
     )
 
 
@@ -142,14 +142,14 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         get_value_fn=get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
-        key=PortSettingKey.SURPLUS,
+        key=PortControlKey.SURPLUS,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         icon=None,  # default
         translation_key="remaining_time",
         suggested_unit_of_measurement=None,
         state_class=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_port_setting_default_zero,
     ),
 ]

@@ -4,7 +4,7 @@ from asyncio import Future
 import pytest
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
+from custom_components.ac_infinity.const import DOMAIN, PortControlKey
 from custom_components.ac_infinity.switch import (
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
@@ -42,14 +42,14 @@ class TestSwitches:
     @pytest.mark.parametrize(
         "setting",
         [
-            PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED,
-            PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED,
-            PortSettingKey.AUTO_TEMP_HIGH_ENABLED,
-            PortSettingKey.AUTO_TEMP_LOW_ENABLED,
-            PortSettingKey.VPD_HIGH_ENABLED,
-            PortSettingKey.VPD_LOW_ENABLED,
-            PortSettingKey.SCHEDULED_START_TIME,
-            PortSettingKey.SCHEDULED_END_TIME,
+            PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
+            PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
+            PortControlKey.AUTO_TEMP_HIGH_ENABLED,
+            PortControlKey.AUTO_TEMP_LOW_ENABLED,
+            PortControlKey.VPD_HIGH_ENABLED,
+            PortControlKey.VPD_LOW_ENABLED,
+            PortControlKey.SCHEDULED_START_TIME,
+            PortControlKey.SCHEDULED_END_TIME,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -70,23 +70,23 @@ class TestSwitches:
         "setting,value,expected",
         [
             # enabled
-            (PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED, 1, True),
-            (PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED, 1, True),
-            (PortSettingKey.AUTO_TEMP_HIGH_ENABLED, 1, True),
-            (PortSettingKey.AUTO_TEMP_LOW_ENABLED, 1, True),
-            (PortSettingKey.VPD_HIGH_ENABLED, 1, True),
-            (PortSettingKey.VPD_LOW_ENABLED, 1, True),
-            (PortSettingKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
-            (PortSettingKey.SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
+            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1, True),
+            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1, True),
+            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1, True),
+            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1, True),
+            (PortControlKey.VPD_HIGH_ENABLED, 1, True),
+            (PortControlKey.VPD_LOW_ENABLED, 1, True),
+            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
+            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
             # disabled
-            (PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED, 0, False),
-            (PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED, 0, False),
-            (PortSettingKey.AUTO_TEMP_HIGH_ENABLED, 0, False),
-            (PortSettingKey.AUTO_TEMP_LOW_ENABLED, 0, False),
-            (PortSettingKey.VPD_HIGH_ENABLED, 0, False),
-            (PortSettingKey.VPD_LOW_ENABLED, 0, False),
-            (PortSettingKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
-            (PortSettingKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
+            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0, False),
+            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0, False),
+            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0, False),
+            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0, False),
+            (PortControlKey.VPD_HIGH_ENABLED, 0, False),
+            (PortControlKey.VPD_LOW_ENABLED, 0, False),
+            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
+            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -103,7 +103,7 @@ class TestSwitches:
             setting,
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortSwitchEntity)
@@ -114,14 +114,14 @@ class TestSwitches:
         "setting,expected",
         [
             # enabled
-            (PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED, 1),
-            (PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED, 1),
-            (PortSettingKey.AUTO_TEMP_HIGH_ENABLED, 1),
-            (PortSettingKey.AUTO_TEMP_LOW_ENABLED, 1),
-            (PortSettingKey.VPD_HIGH_ENABLED, 1),
-            (PortSettingKey.VPD_LOW_ENABLED, 1),
-            (PortSettingKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
-            (PortSettingKey.SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
+            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1),
+            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1),
+            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1),
+            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1),
+            (PortControlKey.VPD_HIGH_ENABLED, 1),
+            (PortControlKey.VPD_LOW_ENABLED, 1),
+            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
+            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -149,14 +149,14 @@ class TestSwitches:
     @pytest.mark.parametrize(
         "setting,expected",
         [
-            (PortSettingKey.AUTO_HUMIDITY_HIGH_ENABLED, 0),
-            (PortSettingKey.AUTO_HUMIDITY_LOW_ENABLED, 0),
-            (PortSettingKey.AUTO_TEMP_HIGH_ENABLED, 0),
-            (PortSettingKey.AUTO_TEMP_LOW_ENABLED, 0),
-            (PortSettingKey.VPD_HIGH_ENABLED, 0),
-            (PortSettingKey.VPD_LOW_ENABLED, 0),
-            (PortSettingKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
-            (PortSettingKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
+            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0),
+            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0),
+            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0),
+            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0),
+            (PortControlKey.VPD_HIGH_ENABLED, 0),
+            (PortControlKey.VPD_LOW_ENABLED, 0),
+            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
+            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

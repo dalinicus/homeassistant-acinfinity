@@ -14,8 +14,8 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
-    ControllerSettingKey,
-    PortSettingKey,
+    AdvancedSettingsKey,
+    PortControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -28,11 +28,11 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
     get_value_fn_controller_setting_default,
-    get_value_fn_port_setting_default,
+    get_value_fn_port_control_default,
     set_value_fn_controller_setting_default,
-    set_value_fn_port_setting_default,
+    set_value_fn_port_control_default,
     suitable_fn_controller_setting_default,
-    suitable_fn_port_setting_default,
+    suitable_fn_port_control_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,13 +69,13 @@ class ACInfinityPortNumberEntityDescription(
 
 def __get_value_fn_cal_temp(entity: ACInfinityEntity, controller: ACInfinityController):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        controller.device_id, ControllerSettingKey.TEMP_UNIT
+        controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
     return entity.ac_infinity.get_controller_setting(
         controller.device_id,
-        ControllerSettingKey.CALIBRATE_TEMP
+        AdvancedSettingsKey.CALIBRATE_TEMP
         if temp_unit > 0
-        else ControllerSettingKey.CALIBRATE_TEMP_F,
+        else AdvancedSettingsKey.CALIBRATE_TEMP_F,
     )
 
 
@@ -83,7 +83,7 @@ def __set_value_fn_cal_temp(
     entity: ACInfinityEntity, controller: ACInfinityController, value: int
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        controller.device_id, ControllerSettingKey.TEMP_UNIT
+        controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
     # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
@@ -96,13 +96,13 @@ def __set_value_fn_cal_temp(
     return entity.ac_infinity.update_controller_settings(
         controller.device_id,
         [
-            (ControllerSettingKey.CALIBRATE_TEMP, value),
-            (ControllerSettingKey.CALIBRATE_TEMP_F, 0),
+            (AdvancedSettingsKey.CALIBRATE_TEMP, value),
+            (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
         ]
         if temp_unit > 0
         else [
-            (ControllerSettingKey.CALIBRATE_TEMP, 0),
-            (ControllerSettingKey.CALIBRATE_TEMP_F, value),
+            (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
+            (AdvancedSettingsKey.CALIBRATE_TEMP_F, value),
         ],
     )
 
@@ -111,13 +111,13 @@ def __get_value_fn_vpd_leaf_temp_offset(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        controller.device_id, ControllerSettingKey.TEMP_UNIT
+        controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
     return entity.ac_infinity.get_controller_setting(
         controller.device_id,
-        ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+        AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
         if temp_unit > 0
-        else ControllerSettingKey.VPD_LEAF_TEMP_OFFSET_F,
+        else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
     )
 
 
@@ -125,7 +125,7 @@ def __set_value_fn_vpd_leaf_temp_offset(
     entity: ACInfinityEntity, controller: ACInfinityController, value: int
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        controller.device_id, ControllerSettingKey.TEMP_UNIT
+        controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
     # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
@@ -137,9 +137,9 @@ def __set_value_fn_vpd_leaf_temp_offset(
 
     return entity.ac_infinity.update_controller_setting(
         controller.device_id,
-        ControllerSettingKey.VPD_LEAF_TEMP_OFFSET
+        AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
         if temp_unit > 0
-        else ControllerSettingKey.VPD_LEAF_TEMP_OFFSET_F,
+        else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
         value,
     )
 
@@ -147,7 +147,7 @@ def __set_value_fn_vpd_leaf_temp_offset(
 def __get_value_fn_timer_duration(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as minutes but stored as seconds
     return (
-        entity.ac_infinity.get_port_setting(
+        entity.ac_infinity.get_port_control(
             port.controller.device_id, port.port_index, entity.entity_description.key
         )
         / 60
@@ -158,7 +158,7 @@ def __set_value_fn_timer_duration(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     # value configured as minutes but stored as seconds
-    return entity.ac_infinity.update_port_setting(
+    return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
@@ -169,7 +169,7 @@ def __set_value_fn_timer_duration(
 def __get_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return (
-        entity.ac_infinity.get_port_setting(
+        entity.ac_infinity.get_port_control(
             port.controller.device_id, port.port_index, entity.entity_description.key
         )
         / 10
@@ -178,7 +178,7 @@ def __get_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort):
 
 def __set_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
-    return entity.ac_infinity.update_port_setting(
+    return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
@@ -189,14 +189,14 @@ def __set_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort, value: in
 def __set_value_fn_temp_auto_low(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
-    return entity.ac_infinity.update_port_settings(
+    return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
         [
             # value is received from HA as C
-            (PortSettingKey.AUTO_TEMP_LOW_TRIGGER, value),
+            (PortControlKey.AUTO_TEMP_LOW_TRIGGER, value),
             # degrees F must be calculated and set in addition to C
-            (PortSettingKey.AUTO_TEMP_LOW_TRIGGER_F, int(round((value * 1.8) + 32, 0))),
+            (PortControlKey.AUTO_TEMP_LOW_TRIGGER_F, int(round((value * 1.8) + 32, 0))),
         ],
     )
 
@@ -204,15 +204,15 @@ def __set_value_fn_temp_auto_low(
 def __set_value_fn_temp_auto_high(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
-    return entity.ac_infinity.update_port_settings(
+    return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
         [
             # value is received from HA as C
-            (PortSettingKey.AUTO_TEMP_HIGH_TRIGGER, value),
+            (PortControlKey.AUTO_TEMP_HIGH_TRIGGER, value),
             # degrees F must be calculated and set in addition to C
             (
-                PortSettingKey.AUTO_TEMP_HIGH_TRIGGER_F,
+                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
                 int(round((value * 1.8) + 32, 0)),
             ),
         ],
@@ -223,29 +223,29 @@ def __get_value_fn_dynamic_transition_temp(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+        port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
-    return entity.ac_infinity.get_port_setting(
+    return entity.ac_infinity.get_port_control(
         port.controller.device_id,
         port.port_index,
-        PortSettingKey.DYNAMIC_TRANSITION_TEMP
+        AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP
         if temp_unit > 0
-        else PortSettingKey.DYNAMIC_TRANSITION_TEMP_F,
+        else AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F,
     )
 
 
 def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinityPort):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+        port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
-    return entity.ac_infinity.get_port_setting(
+    return entity.ac_infinity.get_port_control(
         port.controller.device_id,
         port.port_index,
-        PortSettingKey.DYNAMIC_BUFFER_TEMP
+        AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP
         if temp_unit > 0
-        else PortSettingKey.DYNAMIC_BUFFER_TEMP_F,
+        else AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F,
     )
 
 
@@ -253,7 +253,7 @@ def __set_value_fn_dynamic_transition_temp(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+        port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
     # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
@@ -261,17 +261,17 @@ def __set_value_fn_dynamic_transition_temp(
     if temp_unit > 0 and value > 10:
         value = 10
 
-    return entity.ac_infinity.update_port_settings(
+    return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
         [
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, value),
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP_F, value * 2),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, value),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value * 2),
         ]
         if temp_unit > 0
         else [
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP, math.floor(value / 2)),
-            (PortSettingKey.DYNAMIC_TRANSITION_TEMP_F, value),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, math.floor(value / 2)),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value),
         ],
     )
 
@@ -280,7 +280,7 @@ def __set_value_fn_dynamic_buffer_temp(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     temp_unit = entity.ac_infinity.get_controller_setting(
-        port.controller.device_id, ControllerSettingKey.TEMP_UNIT
+        port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
     # in the event that the user swaps from F to C in the ac infinity app without reloading homeassistant,
@@ -288,24 +288,24 @@ def __set_value_fn_dynamic_buffer_temp(
     if temp_unit > 0 and value > 10:
         value = 10
 
-    return entity.ac_infinity.update_port_settings(
+    return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
         [
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP, value),
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP_F, value * 2),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, value),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value * 2),
         ]
         if temp_unit > 0
         else [
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP, math.floor(value / 2)),
-            (PortSettingKey.DYNAMIC_BUFFER_TEMP_F, value),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, math.floor(value / 2)),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value),
         ],
     )
 
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
     ACInfinityControllerNumberEntityDescription(
-        key=ControllerSettingKey.CALIBRATE_TEMP,
+        key=AdvancedSettingsKey.CALIBRATE_TEMP,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=-20,
@@ -319,7 +319,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         set_value_fn=__set_value_fn_cal_temp,
     ),
     ACInfinityControllerNumberEntityDescription(
-        key=ControllerSettingKey.CALIBRATE_HUMIDITY,
+        key=AdvancedSettingsKey.CALIBRATE_HUMIDITY,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=-10,
@@ -333,7 +333,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         set_value_fn=set_value_fn_controller_setting_default,
     ),
     ACInfinityControllerNumberEntityDescription(
-        key=ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
+        key=AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=-20,
@@ -350,7 +350,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
 
 PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.ON_SPEED,
+        key=PortControlKey.ON_SPEED,
         device_class=NumberDeviceClass.POWER_FACTOR,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -359,12 +359,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:knob",
         translation_key="on_power",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.OFF_SPEED,
+        key=PortControlKey.OFF_SPEED,
         device_class=NumberDeviceClass.POWER_FACTOR,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -373,12 +373,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:knob",
         translation_key="off_power",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.TIMER_DURATION_TO_ON,
+        key=PortControlKey.TIMER_DURATION_TO_ON,
         device_class=NumberDeviceClass.DURATION,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -387,12 +387,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="timer_mode_minutes_to_on",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.TIMER_DURATION_TO_OFF,
+        key=PortControlKey.TIMER_DURATION_TO_OFF,
         device_class=NumberDeviceClass.DURATION,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -401,12 +401,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="timer_mode_minutes_to_off",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.CYCLE_DURATION_ON,
+        key=PortControlKey.CYCLE_DURATION_ON,
         device_class=NumberDeviceClass.DURATION,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -415,12 +415,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="cycle_mode_minutes_on",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.CYCLE_DURATION_OFF,
+        key=PortControlKey.CYCLE_DURATION_OFF,
         device_class=NumberDeviceClass.DURATION,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -429,12 +429,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon=None,  # default
         translation_key="cycle_mode_minutes_off",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.VPD_LOW_TRIGGER,
+        key=PortControlKey.VPD_LOW_TRIGGER,
         device_class=NumberDeviceClass.PRESSURE,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -443,12 +443,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-thermometer-outline",
         translation_key="vpd_mode_low_trigger",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.VPD_HIGH_TRIGGER,
+        key=PortControlKey.VPD_HIGH_TRIGGER,
         device_class=NumberDeviceClass.PRESSURE,
         mode=NumberMode.BOX,
         native_min_value=0,
@@ -457,12 +457,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-thermometer-outline",
         translation_key="vpd_mode_high_trigger",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.AUTO_HUMIDITY_LOW_TRIGGER,
+        key=PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
         device_class=NumberDeviceClass.HUMIDITY,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -471,12 +471,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-percent",
         translation_key="auto_mode_humidity_low_trigger",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+        key=PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
         device_class=NumberDeviceClass.HUMIDITY,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -485,12 +485,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:water-percent",
         translation_key="auto_mode_humidity_high_trigger",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.AUTO_TEMP_LOW_TRIGGER,
+        key=PortControlKey.AUTO_TEMP_LOW_TRIGGER,
         device_class=NumberDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         mode=NumberMode.AUTO,
@@ -499,12 +499,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="auto_mode_temp_low_trigger",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
         set_value_fn=__set_value_fn_temp_auto_low,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.AUTO_TEMP_HIGH_TRIGGER,
+        key=PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
         device_class=NumberDeviceClass.TEMPERATURE,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         mode=NumberMode.AUTO,
@@ -513,12 +513,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="auto_mode_temp_high_trigger",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
         set_value_fn=__set_value_fn_temp_auto_high,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_TRANSITION_TEMP,
+        key=AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -527,12 +527,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_transition_temp",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_dynamic_transition_temp,
         set_value_fn=__set_value_fn_dynamic_transition_temp,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_TRANSITION_HUMIDITY,
+        key=AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -541,12 +541,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_transition_humidity",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_TRANSITION_VPD,
+        key=AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -555,12 +555,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_transition_vpd",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_BUFFER_TEMP,
+        key=AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -569,12 +569,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_buffer_temp",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_dynamic_buffer_temp,
         set_value_fn=__set_value_fn_dynamic_buffer_temp,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_BUFFER_HUMIDITY,
+        key=AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -583,12 +583,12 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_buffer_humidity",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortNumberEntityDescription(
-        key=PortSettingKey.DYNAMIC_BUFFER_VPD,
+        key=AdvancedSettingsKey.DYNAMIC_BUFFER_VPD,
         device_class=None,
         mode=NumberMode.AUTO,
         native_min_value=0,
@@ -597,7 +597,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_buffer_vpd",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_setting_default,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_vpd,
         set_value_fn=__set_value_fn_vpd,
     ),
@@ -671,7 +671,7 @@ async def async_setup_entry(
     entities = ACInfinityEntities()
     for controller in controllers:
         temp_unit = coordinator.ac_infinity.get_controller_setting(
-            controller.device_id, ControllerSettingKey.TEMP_UNIT
+            controller.device_id, AdvancedSettingsKey.TEMP_UNIT
         )
         for description in CONTROLLER_DESCRIPTIONS:
             entity = ACInfinityControllerNumberEntity(
@@ -679,8 +679,8 @@ async def async_setup_entry(
             )
 
             if temp_unit > 0 and description.key in (
-                ControllerSettingKey.CALIBRATE_TEMP,
-                ControllerSettingKey.VPD_LEAF_TEMP_OFFSET,
+                AdvancedSettingsKey.CALIBRATE_TEMP,
+                AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET,
             ):
                 # Celsius is restricted to ±10C versus Fahrenheit which is restricted to ±20F
                 entity.entity_description.native_min_value = -10
@@ -692,8 +692,8 @@ async def async_setup_entry(
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortNumberEntity(coordinator, description, port)
                 if temp_unit > 0 and description.key in (
-                    PortSettingKey.DYNAMIC_TRANSITION_TEMP,
-                    PortSettingKey.DYNAMIC_BUFFER_TEMP,
+                    AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
+                    AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
                 ):
                     # Celsius max value is 10C versus Fahrenheit which maxes out at 20F
                     entity.entity_description.native_max_value = 10

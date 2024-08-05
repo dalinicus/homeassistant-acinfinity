@@ -5,7 +5,7 @@ import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.ac_infinity.const import ControllerSettingKey, PortSettingKey
+from custom_components.ac_infinity.const import AdvancedSettingsKey, PortControlKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -97,24 +97,24 @@ class ACInfinityClient:
         # Remove fields that are not part of update payload, as well as the devSettings structure so we're not messing
         # with the controller settings.
         for key in [
-            PortSettingKey.DEVICE_MAC_ADDR,
-            PortSettingKey.IPC_SETTING,
-            PortSettingKey.DEV_SETTING,
+            PortControlKey.DEVICE_MAC_ADDR,
+            PortControlKey.IPC_SETTING,
+            PortControlKey.DEV_SETTING,
         ]:
             if key in settings:
                 del settings[key]
 
         # Add defaulted fields that exist in the update call on the phone app, but may not exist in the fetch call
         for key in [
-            PortSettingKey.VPD_STATUS,
-            PortSettingKey.VPD_NUMS,
+            PortControlKey.VPD_STATUS,
+            PortControlKey.VPD_NUMS,
         ]:
             if key not in settings:
                 settings[key] = 0
 
         # Convert ids that are strings on the fetch call to int values for the update call
-        settings[PortSettingKey.DEV_ID] = int(settings[PortSettingKey.DEV_ID])
-        settings[PortSettingKey.MODE_SET_ID] = int(settings[PortSettingKey.MODE_SET_ID])
+        settings[PortControlKey.DEV_ID] = int(settings[PortControlKey.DEV_ID])
+        settings[PortControlKey.MODE_SET_ID] = int(settings[PortControlKey.MODE_SET_ID])
 
         # Set values changed by the user
         for key, value in key_values:
@@ -128,81 +128,84 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_ADD_DEV_MODE, settings, headers)
 
-    async def get_device_settings(self, device_id: (str | int)):
+    async def get_device_settings(self, device_id: (str | int), port:int):
         """Gets the current values of controller specific settings;
         such as temperature, humidity, and vpd calibration values
 
         Args:
             device_id: The controller id of the settings to grab
+            port: 0 for controller settings, or the port number for port settings
         """
         if not self.is_logged_in():
             raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
-            API_URL_GET_DEV_SETTING, {"devId": device_id, "port": 0}, headers
+            API_URL_GET_DEV_SETTING, {"devId": device_id, "port": port}, headers
         )
         return json["data"]
 
-    async def update_device_settings(
+    async def update_advanced_settings(
         self,
         device_id: (str | int),
-        controller_name: str,
+        port: int,
+        device_name: str,
         key_values: list[Tuple[str, int]],
     ):
         """Sets a given controller setting to a new value
 
         Args:
             device_id: The device id of the controller to update
-            controller_name: The current controller name value as it exists in the coordinator from the last refresh call.
+            port: 0 for controller settings, or the port number for port settings
+            device_name: The current controller name value as it exists in the coordinator from the last refresh call.
             key_values: key value pairs of settings to update
         """
-        settings = await self.get_device_settings(device_id)
+        settings = await self.get_device_settings(device_id, port)
 
         # the fetch call does not contain the device name. If we use the payload without setting device name,
         # the ac infinity api will change the name of the controller to "None".  We need to set it first before anything.
-        settings[ControllerSettingKey.DEV_NAME] = controller_name
+        settings[AdvancedSettingsKey.DEV_NAME] = device_name
 
         # remove fields not expected in the update payload, so we don't get a 400
         for key in [
-            ControllerSettingKey.SET_ID,
-            ControllerSettingKey.DEV_MAC_ADDR,
-            ControllerSettingKey.PORT_RESISTANCE,
-            ControllerSettingKey.DEV_TIME_ZONE,
-            ControllerSettingKey.SENSOR_SETTING,
-            ControllerSettingKey.SENSOR_TRANS_BUFF,
-            ControllerSettingKey.SUB_DEVICE_VERSION,
-            ControllerSettingKey.SEC_FUC_REPORT_TIME,
-            ControllerSettingKey.UPDATE_ALL_PORT,
-            ControllerSettingKey.CALIBRATION_TIME,
+            AdvancedSettingsKey.SET_ID,
+            AdvancedSettingsKey.DEV_MAC_ADDR,
+            AdvancedSettingsKey.PORT_RESISTANCE,
+            AdvancedSettingsKey.DEV_TIME_ZONE,
+            AdvancedSettingsKey.SENSOR_SETTING,
+            AdvancedSettingsKey.SENSOR_TRANS_BUFF,
+            AdvancedSettingsKey.SUB_DEVICE_VERSION,
+            AdvancedSettingsKey.SEC_FUC_REPORT_TIME,
+            AdvancedSettingsKey.UPDATE_ALL_PORT,
+            AdvancedSettingsKey.CALIBRATION_TIME,
         ]:
             if key in settings:
                 del settings[key]
 
         # Find string based fields that are null and set them to empty string.  Add any keys that don't exist.
         for key in [
-            ControllerSettingKey.SENSOR_TRANS_BUFF_STR,
-            ControllerSettingKey.SENSOR_SETTING_STR,
-            ControllerSettingKey.PORT_PARAM_DATA,
-            ControllerSettingKey.PARAM_SENSORS,
+            AdvancedSettingsKey.SENSOR_TRANS_BUFF_STR,
+            AdvancedSettingsKey.SENSOR_SETTING_STR,
+            AdvancedSettingsKey.PORT_PARAM_DATA,
+            AdvancedSettingsKey.PARAM_SENSORS,
         ]:
             if key not in settings or settings[key] is None:
                 settings[key] = ""
 
         # Add defaulted fields that exist in the update call on the phone app, but may not exist in the fetch call
         for key in [
-            ControllerSettingKey.SENSOR_ONE_TYPE,
-            ControllerSettingKey.IS_SHARE,
-            ControllerSettingKey.TARGET_VPD_SWITCH,
-            ControllerSettingKey.SENSOR_TWO_TYPE,
-            ControllerSettingKey.ZONE_SENSOR_TYPE,
+            AdvancedSettingsKey.SENSOR_ONE_TYPE,
+            AdvancedSettingsKey.IS_SHARE,
+            AdvancedSettingsKey.TARGET_VPD_SWITCH,
+            AdvancedSettingsKey.SENSOR_TWO_TYPE,
+            AdvancedSettingsKey.ZONE_SENSOR_TYPE,
         ]:
             if key not in settings:
                 settings[key] = 0
 
         # Convert ids that are strings on the fetch call to int values for the update call
-        settings[ControllerSettingKey.DEV_ID] = int(
-            settings[ControllerSettingKey.DEV_ID]
+        settings[AdvancedSettingsKey.DEV_ID] = int(
+            settings[AdvancedSettingsKey.DEV_ID]
         )
 
         # Set any values that are None to 0 as that's what the update endpoint expects.

@@ -8,7 +8,7 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SCHEDULE_DISABLED_VALUE,
-    PortSettingKey,
+    PortControlKey,
 )
 from custom_components.ac_infinity.time import (
     ACInfinityPortTimeEntity,
@@ -40,7 +40,7 @@ class TestTimes:
         assert len(test_objects.entities._added_entities) == 8
 
     @pytest.mark.parametrize(
-        "key", [PortSettingKey.SCHEDULED_START_TIME, PortSettingKey.SCHEDULED_END_TIME]
+        "key", [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_schedule_end_time_created_for_each_port(
@@ -55,7 +55,7 @@ class TestTimes:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.SCHEDULED_START_TIME, PortSettingKey.SCHEDULED_END_TIME],
+        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize(
         "value,expected_hour,expected_minute",
@@ -78,7 +78,7 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortTimeEntity)
@@ -89,7 +89,7 @@ class TestTimes:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.SCHEDULED_START_TIME, PortSettingKey.SCHEDULED_END_TIME],
+        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize("value", [None, 1441, 65535])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -103,7 +103,7 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortTimeEntity)
@@ -116,7 +116,7 @@ class TestTimes:
     )
     @pytest.mark.parametrize(
         "setting",
-        [PortSettingKey.SCHEDULED_START_TIME, PortSettingKey.SCHEDULED_END_TIME],
+        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value(

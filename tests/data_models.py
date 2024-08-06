@@ -394,7 +394,7 @@ DEVICE_SETTINGS = {
     "secFucParams": "",
     "secFucReportTime": 0,
     "updateAllPort": True,
-    "calibrationTime": None
+    "calibrationTime": None,
 }
 
 DEVICE_INFO_LIST_ALL = [CONTROLLER_PROPERTIES]
@@ -413,7 +413,7 @@ DEVICE_SETTINGS_DATA = {
     (str(DEVICE_ID), 1): DEVICE_SETTINGS,
     (str(DEVICE_ID), 2): DEVICE_SETTINGS,
     (str(DEVICE_ID), 3): DEVICE_SETTINGS,
-    (str(DEVICE_ID), 4): DEVICE_SETTINGS
+    (str(DEVICE_ID), 4): DEVICE_SETTINGS,
 }
 PORT_PROPERTIES_DATA = {
     (str(DEVICE_ID), 1): PORT_PROPERTY_ONE,

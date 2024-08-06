@@ -128,7 +128,7 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_ADD_DEV_MODE, settings, headers)
 
-    async def get_device_settings(self, device_id: (str | int), port:int):
+    async def get_device_settings(self, device_id: (str | int), port: int):
         """Gets the current values of controller specific settings;
         such as temperature, humidity, and vpd calibration values
 
@@ -204,9 +204,7 @@ class ACInfinityClient:
                 settings[key] = 0
 
         # Convert ids that are strings on the fetch call to int values for the update call
-        settings[AdvancedSettingsKey.DEV_ID] = int(
-            settings[AdvancedSettingsKey.DEV_ID]
-        )
+        settings[AdvancedSettingsKey.DEV_ID] = int(settings[AdvancedSettingsKey.DEV_ID])
 
         # Set any values that are None to 0 as that's what the update endpoint expects.
         for key in settings:

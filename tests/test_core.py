@@ -11,10 +11,10 @@ from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.const import (
     DOMAIN,
     MANUFACTURER,
-    ControllerPropertyKey,
     AdvancedSettingsKey,
-    PortPropertyKey,
+    ControllerPropertyKey,
     PortControlKey,
+    PortPropertyKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -30,17 +30,17 @@ from . import ACTestObjects, setup_entity_mocks
 from .data_models import (
     CONTROLLER_PROPERTIES,
     CONTROLLER_PROPERTIES_DATA,
-    DEVICE_SETTINGS_DATA,
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL,
     DEVICE_NAME,
+    DEVICE_SETTINGS_DATA,
     EMAIL,
     GET_DEV_MODE_SETTING_LIST_PAYLOAD,
     GET_DEV_SETTINGS_PAYLOAD,
     MAC_ADDR,
     PASSWORD,
-    PORT_PROPERTIES_DATA,
     PORT_CONTROLS_DATA,
+    PORT_PROPERTIES_DATA,
 )
 
 
@@ -620,14 +620,19 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
-        ac_infinity._port_properties[(str(DEVICE_ID), 1)][PortPropertyKey.NAME] = DEVICE_NAME
+        ac_infinity._port_properties[(str(DEVICE_ID), 1)][
+            PortPropertyKey.NAME
+        ] = DEVICE_NAME
 
         await ac_infinity.update_port_setting(
             DEVICE_ID, 1, AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2
         )
 
         mocked_set.assert_called_with(
-            DEVICE_ID, 1, DEVICE_NAME, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
+            DEVICE_ID,
+            1,
+            DEVICE_NAME,
+            [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)],
         )
 
     async def test_update_port_settings(self, mocker: MockFixture):
@@ -642,19 +647,22 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
-        ac_infinity._port_properties[(str(DEVICE_ID), 1)][PortPropertyKey.NAME] = DEVICE_NAME
+        ac_infinity._port_properties[(str(DEVICE_ID), 1)][
+            PortPropertyKey.NAME
+        ] = DEVICE_NAME
 
         await ac_infinity.update_port_settings(
             DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
         )
 
         mocked_set.assert_called_with(
-            DEVICE_ID, 1, DEVICE_NAME, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
+            DEVICE_ID,
+            1,
+            DEVICE_NAME,
+            [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)],
         )
 
-    async def test_update_port_settings_retried_on_failure(
-        self, mocker: MockFixture
-    ):
+    async def test_update_port_settings_retried_on_failure(self, mocker: MockFixture):
         """updating settings should be tried 3 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)

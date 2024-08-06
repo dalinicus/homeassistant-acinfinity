@@ -32,15 +32,15 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortReadOnlyMixin,
     get_value_fn_port_property_default,
     suitable_fn_controller_property_default,
-    suitable_fn_port_property_default,
     suitable_fn_port_control_default,
+    suitable_fn_port_property_default,
 )
 
 from .const import (
     DOMAIN,
     ControllerPropertyKey,
-    PortPropertyKey,
     PortControlKey,
+    PortPropertyKey,
 )
 
 _LOGGER = logging.getLogger(__name__)

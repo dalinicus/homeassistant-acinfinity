@@ -136,6 +136,7 @@ class PortControlKey:
     DEV_SETTING = "devSetting"
     IPC_SETTING = "ipcSetting"
 
+
 # Schedules are not enabled or disabled by Booleans,
 # but rather disabled when schedule time is set to 65535
 SCHEDULE_DISABLED_VALUE = 65535  # Disabled

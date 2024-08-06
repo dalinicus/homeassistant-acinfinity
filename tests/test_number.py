@@ -100,7 +100,9 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(4)
 
-        test_objects.port_control_set_mock.assert_called_with(str(DEVICE_ID), port, setting, 4)
+        test_objects.port_control_set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, 4
+        )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -615,7 +617,10 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP],
+        [
+            AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
+            AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
+        ],
     )
     @pytest.mark.parametrize("temp_unit,expected", [(0, 20), (1, 10)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -698,7 +703,9 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+            setting
+        ] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -712,7 +719,10 @@ class TestNumbers:
                 AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
                 AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F,
             ),
-            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F),
+            (
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F,
+            ),
         ],
     )
     @pytest.mark.parametrize(
@@ -804,7 +814,10 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, AdvancedSettingsKey.DYNAMIC_BUFFER_VPD],
+        [
+            AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD,
+            AdvancedSettingsKey.DYNAMIC_BUFFER_VPD,
+        ],
     )
     @pytest.mark.parametrize("expected,value", [(0, 0), (5, 0.5), (10, 1)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

@@ -5,7 +5,8 @@ import pytest
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
-    AdvancedSettingsKey, DOMAIN,
+    DOMAIN,
+    AdvancedSettingsKey,
     PortControlKey,
 )
 from custom_components.ac_infinity.select import (

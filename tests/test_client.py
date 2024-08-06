@@ -15,10 +15,10 @@ from custom_components.ac_infinity.client import (
 )
 from custom_components.ac_infinity.const import AdvancedSettingsKey, PortControlKey
 from tests.data_models import (
-    DEVICE_SETTINGS,
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL_PAYLOAD,
     DEVICE_NAME,
+    DEVICE_SETTINGS,
     EMAIL,
     GET_DEV_MODE_SETTING_LIST_PAYLOAD,
     GET_DEV_SETTINGS_PAYLOAD,
@@ -226,7 +226,7 @@ class TestACInfinityClient:
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert payload[key] == (
-                        PORT_CONTROLS[key] or 0
+                    PORT_CONTROLS[key] or 0
                 ), f"Key {key} has incorrect value"
 
     async def test_set_device_port_setting_value_changed_in_payload(self):
@@ -303,7 +303,7 @@ class TestACInfinityClient:
         assert mode_set_id == MODE_SET_ID
 
     @pytest.mark.parametrize("port", [0, 1, 2, 3, 4])
-    async def test_get_device_settings_returns_settings(self, port:int):
+    async def test_get_device_settings_returns_settings(self, port: int):
         """When logged in, get controller settings should return the current settings"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         client._user_id = USER_ID
@@ -393,7 +393,7 @@ class TestACInfinityClient:
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert (
-                        payload[key] == DEVICE_SETTINGS[key] or 0
+                    payload[key] == DEVICE_SETTINGS[key] or 0
                 ), f"Key {key} has incorrect value"
 
     async def test_update_advanced_settings_value_changed_in_payload(self):
@@ -405,7 +405,9 @@ class TestACInfinityClient:
 
         assert payload[AdvancedSettingsKey.CALIBRATE_HUMIDITY] == 3
 
-    async def test_update_advanced_settings_bad_fields_removed_and_missing_fields_added(self):
+    async def test_update_advanced_settings_bad_fields_removed_and_missing_fields_added(
+        self,
+    ):
         payload = (
             await self.__make_generic_update_advanced_settings_call_and_get_sent_payload()
         )
@@ -480,10 +482,8 @@ class TestACInfinityClient:
         assert isinstance(dev_settings["data"], dict)
         dev_settings["data"][AdvancedSettingsKey.PARAM_SENSORS] = set_value
 
-        payload = (
-            await self.__make_generic_update_advanced_settings_call_and_get_sent_payload(
-                dev_settings
-            )
+        payload = await self.__make_generic_update_advanced_settings_call_and_get_sent_payload(
+            dev_settings
         )
 
         expected = set_value if set_value else ""

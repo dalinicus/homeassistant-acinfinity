@@ -29,10 +29,13 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortReadWriteMixin,
     get_value_fn_controller_setting_default,
     get_value_fn_port_control_default,
-    get_value_fn_port_setting_default, set_value_fn_controller_setting_default,
+    get_value_fn_port_setting_default,
+    set_value_fn_controller_setting_default,
     set_value_fn_port_control_default,
-    set_value_fn_port_setting_default, suitable_fn_controller_setting_default,
-    suitable_fn_port_control_default, suitable_fn_port_setting_default,
+    set_value_fn_port_setting_default,
+    suitable_fn_controller_setting_default,
+    suitable_fn_port_control_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -176,7 +179,9 @@ def __get_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort):
     )
 
 
-def __set_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
+def __set_value_fn_vpd_control(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
@@ -184,6 +189,7 @@ def __set_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort, v
         entity.entity_description.key,
         value * 10,
     )
+
 
 def __get_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
@@ -195,7 +201,9 @@ def __get_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort):
     )
 
 
-def __set_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
+def __set_value_fn_vpd_setting(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return entity.ac_infinity.update_port_setting(
         port.controller.device_id,
@@ -203,6 +211,7 @@ def __set_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort, v
         entity.entity_description.key,
         value * 10,
     )
+
 
 def __set_value_fn_temp_auto_low(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int

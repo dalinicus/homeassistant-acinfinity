@@ -86,7 +86,7 @@ Device entities will be created for each ***PORT*** on each UIS controller, even
 
 ## Terms
 - `Sesonr`: A read-only measurement entity, such as temperature or humidity.
-- `Control`: An entity that can change the operational state of devices, such as individual mode selections, triggers, and timer schedules. 
+- `Control`: An entity that can change the operational state of devices, such as individual mode selections, triggers, and timer schedules.
 - `Setting`: An entity that can change controller/device settings.  These correspond to fields found in the Settings section of the Android/iOS app.
 
 ## Controller Sensors

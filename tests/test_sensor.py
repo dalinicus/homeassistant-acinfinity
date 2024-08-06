@@ -10,8 +10,8 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
-    PortPropertyKey,
     PortControlKey,
+    PortPropertyKey,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,

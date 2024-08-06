@@ -6,7 +6,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from custom_components.ac_infinity.const import AdvancedSettingsKey, DOMAIN, PortControlKey
+from custom_components.ac_infinity.const import (
+    DOMAIN,
+    AdvancedSettingsKey,
+    PortControlKey,
+)
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
@@ -14,7 +18,8 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    suitable_fn_port_control_default, suitable_fn_port_setting_default,
+    suitable_fn_port_control_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)

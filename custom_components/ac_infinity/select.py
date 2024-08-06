@@ -14,7 +14,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    suitable_fn_port_control_default,
+    suitable_fn_port_control_default, suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def __get_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     return DYNAMIC_RESPONSE_OPTIONS[
-        entity.ac_infinity.get_port_control(
+        entity.ac_infinity.get_port_setting(
             port.controller.device_id,
             port.port_index,
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
@@ -108,7 +108,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
         options=DYNAMIC_RESPONSE_OPTIONS,
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
     ),

@@ -100,7 +100,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(4)
 
-        test_objects.port_set_mock.assert_called_with(str(DEVICE_ID), port, setting, 4)
+        test_objects.port_control_set_mock.assert_called_with(str(DEVICE_ID), port, setting, 4)
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -172,7 +172,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(field_value)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
         test_objects.refresh_mock.assert_called()
@@ -255,7 +255,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(value)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
         test_objects.refresh_mock.assert_called()
@@ -329,7 +329,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(field_value)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
         test_objects.refresh_mock.assert_called()
@@ -410,7 +410,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(c)
 
-        test_objects.port_sets_mock.assert_called_with(
+        test_objects.port_control_sets_mock.assert_called_with(
             str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
         )
         test_objects.refresh_mock.assert_called()
@@ -428,7 +428,7 @@ class TestNumbers:
     ):
         """Sensor for device reported temperature is created on setup"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 1)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -489,7 +489,7 @@ class TestNumbers:
             setup, async_setup_entry, setting
         )
 
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][setting] = value
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
@@ -517,7 +517,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -567,7 +567,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -624,7 +624,7 @@ class TestNumbers:
     ):
         """Dynamic response temp controls setup for each port"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -698,7 +698,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -740,7 +740,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._controller_settings[str(DEVICE_ID)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -752,7 +752,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         if temp_unit > 0:
-            test_objects.port_sets_mock.assert_called_with(
+            test_objects.port_setting_sets_mock.assert_called_with(
                 str(DEVICE_ID),
                 port,
                 [
@@ -761,7 +761,7 @@ class TestNumbers:
                 ],
             )
         else:
-            test_objects.port_sets_mock.assert_called_with(
+            test_objects.port_setting_sets_mock.assert_called_with(
                 str(DEVICE_ID),
                 port,
                 [
@@ -796,7 +796,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(value)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_setting_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, value
         )
 
@@ -824,7 +824,7 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityPortNumberEntity)
         await entity.async_set_native_value(value)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_setting_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
 

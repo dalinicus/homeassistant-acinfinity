@@ -21,6 +21,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
   - [Controller Sensors](#controller-sensors)
   - [Device Sensors](#device-sensors)
   - [Device Controls](#device-controls)
+    - [Global](#global)
     - [On Mode](#on-mode)
     - [Off Mode](#off-mode)
     - [Auto Mode](#auto-mode)
@@ -32,7 +33,6 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
   - [Controller Settings](#controller-settings)
     - [Sensor / VPD Calibration](#sensor--vpd-calibration)
   - [Device Settings](#device-settings)
-    - [Level Status](#level-status)
     - [Dynamic Response](#dynamic-response)
       - [Transition Mode](#transition-mode)
       - [Buffer Mode](#buffer-mode)
@@ -84,6 +84,11 @@ Controller entities will be created for each AC Infinity Controller on the confi
 
 Device entities will be created for each ***PORT*** on each UIS controller, even if no device is attached to a given port.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
+## Terms
+- `Sesonr`: A read-only measurement entity, such as temperature or humidity.
+- `Control`: An entity that can change the operational state of devices, such as individual mode selections, triggers, and timer schedules. 
+- `Setting`: An entity that can change controller/device settings.  These correspond to fields found in the Settings section of the Android/iOS app.
+
 ## Controller Sensors
 Read Only sensors reported from the controller
 - `Air Temperature`: The air temperature as reported by the air probe.
@@ -110,7 +115,10 @@ The mode can be changed via the `Active Mode` control, which provides the follow
 - `Schedule`: Device is toggled based on a schedule
 - `VPD`: Device is toggled based on VPD triggers
 
-See [Level Status](#level-status) for information on how to set the power level of devices while in an ON or OFF state
+### Global
+These settings control the power level of a device when in a given trigger state, which is shared across all modes.
+- `On Speed`: Go to OFF MODE to set. The device will run at this level when triggered ON
+- `Off Speed`: Go to ON MODE to set.  The device will run at this level even when triggered OFF
 
 ### On Mode
 Device is always set to the on speed . This mode has no unique controls.

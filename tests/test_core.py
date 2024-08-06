@@ -30,7 +30,7 @@ from . import ACTestObjects, setup_entity_mocks
 from .data_models import (
     CONTROLLER_PROPERTIES,
     CONTROLLER_PROPERTIES_DATA,
-    CONTROLLER_SETTINGS_DATA,
+    DEVICE_SETTINGS_DATA,
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL,
     DEVICE_NAME,
@@ -411,7 +411,7 @@ class TestACInfinity:
         """getting a port setting gets the correct setting from the correct port"""
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting_exists(device_id, setting_key)
@@ -431,7 +431,7 @@ class TestACInfinity:
         """getting a port setting gets the correct setting from the correct port"""
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting(device_id, setting_key)
@@ -572,7 +572,7 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
 
         await ac_infinity.update_controller_settings(
             DEVICE_ID, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
@@ -604,6 +604,76 @@ class TestACInfinity:
         with pytest.raises(Exception):
             await ac_infinity.update_controller_settings(
                 DEVICE_ID, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
+            )
+
+        assert mocked_sets.call_count == 3
+
+    async def test_update_port_setting(self, mocker: MockFixture):
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_set = mocker.patch.object(
+            ACInfinityClient, "update_advanced_settings", return_value=future
+        )
+
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        ac_infinity._port_properties[(str(DEVICE_ID), 1)][PortPropertyKey.NAME] = DEVICE_NAME
+
+        await ac_infinity.update_port_setting(
+            DEVICE_ID, 1, AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2
+        )
+
+        mocked_set.assert_called_with(
+            DEVICE_ID, 1, DEVICE_NAME, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
+        )
+
+    async def test_update_port_settings(self, mocker: MockFixture):
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_set = mocker.patch.object(
+            ACInfinityClient, "update_advanced_settings", return_value=future
+        )
+
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        ac_infinity._port_properties[(str(DEVICE_ID), 1)][PortPropertyKey.NAME] = DEVICE_NAME
+
+        await ac_infinity.update_port_settings(
+            DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
+        )
+
+        mocked_set.assert_called_with(
+            DEVICE_ID, 1, DEVICE_NAME, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
+        )
+
+    async def test_update_port_settings_retried_on_failure(
+        self, mocker: MockFixture
+    ):
+        """updating settings should be tried 3 times before failing"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+        mocker.patch("asyncio.sleep", return_value=future)
+        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
+        mocked_sets = mocker.patch.object(
+            ACInfinityClient,
+            "update_advanced_settings",
+            return_value=future,
+            side_effect=Exception("unit-test"),
+        )
+
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity._port_controls = PORT_CONTROLS_DATA
+
+        with pytest.raises(Exception):
+            await ac_infinity.update_port_settings(
+                DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
             )
 
         assert mocked_sets.call_count == 3

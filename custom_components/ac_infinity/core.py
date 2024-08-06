@@ -164,11 +164,11 @@ class ACInfinityService:
     # api/user/devInfoListAll json organized by controller device id and port index
     _port_properties: dict[Tuple[str, int], Any] = {}
 
-    # api/dev/getDevSetting json organized by controller device id
-    _controller_settings: dict[str, Any] = {}
-
     # api/dev/getDevModeSettingList json organized by controller device id and port index
     _port_controls: dict[Tuple[str, int], Any] = {}
+
+    # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
+    _device_settings: dict[Tuple[str, int], Any] = {}
 
     def __init__(self, email: str, password: str) -> None:
         """
@@ -293,11 +293,7 @@ class ACInfinityService:
             controller_id: the device id of the controller
             setting_key: the json field name for the data being retrieved
         """
-        normalized_id = str(controller_id)
-        return (
-            normalized_id in self._controller_settings
-            and setting_key in self._controller_settings[normalized_id]
-        )
+        return self.get_port_setting_exists(controller_id, 0, setting_key)
 
     def get_controller_setting(
         self, controller_id: (str | int), setting_key: str, default_value=None
@@ -309,23 +305,52 @@ class ACInfinityService:
             setting_key: the json field name for the data being retrieved
             default_value: the value to return if the controller or property doesn't exist
         """
+        return self.get_port_setting(controller_id, 0, setting_key, default_value)
+
+    def get_port_setting_exists(
+        self, controller_id: (str | int), port_index: int, setting_key: str
+    ) -> bool:
+        """returns if a given setting exists on a given controller.
+
+        Args:
+            controller_id: the device id of the controller
+            port_index: the port index of the device.
+            setting_key: the json field name for the data being retrieved
+        """
         normalized_id = str(controller_id)
-        if normalized_id in self._controller_settings:
-            result = self._controller_settings[normalized_id]
+        return (
+            (normalized_id, port_index) in self._device_settings
+            and setting_key in self._device_settings[(normalized_id, port_index)]
+        )
+
+    def get_port_setting(
+        self, controller_id: (str | int), port_index: int, setting_key: str, default_value=None
+    ):
+        """gets a property value for a given device, if both the setting and device exist.
+
+        Args:
+            controller_id: the device id of the controller
+            port_index: the port index of the device
+            setting_key: the json field name for the data being retrieved
+            default_value: the value to return if the controller or property doesn't exist
+        """
+        normalized_id = str(controller_id)
+        if (normalized_id, port_index) in self._device_settings:
+            result = self._device_settings[(normalized_id, port_index)]
             if setting_key in result:
                 value = result[setting_key]
                 return value if value is not None else default_value
 
         return default_value
 
-    def __set_controller_settings_json(self, controller_id: str, json: Any) -> None:
+    def __set_settings_json(self, controller_id: str, port_index:int, json: Any) -> None:
         """sets the json settings data for a given controller
 
         Args:
             controller_id: the device id of the controller
             json: he relevant json snippet from the returned API payload
         """
-        self._controller_settings[controller_id] = json
+        self._device_settings[(controller_id, port_index)] = json
 
     def get_port_control_exists(
         self,
@@ -411,8 +436,8 @@ class ACInfinityService:
                     controller_settings_json = await self._client.get_device_settings(
                         controller_id, 0
                     )
-                    self.__set_controller_settings_json(
-                        controller_id, controller_settings_json
+                    self.__set_settings_json(
+                        controller_id, 0, controller_settings_json
                     )
 
                     for port_properties_json in controller_properties_json[
@@ -425,7 +450,7 @@ class ACInfinityService:
                             controller_id, port_index, port_properties_json
                         )
 
-                        # retrieve and set port settings; current mode, temperature triggers, on/off speed, etc...
+                        # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
                         port_controls_json = (
                             await self._client.get_device_mode_settings_list(
                                 controller_id, port_index
@@ -433,6 +458,14 @@ class ACInfinityService:
                         )
                         self.__set_port_controls_json(
                             controller_id, port_index, port_controls_json
+                        )
+
+                        # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
+                        port_settings_json  = await self._client.get_device_settings(
+                            controller_id, port_index
+                        )
+                        self.__set_settings_json(
+                            controller_id, port_index, port_settings_json
                         )
                 return  # update successful.  eject from the infinite while loop.
             except BaseException as ex:
@@ -486,6 +519,36 @@ class ACInfinityService:
             controller_id, ControllerPropertyKey.DEVICE_NAME
         )
         await self.__update_advanced_settings(controller_id, 0, device_name, key_values)
+
+    async def update_port_setting(
+        self,
+        controller_id: (str | int),
+        port_index:int,
+        setting_key: str,
+        new_value: int,
+    ):
+        """Update the value of a setting via the AC Infinity API
+
+        Args:
+            controller_id: the device id of the controller
+            port_index: the port of the device
+            setting_key: the setting to update the value of
+            new_value: the new value of the setting to set
+        """
+        await self.update_port_settings(controller_id, port_index, [(setting_key, new_value)])
+
+    async def update_port_settings(self, controller_id: (str | int), port_index:int, key_values: list[Tuple[str, int]]):
+        """Update the values of a set of settings via the AC Infinity API
+
+        Args:
+            controller_id: The device id of the controller to update
+            port_index: the port of the device
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        device_name = self.get_port_property(
+            controller_id, port_index, PortPropertyKey.NAME
+        )
+        await self.__update_advanced_settings(controller_id, port_index, device_name, key_values)
 
     async def __update_advanced_settings(
         self,
@@ -810,6 +873,24 @@ def set_value_fn_port_control_default(
         port.controller.device_id, port.port_index, entity.entity_description.key, value
     )
 
+def suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_setting_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+
+def get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_setting(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+
+def set_value_fn_port_setting_default(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id, port.port_index, entity.entity_description.key, value
+    )
 
 class ACInfinityEntities(list[ACInfinityEntity]):
     def append_if_suitable(self, entity: ACInfinityEntity):

@@ -29,10 +29,10 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortReadWriteMixin,
     get_value_fn_controller_setting_default,
     get_value_fn_port_control_default,
-    set_value_fn_controller_setting_default,
+    get_value_fn_port_setting_default, set_value_fn_controller_setting_default,
     set_value_fn_port_control_default,
-    suitable_fn_controller_setting_default,
-    suitable_fn_port_control_default,
+    set_value_fn_port_setting_default, suitable_fn_controller_setting_default,
+    suitable_fn_port_control_default, suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -166,7 +166,7 @@ def __set_value_fn_timer_duration(
     )
 
 
-def __get_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort):
+def __get_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return (
         entity.ac_infinity.get_port_control(
@@ -176,7 +176,7 @@ def __get_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort):
     )
 
 
-def __set_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
+def __set_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
@@ -185,6 +185,24 @@ def __set_value_fn_vpd(entity: ACInfinityEntity, port: ACInfinityPort, value: in
         value * 10,
     )
 
+def __get_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort):
+    # value configured as percent (10.2%) but stored as tenths of a percent (102)
+    return (
+        entity.ac_infinity.get_port_setting(
+            port.controller.device_id, port.port_index, entity.entity_description.key
+        )
+        / 10
+    )
+
+
+def __set_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort, value: int):
+    # value configured as percent (10.2%) but stored as tenths of a percent (102)
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        entity.entity_description.key,
+        value * 10,
+    )
 
 def __set_value_fn_temp_auto_low(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
@@ -226,7 +244,7 @@ def __get_value_fn_dynamic_transition_temp(
         port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
-    return entity.ac_infinity.get_port_control(
+    return entity.ac_infinity.get_port_setting(
         port.controller.device_id,
         port.port_index,
         AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP
@@ -240,7 +258,7 @@ def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinit
         port.controller.device_id, AdvancedSettingsKey.TEMP_UNIT
     )
 
-    return entity.ac_infinity.get_port_control(
+    return entity.ac_infinity.get_port_setting(
         port.controller.device_id,
         port.port_index,
         AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP
@@ -261,7 +279,7 @@ def __set_value_fn_dynamic_transition_temp(
     if temp_unit > 0 and value > 10:
         value = 10
 
-    return entity.ac_infinity.update_port_controls(
+    return entity.ac_infinity.update_port_settings(
         port.controller.device_id,
         port.port_index,
         [
@@ -288,7 +306,7 @@ def __set_value_fn_dynamic_buffer_temp(
     if temp_unit > 0 and value > 10:
         value = 10
 
-    return entity.ac_infinity.update_port_controls(
+    return entity.ac_infinity.update_port_settings(
         port.controller.device_id,
         port.port_index,
         [
@@ -444,8 +462,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         translation_key="vpd_mode_low_trigger",
         native_unit_of_measurement=None,
         suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_vpd,
-        set_value_fn=__set_value_fn_vpd,
+        get_value_fn=__get_value_fn_vpd_control,
+        set_value_fn=__set_value_fn_vpd_control,
     ),
     ACInfinityPortNumberEntityDescription(
         key=PortControlKey.VPD_HIGH_TRIGGER,
@@ -458,8 +476,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         translation_key="vpd_mode_high_trigger",
         native_unit_of_measurement=None,
         suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_vpd,
-        set_value_fn=__set_value_fn_vpd,
+        get_value_fn=__get_value_fn_vpd_control,
+        set_value_fn=__set_value_fn_vpd_control,
     ),
     ACInfinityPortNumberEntityDescription(
         key=PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
@@ -527,7 +545,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_transition_temp",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_transition_temp,
         set_value_fn=__set_value_fn_dynamic_transition_temp,
     ),
@@ -541,9 +559,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_transition_humidity",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
     ),
     ACInfinityPortNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD,
@@ -555,9 +573,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_transition_vpd",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_vpd,
-        set_value_fn=__set_value_fn_vpd,
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=__get_value_fn_vpd_setting,
+        set_value_fn=__set_value_fn_vpd_setting,
     ),
     ACInfinityPortNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
@@ -569,7 +587,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:thermometer-plus",
         translation_key="dynamic_buffer_temp",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_buffer_temp,
         set_value_fn=__set_value_fn_dynamic_buffer_temp,
     ),
@@ -583,9 +601,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:cloud-percent-outline",
         translation_key="dynamic_buffer_humidity",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
     ),
     ACInfinityPortNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_BUFFER_VPD,
@@ -597,9 +615,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         icon="mdi:leaf",
         translation_key="dynamic_buffer_vpd",
         native_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_vpd,
-        set_value_fn=__set_value_fn_vpd,
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=__get_value_fn_vpd_setting,
+        set_value_fn=__set_value_fn_vpd_setting,
     ),
 ]
 

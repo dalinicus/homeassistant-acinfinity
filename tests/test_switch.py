@@ -141,7 +141,7 @@ class TestSwitches:
         assert isinstance(entity, ACInfinityPortSwitchEntity)
         await entity.async_turn_on()
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
         test_objects.refresh_mock.assert_called()
@@ -176,7 +176,7 @@ class TestSwitches:
         assert isinstance(entity, ACInfinityPortSwitchEntity)
         await entity.async_turn_off()
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, setting, expected
         )
         test_objects.refresh_mock.assert_called()

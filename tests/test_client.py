@@ -15,7 +15,7 @@ from custom_components.ac_infinity.client import (
 )
 from custom_components.ac_infinity.const import AdvancedSettingsKey, PortControlKey
 from tests.data_models import (
-    CONTROLLER_SETTINGS,
+    DEVICE_SETTINGS,
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL_PAYLOAD,
     DEVICE_NAME,
@@ -26,7 +26,7 @@ from tests.data_models import (
     LOGIN_PAYLOAD,
     MODE_SET_ID,
     PASSWORD,
-    PORT_SETTING,
+    PORT_CONTROLS,
     UPDATE_SUCCESS_PAYLOAD,
     USER_ID,
 )
@@ -210,7 +210,7 @@ class TestACInfinityClient:
             await self.__make_generic_set_port_settings_call_and_get_sent_payload()
         )
 
-        for key in PORT_SETTING:
+        for key in PORT_CONTROLS:
             # ignore fields we set or need to modify.  They are tested in subsequent test cases.
             if key not in [
                 PortControlKey.DEV_ID,
@@ -226,7 +226,7 @@ class TestACInfinityClient:
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert payload[key] == (
-                    PORT_SETTING[key] or 0
+                        PORT_CONTROLS[key] or 0
                 ), f"Key {key} has incorrect value"
 
     async def test_set_device_port_setting_value_changed_in_payload(self):
@@ -366,7 +366,7 @@ class TestACInfinityClient:
             await self.__make_generic_update_advanced_settings_call_and_get_sent_payload()
         )
 
-        for key in CONTROLLER_SETTINGS:
+        for key in DEVICE_SETTINGS:
             # ignore fields we set or need to modify.  They are tested in subsequent test cases.
             if key not in [
                 AdvancedSettingsKey.SET_ID,
@@ -393,7 +393,7 @@ class TestACInfinityClient:
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert (
-                    payload[key] == CONTROLLER_SETTINGS[key] or 0
+                        payload[key] == DEVICE_SETTINGS[key] or 0
                 ), f"Key {key} has incorrect value"
 
     async def test_update_advanced_settings_value_changed_in_payload(self):

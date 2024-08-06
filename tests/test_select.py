@@ -133,13 +133,13 @@ class TestSelectors:
         assert isinstance(entity, ACInfinityPortSelectEntity)
         await entity.async_select_option(at_type_string)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, PortControlKey.AT_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "at_type,expected",
+        "value,expected",
         [
             (0, "Transition"),
             (1, "Buffer"),
@@ -147,7 +147,7 @@ class TestSelectors:
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_dynamic_response_value_correct(
-        self, setup, at_type, expected, port
+        self, setup, value, expected, port
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -159,9 +159,9 @@ class TestSelectors:
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE
-        ] = at_type
+        ] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortSelectEntity)
@@ -194,7 +194,7 @@ class TestSelectors:
         assert isinstance(entity, ACInfinityPortSelectEntity)
         await entity.async_select_option(at_type_string)
 
-        test_objects.port_set_mock.assert_called_with(
+        test_objects.port_control_set_mock.assert_called_with(
             str(DEVICE_ID), port, AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()

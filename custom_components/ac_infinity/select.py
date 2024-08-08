@@ -6,13 +6,20 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from custom_components.ac_infinity.const import DOMAIN, PortSettingKey
+from custom_components.ac_infinity.const import (
+    DOMAIN,
+    AdvancedSettingsKey,
+    PortControlKey,
+)
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
+    ACInfinityEntities,
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
+    suitable_fn_port_control_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,12 +52,14 @@ MODE_OPTIONS = [
     "VPD",
 ]
 
+DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
+
 
 def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return MODE_OPTIONS[
         # data is 1 based.  Adjust to 0 based enum by subtracting 1
-        entity.ac_infinity.get_port_setting(
-            port.controller.device_id, port.port_index, PortSettingKey.AT_TYPE
+        entity.ac_infinity.get_port_control(
+            port.controller.device_id, port.port_index, PortControlKey.AT_TYPE
         )
         - 1
     ]
@@ -59,23 +68,55 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
 def __set_value_fn_active_mode(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
 ):
-    return entity.ac_infinity.update_port_setting(
+    return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        PortSettingKey.AT_TYPE,
+        PortControlKey.AT_TYPE,
         # data is 1 based.  Adjust from 0 based enum by adding 1
         MODE_OPTIONS.index(value) + 1,
     )
 
 
+def __get_value_fn_dynamic_response_type(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
+    return DYNAMIC_RESPONSE_OPTIONS[
+        entity.ac_infinity.get_port_setting(
+            port.controller.device_id,
+            port.port_index,
+            AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
+        )
+    ]
+
+
+def __set_value_fn_dynamic_response_type(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id,
+        port.port_index,
+        AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
+        DYNAMIC_RESPONSE_OPTIONS.index(value),
+    )
+
+
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
-        key=PortSettingKey.AT_TYPE,
+        key=PortControlKey.AT_TYPE,
         translation_key="active_mode",
         options=MODE_OPTIONS,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
-    )
+    ),
+    ACInfinityPortSelectEntityDescription(
+        key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
+        translation_key="dynamic_response_type",
+        options=DYNAMIC_RESPONSE_OPTIONS,
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=__get_value_fn_dynamic_response_type,
+        set_value_fn=__set_value_fn_dynamic_response_type,
+    ),
 ]
 
 
@@ -88,7 +129,9 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         description: ACInfinityPortSelectEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.key)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.SELECT
+        )
         self.entity_description = description
 
     @property
@@ -114,16 +157,11 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = []
+    entities = ACInfinityEntities()
     for controller in controllers:
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortSelectEntity(coordinator, description, port)
-                entities.append(entity)
-                _LOGGER.info(
-                    'Initializing entity "%s" for platform "%s".',
-                    entity.unique_id,
-                    Platform.SELECT,
-                )
+                entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

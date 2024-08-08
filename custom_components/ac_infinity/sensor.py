@@ -25,18 +25,22 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
+    ACInfinityEntities,
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
     get_value_fn_port_property_default,
+    suitable_fn_controller_property_default,
+    suitable_fn_port_control_default,
+    suitable_fn_port_property_default,
 )
 
 from .const import (
     DOMAIN,
     ControllerPropertyKey,
+    PortControlKey,
     PortPropertyKey,
-    PortSettingKey,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,8 +88,8 @@ def __get_value_fn_floating_point_as_int(
 def __get_value_fn_port_setting_default_zero(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
-    return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, PortSettingKey.SURPLUS, 0
+    return entity.ac_infinity.get_port_control(
+        port.controller.device_id, port.port_index, PortControlKey.SURPLUS, 0
     )
 
 
@@ -98,6 +102,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="temperature",
         suggested_unit_of_measurement=None,
+        suitable_fn=suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -108,6 +113,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="humidity",
         suggested_unit_of_measurement=None,
+        suitable_fn=suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -118,6 +124,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
         translation_key="vapor_pressure_deficit",
+        suitable_fn=suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
 ]
@@ -131,16 +138,18 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         icon=None,  # default
         translation_key="current_power",
         suggested_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_property_default,
         get_value_fn=get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
-        key=PortSettingKey.SURPLUS,
+        key=PortControlKey.SURPLUS,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         icon=None,  # default
         translation_key="remaining_time",
         suggested_unit_of_measurement=None,
         state_class=None,
+        suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_port_setting_default_zero,
     ),
 ]
@@ -155,7 +164,13 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
         description: ACInfinityControllerSensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
-        super().__init__(coordinator, controller, description.key)
+        super().__init__(
+            coordinator,
+            controller,
+            description.suitable_fn,
+            description.key,
+            Platform.SENSOR,
+        )
         self.entity_description = description
 
     @property
@@ -172,7 +187,9 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
         description: ACInfinityPortSensorEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.key)
+        super().__init__(
+            coordinator, port, description.suitable_fn, description.key, Platform.SENSOR
+        )
         self.entity_description = description
 
     @property
@@ -189,27 +206,17 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = []
+    entities = ACInfinityEntities()
     for controller in controllers:
         for description in CONTROLLER_DESCRIPTIONS:
             entity = ACInfinityControllerSensorEntity(
                 coordinator, description, controller
             )
-            entities.append(entity)
-            _LOGGER.info(
-                'Initializing entity "%s" for platform "%s".',
-                entity.unique_id,
-                Platform.SENSOR,
-            )
+            entities.append_if_suitable(entity)
 
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortSensorEntity(coordinator, description, port)
-                entities.append(entity)
-                _LOGGER.info(
-                    'Initializing entity "%s" for platform "%s".',
-                    entity.unique_id,
-                    Platform.SENSOR,
-                )
+                entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

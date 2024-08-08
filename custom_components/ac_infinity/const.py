@@ -44,15 +44,32 @@ class PortPropertyKey:
 
 
 # noinspection SpellCheckingInspection
-class ControllerSettingKey:
+class AdvancedSettingsKey:
     # /api/dev/getDevSetting
     # /api/dev/updateAdvSetting
+    DEV_ID = "devId"
+    DEV_NAME = "devName"
+
+    # fields associated with controller advanced settings
     TEMP_UNIT = "devCompany"
     CALIBRATE_TEMP = "devCt"
     CALIBRATE_TEMP_F = "devCth"
     CALIBRATE_HUMIDITY = "devCh"
     VPD_LEAF_TEMP_OFFSET = "vpdCt"
     VPD_LEAF_TEMP_OFFSET_F = "vpdCth"
+
+    # fields associated with port advanced settings
+    DYNAMIC_RESPONSE_TYPE = "isFlag"
+    DYNAMIC_TRANSITION_TEMP = "devTt"
+    DYNAMIC_TRANSITION_TEMP_F = "devTth"
+    DYNAMIC_TRANSITION_HUMIDITY = "devTh"
+    DYNAMIC_TRANSITION_VPD = "vpdTransition"
+    DYNAMIC_BUFFER_TEMP = "devBt"
+    DYNAMIC_BUFFER_TEMP_F = "devBth"
+    DYNAMIC_BUFFER_HUMIDITY = "devBh"
+    DYNAMIC_BUFFER_VPD = "devBvpd"
+
+    # unassociated fields used for cleaning data
     CALIBRATION_TIME = "calibrationTime"
     SENSOR_SETTING = "sensorSetting"
     SENSOR_TRANS_BUFF = "sensorTransBuff"
@@ -62,7 +79,6 @@ class ControllerSettingKey:
     SUPPORT_OTA = "supportOta"
     SET_ID = "setId"
     DEV_MAC_ADDR = "devMacAddr"
-    DEV_NAME = "devName"
     PORT_RESISTANCE = "portResistance"
     DEV_TIME_ZONE = "devTimeZone"
     PORT_PARAM_DATA = "portParamData"
@@ -77,11 +93,10 @@ class ControllerSettingKey:
     SENSOR_TWO_TYPE = "sensorTwoType"
     PARAM_SENSORS = "paramSensors"
     ZONE_SENSOR_TYPE = "zoneSensorType"
-    DEV_ID = "devId"
 
 
 # noinspection SpellCheckingInspection
-class PortSettingKey:
+class PortControlKey:
     # /api/dev/getdevModeSettingsList
     # /api/dev/addDevMode
     DEV_ID = "devId"

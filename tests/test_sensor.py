@@ -10,8 +10,8 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
+    PortControlKey,
     PortPropertyKey,
-    PortSettingKey,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,
@@ -155,12 +155,12 @@ class TestSensors:
         """Sensor for device port surplus created on setup"""
 
         entity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortSettingKey.SURPLUS
+            setup, async_setup_entry, port, PortControlKey.SURPLUS
         )
 
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortSettingKey.SURPLUS}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortControlKey.SURPLUS}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.DURATION
         assert entity.device_info is not None
@@ -179,7 +179,7 @@ class TestSensors:
     ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
             PortPropertyKey.SPEAK
         ] = expected
         entity = await execute_and_get_port_entity(
@@ -199,11 +199,11 @@ class TestSensors:
         test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortSettingKey.SURPLUS
+            setup, async_setup_entry, port, PortControlKey.SURPLUS
         )
 
-        test_objects.ac_infinity._port_settings[(str(DEVICE_ID), port)][
-            PortSettingKey.SURPLUS
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+            PortControlKey.SURPLUS
         ] = value
         entity._handle_coordinator_update()
 

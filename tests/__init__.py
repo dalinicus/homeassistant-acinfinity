@@ -22,12 +22,12 @@ from custom_components.ac_infinity.core import (
 )
 from tests.data_models import (
     CONTROLLER_PROPERTIES_DATA,
-    CONTROLLER_SETTINGS_DATA,
+    DEVICE_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
     PASSWORD,
+    PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
-    PORT_SETTINGS_DATA,
 )
 
 MockType = Union[
@@ -115,23 +115,29 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity = ACInfinityService(EMAIL, PASSWORD)
 
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-    ac_infinity._controller_settings = CONTROLLER_SETTINGS_DATA
+    ac_infinity._device_settings = DEVICE_SETTINGS_DATA
     ac_infinity._port_properties = PORT_PROPERTIES_DATA
-    ac_infinity._port_settings = PORT_SETTINGS_DATA
+    ac_infinity._port_controls = PORT_CONTROLS_DATA
 
     coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
 
-    port_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_setting", return_value=future
+    port_control_set_mock = mocker.patch.object(
+        ac_infinity, "update_port_control", return_value=future
     )
-    port_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_settings", return_value=future
+    port_control_sets_mock = mocker.patch.object(
+        ac_infinity, "update_port_controls", return_value=future
     )
-    controller_set_mock = mocker.patch.object(
+    controller_setting_set_mock = mocker.patch.object(
         ac_infinity, "update_controller_setting", return_value=future
     )
-    controller_sets_mock = mocker.patch.object(
+    controller_setting_sets_mock = mocker.patch.object(
         ac_infinity, "update_controller_settings", return_value=future
+    )
+    port_setting_set_mock = mocker.patch.object(
+        ac_infinity, "update_port_setting", return_value=future
+    )
+    port_setting_sets_mock = mocker.patch.object(
+        ac_infinity, "update_port_settings", return_value=future
     )
     refresh_mock = mocker.patch.object(
         coordinator, "async_request_refresh", return_value=future
@@ -170,10 +176,12 @@ def setup_entity_mocks(mocker: MockFixture):
         config_entry,
         entities,
         ac_infinity,
-        controller_set_mock,
-        controller_sets_mock,
-        port_set_mock,
-        port_sets_mock,
+        controller_setting_set_mock,
+        controller_setting_sets_mock,
+        port_control_set_mock,
+        port_control_sets_mock,
+        port_setting_set_mock,
+        port_setting_sets_mock,
         write_ha_mock,
         coordinator,
         refresh_mock,
@@ -190,8 +198,10 @@ class ACTestObjects:
         ac_infinity,
         controller_set_mock,
         controller_sets_mock,
-        port_set_mock,
-        port_sets_mock,
+        port_control_set_mock,
+        port_control_sets_mock,
+        port_setting_set_mock,
+        port_setting_sets_mock,
         write_ha_mock,
         coordinator,
         refresh_mock,
@@ -203,8 +213,10 @@ class ACTestObjects:
         self.ac_infinity: ACInfinityService = ac_infinity
         self.controller_set_mock: MockType = controller_set_mock
         self.controller_sets_mock: MockType = controller_sets_mock
-        self.port_set_mock: MockType = port_set_mock
-        self.port_sets_mock: MockType = port_sets_mock
+        self.port_control_set_mock: MockType = port_control_set_mock
+        self.port_control_sets_mock: MockType = port_control_sets_mock
+        self.port_setting_set_mock: MockType = port_setting_set_mock
+        self.port_setting_sets_mock: MockType = port_setting_sets_mock
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
         self.refresh_mock: MockType = refresh_mock

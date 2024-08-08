@@ -86,7 +86,7 @@ Controller entities will be created for each AC Infinity Controller on the confi
 Device entities will be created for each ***PORT*** on each UIS controller, even if no device is attached to a given port.  The UIS protocol is device type agnostic, so each port will be treated the same regardless of what is plugged (or not plugged) into it.
 
 ## Terms
-- `Sesonr`: A read-only measurement entity, such as temperature or humidity.
+- `Sensor`: A read-only measurement entity, such as temperature or humidity.
 - `Control`: An entity that can change the operational state of devices, such as individual mode selections, triggers, and timer schedules.
 - `Setting`: An entity that can change controller/device settings.  These correspond to fields found in the Settings section of the Android/iOS app.
 

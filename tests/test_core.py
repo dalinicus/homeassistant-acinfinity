@@ -310,7 +310,11 @@ class TestACInfinity:
 
     @pytest.mark.parametrize(
         "dev_type,expected_model",
-        [(11, "UIS Controller 69 Pro (CTR69P)"), (3, "UIS Controller Type 3")],
+        [
+            (11, "UIS Controller 69 Pro (CTR69P)"),
+            (18, "UIS CONTROLLER 69 Pro+ (CTR69Q)"),
+            (3, "UIS Controller Type 3"),
+        ],
     )
     async def test_ac_infinity_device_has_correct_device_info(
         self, dev_type: int, expected_model: str

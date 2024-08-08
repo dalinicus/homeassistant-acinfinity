@@ -195,7 +195,7 @@ class TestSelectors:
         assert isinstance(entity, ACInfinityPortSelectEntity)
         await entity.async_select_option(at_type_string)
 
-        test_objects.port_control_set_mock.assert_called_with(
+        test_objects.port_setting_set_mock.assert_called_with(
             str(DEVICE_ID), port, AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()

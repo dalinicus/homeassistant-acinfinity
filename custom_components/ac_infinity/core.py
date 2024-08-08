@@ -98,6 +98,8 @@ class ACInfinityController:
         match device_type:
             case 11:
                 return "UIS Controller 69 Pro (CTR69P)"
+            case 18:
+                return "UIS CONTROLLER 69 Pro+ (CTR69Q)"
             case _:
                 return f"UIS Controller Type {device_type}"
 

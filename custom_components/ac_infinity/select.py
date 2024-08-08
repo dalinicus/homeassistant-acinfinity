@@ -92,7 +92,7 @@ def __get_value_fn_dynamic_response_type(
 def __set_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
 ):
-    return entity.ac_infinity.update_port_control(
+    return entity.ac_infinity.update_port_setting(
         port.controller.device_id,
         port.port_index,
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,

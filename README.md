@@ -18,6 +18,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Initial Setup](#initial-setup)
   - [Additional Configuration](#additional-configuration)
 - [Entities](#entities)
+  - [Terms](#terms)
   - [Controller Sensors](#controller-sensors)
   - [Device Sensors](#device-sensors)
   - [Device Controls](#device-controls)
@@ -117,8 +118,8 @@ The mode can be changed via the `Active Mode` control, which provides the follow
 
 ### Global
 These settings control the power level of a device when in a given trigger state, which is shared across all modes.
-- `On Speed`: Go to OFF MODE to set. The device will run at this level when triggered ON
-- `Off Speed`: Go to ON MODE to set.  The device will run at this level even when triggered OFF
+- `On Power`: Go to OFF MODE to set. The device will run at this level when triggered ON
+- `Off Power`: Go to ON MODE to set.  The device will run at this level even when triggered OFF
 
 ### On Mode
 Device is always set to the on speed . This mode has no unique controls.
@@ -128,14 +129,14 @@ Device is always set to the off speed . This mode has no unique controls.
 
 ### Auto Mode
 Device toggled based on temperature and/or humidity triggers
-- `Auto High Temp Enabled`: Enable or disable high temp trigger while in Auto mode
-- `Auto High Temp Trigger`: If trigger is enabled, device will be turned on if temp exceeds configured value.
-- `Auto Low Temp Enabled`: Enable or disable low temp trigger while in Auto mode
-- `Auto Low Temp Trigger`: If trigger is enabled, device will be turned on if temp drops below configured value.
-- `Auto High Humidity Enabled`: Enable or disable high humidity trigger while in Auto mode
-- `Auto High Humidity Trigger`: If trigger is enabled, device will be turned on if humidity exceeds configured value.
-- `Auto Low Humidity Enabled`: Enable or disable low humidity trigger while in Auto mode
-- `Auto Low Humidity Trigger`: If trigger is enabled, device will be turned on if humidity drops below configured value.
+- `High Temp Enabled`: Enable or disable high temp trigger while in Auto mode
+- `High Temp Trigger`: If trigger is enabled, device will be turned on if temp exceeds configured value.
+- `Low Temp Enabled`: Enable or disable low temp trigger while in Auto mode
+- `Low Temp Trigger`: If trigger is enabled, device will be turned on if temp drops below configured value.
+- `High Humidity Enabled`: Enable or disable high humidity trigger while in Auto mode
+- `High Humidity Trigger`: If trigger is enabled, device will be turned on if humidity exceeds configured value.
+- `Low Humidity Enabled`: Enable or disable low humidity trigger while in Auto mode
+- `Low Humidity Trigger`: If trigger is enabled, device will be turned on if humidity drops below configured value.
 
 ### Timer to On Mode
 Device is turned on after a set duration

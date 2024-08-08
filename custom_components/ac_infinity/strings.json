@@ -96,11 +96,32 @@
       },
       "vpd_leaf_temperature_offset" : {
         "name": "VPD Leaf Temperature Offset"
+      },
+      "dynamic_transition_temp": {
+        "name": "Transition Temperature"
+      },
+      "dynamic_transition_humidity": {
+        "name": "Transition Humidity"
+      },
+      "dynamic_transition_vpd": {
+        "name": "Transition VPD"
+      },
+      "dynamic_buffer_temp": {
+        "name": "Buffer Temperature"
+      },
+      "dynamic_buffer_humidity": {
+        "name": "Buffer Humidity"
+      },
+      "dynamic_buffer_vpd": {
+        "name": "Buffer VPD"
       }
     },
     "select": {
       "active_mode": {
         "name": "Active Mode"
+      },
+      "dynamic_response_type": {
+        "name": "Dynamic Response"
       }
     },
     "sensor": {

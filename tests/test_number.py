@@ -262,7 +262,6 @@ class TestNumbers:
         )
         test_objects.refresh_mock.assert_called()
 
-    #
     @pytest.mark.parametrize(
         "key", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
     )

@@ -12,12 +12,16 @@ from custom_components.ac_infinity.const import (
     PortControlKey,
 )
 from custom_components.ac_infinity.core import (
+    ACInfinityController,
+    ACInfinityControllerEntity,
+    ACInfinityControllerReadWriteMixin,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
+    suitable_fn_controller_setting_default,
     suitable_fn_port_control_default,
     suitable_fn_port_setting_default,
 )
@@ -32,6 +36,13 @@ class ACInfinitySelectEntityDescription(SelectEntityDescription):
     key: str
     translation_key: str | None
     options: list[str] | None
+
+
+@dataclass
+class ACInfinityControllerSelectEntityDescription(
+    ACInfinitySelectEntityDescription, ACInfinityControllerReadWriteMixin
+):
+    """Describes ACInfinity Select Controller Entities."""
 
 
 @dataclass
@@ -53,6 +64,29 @@ MODE_OPTIONS = [
 ]
 
 DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
+
+OUTSIDE_CLIMATE_OPTIONS = ["Neutral", "Lower", "Higher"]
+
+
+def __get_value_fn_outside_climate(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return OUTSIDE_CLIMATE_OPTIONS[
+        entity.ac_infinity.get_controller_setting(
+            controller.device_id,
+            entity.entity_description.key,
+        )
+    ]
+
+
+def __set_value_fn_outside_climate(
+    entity: ACInfinityEntity, controller: ACInfinityController, value: str
+):
+    return entity.ac_infinity.update_controller_setting(
+        controller.device_id,
+        entity.entity_description.key,
+        OUTSIDE_CLIMATE_OPTIONS.index(value),
+    )
 
 
 def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
@@ -100,6 +134,25 @@ def __set_value_fn_dynamic_response_type(
     )
 
 
+CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
+    ACInfinityControllerSelectEntityDescription(
+        key=AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
+        translation_key="outside_climate_temperature",
+        options=OUTSIDE_CLIMATE_OPTIONS,
+        suitable_fn=suitable_fn_controller_setting_default,
+        get_value_fn=__get_value_fn_outside_climate,
+        set_value_fn=__set_value_fn_outside_climate,
+    ),
+    ACInfinityControllerSelectEntityDescription(
+        key=AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
+        translation_key="outside_climate_humidity",
+        options=OUTSIDE_CLIMATE_OPTIONS,
+        suitable_fn=suitable_fn_controller_setting_default,
+        get_value_fn=__get_value_fn_outside_climate,
+        set_value_fn=__set_value_fn_outside_climate,
+    ),
+]
+
 PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
     ACInfinityPortSelectEntityDescription(
         key=PortControlKey.AT_TYPE,
@@ -118,6 +171,38 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         set_value_fn=__set_value_fn_dynamic_response_type,
     ),
 ]
+
+
+class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity):
+    entity_description: ACInfinityControllerSelectEntityDescription
+
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        description: ACInfinityControllerSelectEntityDescription,
+        controller: ACInfinityController,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            controller,
+            description.suitable_fn,
+            description.key,
+            Platform.SELECT,
+        )
+        self.entity_description = description
+
+    @property
+    def current_option(self) -> str | None:
+        return self.entity_description.get_value_fn(self, self.controller)
+
+    async def async_select_option(self, option: str) -> None:
+        _LOGGER.info(
+            'User requesting value update of entity "%s" to "%s"',
+            self.unique_id,
+            option,
+        )
+        await self.entity_description.set_value_fn(self, self.controller, option)
+        await self.coordinator.async_request_refresh()
 
 
 class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
@@ -159,6 +244,12 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
+        for description in CONTROLLER_DESCRIPTIONS:
+            entity = ACInfinityControllerSelectEntity(
+                coordinator, description, controller
+            )
+            entities.append_if_suitable(entity)
+
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortSelectEntity(coordinator, description, port)

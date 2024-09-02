@@ -70,6 +70,8 @@ class AdvancedSettingsKey:
     DYNAMIC_BUFFER_TEMP_F = "devBth"
     DYNAMIC_BUFFER_HUMIDITY = "devBh"
     DYNAMIC_BUFFER_VPD = "devBvpd"
+    SUNRISE_TIMER_ENABLED = "onTimeSwitch"
+    SUNRISE_TIMER_DURATION = "onTime"
 
     # unassociated fields used for cleaning data
     CALIBRATION_TIME = "calibrationTime"

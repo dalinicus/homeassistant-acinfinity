@@ -15,6 +15,7 @@ from custom_components.ac_infinity.const import (
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
     SCHEDULE_MIDNIGHT_VALUE,
+    AdvancedSettingsKey,
     PortControlKey,
 )
 from custom_components.ac_infinity.core import (
@@ -25,8 +26,11 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
     get_value_fn_port_control_default,
+    get_value_fn_port_setting_default,
     set_value_fn_port_control_default,
+    set_value_fn_port_setting_default,
     suitable_fn_port_control_default,
+    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -158,6 +162,17 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
         set_value_fn=set_value_fn_port_control_default,
+    ),
+    ACInfinityPortSwitchEntityDescription(
+        key=AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="sunrise_timer_enabled",
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
     ),
 ]
 

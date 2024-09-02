@@ -43,7 +43,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 75
+        assert len(test_objects.entities._added_entities) == 79
 
     @pytest.mark.parametrize(
         "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
@@ -840,4 +840,62 @@ class TestNumbers:
             str(DEVICE_ID), port, setting, expected
         )
 
+        test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_sunrise_duration_created_for_each_port(
+        self, setup, port
+    ):
+        """Setting for sunrise duration created on setup"""
+
+        sensor = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
+        )
+
+        assert (
+            sensor.unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{AdvancedSettingsKey.SUNRISE_TIMER_DURATION}"
+        )
+        assert sensor.device_info is not None
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_sunrise_duration_value_correct(
+        self,
+        setup,
+        port,
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
+        )
+
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+            AdvancedSettingsKey.SUNRISE_TIMER_DURATION
+        ] = 154
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert entity.native_value == 154
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_sunrise_duration(self, setup, port):
+        """Reported entity value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
+        )
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        await entity.async_set_native_value(156)
+
+        test_objects.port_setting_set_mock.assert_called_with(
+            str(DEVICE_ID), port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
+        )
         test_objects.refresh_mock.assert_called()

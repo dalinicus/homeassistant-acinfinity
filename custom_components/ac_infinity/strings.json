@@ -114,6 +114,9 @@
       },
       "dynamic_buffer_vpd": {
         "name": "Buffer VPD"
+      },
+      "sunrise_timer_minutes": {
+        "name": "Sunrise/Sunset Minutes"
       }
     },
     "select": {
@@ -171,6 +174,9 @@
       },
       "schedule_mode_off_time_enabled": {
         "name": "Scheduled Off-Time Enabled"
+      },
+      "sunrise_timer_enabled": {
+        "name": "Sunrise/Sunset Enabled"
       }
     },
     "time": {

@@ -628,6 +628,20 @@ PORT_DESCRIPTIONS: list[ACInfinityPortNumberEntityDescription] = [
         get_value_fn=__get_value_fn_vpd_setting,
         set_value_fn=__set_value_fn_vpd_setting,
     ),
+    ACInfinityPortNumberEntityDescription(
+        key=AdvancedSettingsKey.SUNRISE_TIMER_DURATION,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=360,
+        native_step=1,
+        icon=None,  # default
+        translation_key="sunrise_timer_minutes",
+        native_unit_of_measurement=None,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_setting_default,
+        set_value_fn=set_value_fn_port_setting_default,
+    ),
 ]
 
 

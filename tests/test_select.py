@@ -10,12 +10,14 @@ from custom_components.ac_infinity.const import (
     PortControlKey,
 )
 from custom_components.ac_infinity.select import (
-    ACInfinityControllerSelectEntity, ACInfinityPortSelectEntity,
+    ACInfinityControllerSelectEntity,
+    ACInfinityPortSelectEntity,
     async_setup_entry,
 )
 from tests import (
     ACTestObjects,
-    execute_and_get_controller_entity, execute_and_get_port_entity,
+    execute_and_get_controller_entity,
+    execute_and_get_port_entity,
     setup_entity_mocks,
 )
 from tests.data_models import DEVICE_ID, MAC_ADDR
@@ -44,11 +46,12 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "setting",
-        [AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE, AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE],
+        [
+            AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
+            AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
+        ],
     )
-    async def test_async_setup_outside_climate_created(
-        self, setup, setting
-    ):
+    async def test_async_setup_outside_climate_created(self, setup, setting):
         """Sensor for device port mode created on setup"""
 
         entity = await execute_and_get_controller_entity(
@@ -90,15 +93,14 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "value,expected",
-        [
-            (0, "Neutral"),
-            (1, "Lower"),
-            (2, "Higher")
-        ],
+        [(0, "Neutral"), (1, "Lower"), (2, "Higher")],
     )
     @pytest.mark.parametrize(
         "setting",
-        [AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE, AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE],
+        [
+            AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
+            AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
+        ],
     )
     async def test_async_update_outside_climate_value_correct(
         self, setup, value, expected, setting
@@ -112,9 +114,7 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][
-            setting
-        ] = value
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSelectEntity)
@@ -123,15 +123,14 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "expected,value",
-        [
-            (0, "Neutral"),
-            (1, "Lower"),
-            (2, "Higher")
-        ],
+        [(0, "Neutral"), (1, "Lower"), (2, "Higher")],
     )
     @pytest.mark.parametrize(
         "setting",
-        [AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE, AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE],
+        [
+            AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
+            AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
+        ],
     )
     async def test_async_set_native_value_outside_climate(
         self, setup, value, expected, setting
@@ -154,7 +153,6 @@ class TestSelectors:
             str(DEVICE_ID), setting, expected
         )
         test_objects.refresh_mock.assert_called()
-
 
     @pytest.mark.parametrize(
         "at_type,expected",

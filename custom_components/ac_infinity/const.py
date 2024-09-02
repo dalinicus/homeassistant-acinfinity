@@ -57,6 +57,8 @@ class AdvancedSettingsKey:
     CALIBRATE_HUMIDITY = "devCh"
     VPD_LEAF_TEMP_OFFSET = "vpdCt"
     VPD_LEAF_TEMP_OFFSET_F = "vpdCth"
+    OUTSIDE_TEMP_COMPARE = "tempCompare"
+    OUTSIDE_HUMIDITY_COMPARE = "humiCompare"
 
     # fields associated with port advanced settings
     DYNAMIC_RESPONSE_TYPE = "isFlag"

@@ -122,6 +122,12 @@
       },
       "dynamic_response_type": {
         "name": "Dynamic Response"
+      },
+      "outside_climate_temperature": {
+        "name": "Outside Temperature"
+      },
+      "outside_climate_humidity": {
+        "name": "Outside Humidity"
       }
     },
     "sensor": {

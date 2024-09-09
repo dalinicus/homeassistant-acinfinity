@@ -38,23 +38,31 @@ class TestBinarySensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 4
+        assert len(test_objects.entities._added_entities) == 8
 
+    @pytest.mark.parametrize("setting, expected_class", [
+        (PortPropertyKey.STATE, BinarySensorDeviceClass.POWER),
+        (PortPropertyKey.ONLINE, BinarySensorDeviceClass.PLUG)
+    ])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_setup_entry_plug_created_for_each_port(self, setup, port):
+    async def test_async_setup_entry_plug_created_for_each_port(self, setup, setting, expected_class, port):
         """Sensor for device port connected is created on setup"""
 
         sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortPropertyKey.ONLINE
+            setup, async_setup_entry, port, setting
         )
 
         assert (
             sensor.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortPropertyKey.ONLINE}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         )
-        assert sensor.entity_description.device_class == BinarySensorDeviceClass.PLUG
+        assert sensor.entity_description.device_class == expected_class
         assert sensor.device_info is not None
 
+    @pytest.mark.parametrize("setting", [
+        PortPropertyKey.STATE,
+        PortPropertyKey.ONLINE
+    ])
     @pytest.mark.parametrize(
         "port,expected",
         [
@@ -64,12 +72,12 @@ class TestBinarySensors:
             (4, False),
         ],
     )
-    async def test_async_update_plug_value_correct(self, setup, port, expected):
+    async def test_async_update_plug_value_correct(self, setup, port, setting, expected):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
         sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortPropertyKey.ONLINE
+            setup, async_setup_entry, port, setting
         )
         sensor._handle_coordinator_update()
 

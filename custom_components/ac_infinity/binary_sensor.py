@@ -46,8 +46,16 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
     ACInfinityPortBinarySensorEntityDescription(
         key=PortPropertyKey.ONLINE,
         device_class=BinarySensorDeviceClass.PLUG,
-        icon="mdi:power",
+        icon="mdi:power-plug",
         translation_key="port_online",
+        suitable_fn=suitable_fn_port_property_default,
+        get_value_fn=get_value_fn_port_property_default,
+    ),
+    ACInfinityPortBinarySensorEntityDescription(
+        key=PortPropertyKey.STATE,
+        device_class=BinarySensorDeviceClass.POWER,
+        icon="mdi:power",
+        translation_key="port_state",
         suitable_fn=suitable_fn_port_property_default,
         get_value_fn=get_value_fn_port_property_default,
     )

@@ -98,8 +98,9 @@ Read Only sensors reported from the controller
 
 ## Device Sensors
 Read Only sensors reported from each device
-- `Status`: Di there a device plugged in on that port
-- `Power`: Current Power supplied to the connected device
+- `Status`: Indicates if a device plugged in and active on that port
+- `State`: Indicates if the device is following the `On Power` or `Off Power` setting
+- `Power`: Current power of the device, governed by the `On Power` and `Off Power` settings
 
 ![AC-Infinity](/images/ac-infinity-device.png)
 
@@ -164,9 +165,9 @@ Device is toggled based on VPD triggers
 - `VPD Low Trigger`: If trigger is enabled, device will be turned on if VPD drops below configured value.
 
 ## Controller Settings
+These entities correspond to fields found in the `Controller` tab of the device settings in the AC Infinity App.
 
 ### Sensor / VPD Calibration
-These entities correspond to fields found in the `Controller` tab of the device settings in the AC Infinity App.
 
 - `Calibrate Temperature`:  Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
 - `Calibrate Humidity`:  Adjusts the humidity reading from the sensor probe, up to ±10%
@@ -177,6 +178,11 @@ Note: If the preferred unit of temperature is changed on the UIS Controller, a r
 update the user interface controls with the correct min/max values.  That being said, these fields should still continue
 to function correctly when interfacing with the UIS API, even without a reboot.
 </sub>
+
+### Outside Climate
+
+- `Outside Temperature`: Sets whether the exterior temperature is neutral to, higher, or lower than your interior space.
+- `Outside Humidity`: Sets whether the exterior humidity is neutral to, higher, or lower than your interior space.
 
 ## Device Settings
 These entities correspond to fields found in the `Port` tab of the device settings in the AC Infinity App.
@@ -205,3 +211,9 @@ The dynamic response type can be changed via the `Dynamic Response` setting.
 - `Buffer VPD`: Set a buffer X. Triggers won't deactivate until the VPD falls X kPa below the trigger VPD for high triggers, or X kPa above the trigger VPD for low triggers.
 
 &nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/buffer-setting.html)</sub>
+
+### Sunrise / Sunset Duration
+Only valid for Grow Light devices operating in `Cycle` or `Schedule` mode.
+
+- `Sunrise/Sunset Enabled`: Enables or disables simulating the sun when transitioning the light between on and off states.
+- `Sunrise/Sunset Minute`: Sets the time it will take to fully brighten or dim your grow lights to simulate the sun.

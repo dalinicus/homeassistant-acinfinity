@@ -49,6 +49,9 @@
     "binary_sensor": {
       "port_online": {
         "name": "Status"
+      },
+      "port_state": {
+        "name": "State"
       }
     },
     "number": {

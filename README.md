@@ -92,6 +92,7 @@ Device entities will be created for each ***PORT*** on each UIS controller, even
 
 ## Controller Sensors
 Read Only sensors reported from the controller
+- `Status'`: Indicates if the controller is on and communicating with the AC Infinity API
 - `Air Temperature`: The air temperature as reported by the air probe.
 - `Humidity`: The humidity as reported by the air probe.
 - `Vaper Pressure Deficit (VPD)`: Calculated VPD based on air probe temperature and humidity readings.

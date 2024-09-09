@@ -10,15 +10,24 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from custom_components.ac_infinity.const import DOMAIN, PortPropertyKey
+from custom_components.ac_infinity.const import (
+    DOMAIN,
+    ControllerPropertyKey,
+    PortPropertyKey,
+)
 
 from .core import (
+    ACInfinityController,
+    ACInfinityControllerEntity,
+    ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
+    get_value_fn_controller_property_default,
     get_value_fn_port_property_default,
+    suitable_fn_controller_property_default,
     suitable_fn_port_property_default,
 )
 
@@ -36,16 +45,34 @@ class ACInfinityBinarySensorEntityDescription(BinarySensorEntityDescription):
 
 
 @dataclass
+class ACInfinityControllerBinarySensorEntityDescription(
+    ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin
+):
+    """Describes ACInfinity Binary Sensor Port Entities."""
+
+
+@dataclass
 class ACInfinityPortBinarySensorEntityDescription(
     ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
 
 
+CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription] = [
+    ACInfinityControllerBinarySensorEntityDescription(
+        key=ControllerPropertyKey.ONLINE,
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        icon="mdi:power-plug",
+        translation_key="controller_online",
+        suitable_fn=suitable_fn_controller_property_default,
+        get_value_fn=get_value_fn_controller_property_default,
+    )
+]
+
 PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
     ACInfinityPortBinarySensorEntityDescription(
         key=PortPropertyKey.ONLINE,
-        device_class=BinarySensorDeviceClass.PLUG,
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:power-plug",
         translation_key="port_online",
         suitable_fn=suitable_fn_port_property_default,
@@ -58,8 +85,34 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
         translation_key="port_state",
         suitable_fn=suitable_fn_port_property_default,
         get_value_fn=get_value_fn_port_property_default,
-    )
+    ),
 ]
+
+
+class ACInfinityControllerBinarySensorEntity(
+    ACInfinityControllerEntity, BinarySensorEntity
+):
+    entity_description: ACInfinityControllerBinarySensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        description: ACInfinityControllerBinarySensorEntityDescription,
+        controller: ACInfinityController,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            controller,
+            description.suitable_fn,
+            description.key,
+            Platform.SENSOR,
+        )
+        self.entity_description = description
+
+    @property
+    def is_on(self) -> bool | None:
+        """returns true if on, false or none if off"""
+        return self.entity_description.get_value_fn(self, self.controller)
 
 
 class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity):
@@ -104,6 +157,12 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
+        for description in CONTROLLER_DESCRIPTIONS:
+            entity = ACInfinityControllerBinarySensorEntity(
+                coordinator, description, controller
+            )
+            entities.append_if_suitable(entity)
+
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortBinarySensorEntity(

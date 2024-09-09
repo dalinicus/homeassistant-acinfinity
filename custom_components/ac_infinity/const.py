@@ -32,6 +32,7 @@ class ControllerPropertyKey:
     TEMPERATURE = "temperature"
     HUMIDITY = "humidity"
     VPD = "vpdnums"
+    ONLINE = "online"
 
 
 # noinspection SpellCheckingInspection

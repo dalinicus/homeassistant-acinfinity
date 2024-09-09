@@ -837,6 +837,14 @@ def suitable_fn_controller_property_default(
     )
 
 
+def get_value_fn_controller_property_default(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return entity.ac_infinity.get_controller_property(
+        controller.device_id, entity.entity_description.key
+    )
+
+
 def suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_property_exists(
         port.controller.device_id, port.port_index, entity.entity_description.key

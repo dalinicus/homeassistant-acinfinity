@@ -65,9 +65,9 @@ async def execute_and_get_controller_entity(
     )
 
     found = [
-        sensor
-        for sensor in test_objects.entities.added_entities
-        if property_key in sensor.unique_id
+        entity
+        for entity in test_objects.entities.added_entities
+        if property_key in entity.unique_id and "port_" not in entity.unique_id
     ]
     assert len(found) == 1
     entity = found[0]

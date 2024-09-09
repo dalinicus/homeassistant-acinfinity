@@ -356,7 +356,6 @@ class TestSelectors:
         )
         test_objects.refresh_mock.assert_called()
 
-
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_load_type_unknown_device_type(
         self, setup, port
@@ -365,7 +364,6 @@ class TestSelectors:
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        test_objects: ACTestObjects = setup
         entity = await execute_and_get_port_entity(
             setup,
             async_setup_entry,

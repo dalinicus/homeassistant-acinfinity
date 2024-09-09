@@ -72,8 +72,9 @@ DEVICE_LOAD_TYPE_OPTIONS = {
     2: "Humidifier",
     4: "Heater",
     5: "AC",
-    6: "Fan"
+    6: "Fan",
 }
+
 
 def __get_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController
@@ -140,16 +141,14 @@ def __set_value_fn_dynamic_response_type(
         DYNAMIC_RESPONSE_OPTIONS.index(value),
     )
 
-def __get_value_fn_device_load_type(
-    entity: ACInfinityEntity, port: ACInfinityPort
-):
+
+def __get_value_fn_device_load_type(entity: ACInfinityEntity, port: ACInfinityPort):
     value = entity.ac_infinity.get_port_setting(
-        port.controller.device_id,
-        port.port_index,
-        AdvancedSettingsKey.DEVICE_LOAD_TYPE
+        port.controller.device_id, port.port_index, AdvancedSettingsKey.DEVICE_LOAD_TYPE
     )
 
     return DEVICE_LOAD_TYPE_OPTIONS.get(value, "Unknown Device Type")
+
 
 def __set_value_fn_device_load_type(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
@@ -160,10 +159,11 @@ def __set_value_fn_device_load_type(
                 port.controller.device_id,
                 port.port_index,
                 AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-                key
+                key,
             )
 
     raise ValueError(f"Unknown Device Type: {value}")
+
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(

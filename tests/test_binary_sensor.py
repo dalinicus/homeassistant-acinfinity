@@ -5,16 +5,22 @@ from homeassistant.components.binary_sensor import (
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.binary_sensor import (
+    ACInfinityControllerBinarySensorEntity,
     ACInfinityPortBinarySensorEntity,
     async_setup_entry,
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    ControllerPropertyKey,
     PortPropertyKey,
 )
-from custom_components.ac_infinity.core import ACInfinityPortEntity
+from custom_components.ac_infinity.core import (
+    ACInfinityControllerEntity,
+    ACInfinityPortEntity,
+)
 from tests import (
     ACTestObjects,
+    execute_and_get_controller_entity,
     execute_and_get_port_entity,
     setup_entity_mocks,
 )
@@ -38,31 +44,58 @@ class TestBinarySensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 8
+        assert len(test_objects.entities._added_entities) == 9
 
-    @pytest.mark.parametrize("setting, expected_class", [
-        (PortPropertyKey.STATE, BinarySensorDeviceClass.POWER),
-        (PortPropertyKey.ONLINE, BinarySensorDeviceClass.PLUG)
-    ])
+    async def test_async_setup_entry_entity_created_for_controller(self, setup):
+        """Sensor for device port connected is created on setup"""
+
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+            setup, async_setup_entry, ControllerPropertyKey.ONLINE
+        )
+
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_{ControllerPropertyKey.ONLINE}"
+        assert (
+            sensor.entity_description.device_class
+            == BinarySensorDeviceClass.CONNECTIVITY
+        )
+        assert sensor.device_info is not None
+
+    @pytest.mark.parametrize(
+        "setting, expected_class",
+        [
+            (PortPropertyKey.STATE, BinarySensorDeviceClass.POWER),
+            (PortPropertyKey.ONLINE, BinarySensorDeviceClass.CONNECTIVITY),
+        ],
+    )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_setup_entry_plug_created_for_each_port(self, setup, setting, expected_class, port):
+    async def test_async_setup_entry_entity_created_for_each_port(
+        self, setup, setting, expected_class, port
+    ):
         """Sensor for device port connected is created on setup"""
 
         sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, setting
         )
 
-        assert (
-            sensor.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
-        )
+        assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         assert sensor.entity_description.device_class == expected_class
         assert sensor.device_info is not None
 
-    @pytest.mark.parametrize("setting", [
-        PortPropertyKey.STATE,
-        PortPropertyKey.ONLINE
-    ])
+    async def test_async_update_entity_controller_value_correct(self, setup):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
+            setup, async_setup_entry, ControllerPropertyKey.ONLINE
+        )
+        sensor._handle_coordinator_update()
+
+        assert isinstance(sensor, ACInfinityControllerBinarySensorEntity)
+        assert sensor.is_on
+
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize("setting", [PortPropertyKey.STATE, PortPropertyKey.ONLINE])
     @pytest.mark.parametrize(
         "port,expected",
         [
@@ -72,7 +105,9 @@ class TestBinarySensors:
             (4, False),
         ],
     )
-    async def test_async_update_plug_value_correct(self, setup, port, setting, expected):
+    async def test_async_update_entity_port_value_correct(
+        self, setup, port, setting, expected
+    ):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup

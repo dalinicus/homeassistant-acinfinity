@@ -47,6 +47,9 @@
   },
   "entity": {
     "binary_sensor": {
+      "controller_online": {
+        "name": "Status"
+      },
       "port_online": {
         "name": "Status"
       },

@@ -41,6 +41,7 @@ class PortPropertyKey:
     NAME = "portName"
     SPEAK = "speak"
     ONLINE = "online"
+    STATE = "loadState"
 
 
 # noinspection SpellCheckingInspection

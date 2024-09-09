@@ -20,6 +20,9 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Entities](#entities)
   - [Terms](#terms)
   - [Controller Sensors](#controller-sensors)
+  - [Controller Settings](#controller-settings)
+    - [Sensor / VPD Calibration](#sensor--vpd-calibration)
+    - [Outside Climate](#outside-climate)
   - [Device Sensors](#device-sensors)
   - [Device Controls](#device-controls)
     - [Global](#global)
@@ -31,12 +34,11 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
     - [Cycle Mode](#cycle-mode)
     - [Schedule Mode](#schedule-mode)
     - [VPD Mode](#vpd-mode)
-  - [Controller Settings](#controller-settings)
-    - [Sensor / VPD Calibration](#sensor--vpd-calibration)
   - [Device Settings](#device-settings)
     - [Dynamic Response](#dynamic-response)
       - [Transition Mode](#transition-mode)
       - [Buffer Mode](#buffer-mode)
+      - [Sunrise / Sunset](#sunrise--sunset-duration)
 
 # Compatibility
 
@@ -92,18 +94,69 @@ Device entities will be created for each ***PORT*** on each UIS controller, even
 
 ## Controller Sensors
 Read Only sensors reported from the controller
-- `Status'`: Indicates if the controller is on and communicating with the AC Infinity API
+- `Status`: Indicates if the controller is on and communicating with the AC Infinity API
 - `Air Temperature`: The air temperature as reported by the air probe.
 - `Humidity`: The humidity as reported by the air probe.
 - `Vaper Pressure Deficit (VPD)`: Calculated VPD based on air probe temperature and humidity readings.
+
+## Controller Settings
+These entities correspond to fields found in the `Controller` tab of the device settings in the AC Infinity App.
+
+### Sensor / VPD Calibration
+
+- `Calibrate Temperature`:  Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
+- `Calibrate Humidity`:  Adjusts the humidity reading from the sensor probe, up to ±10%
+- `VPD Leaf Temperature Offset`:  Adjusts the leaf temperature in VPD calculation, up to ±10C or ±20F
+
+<sub>
+Note: If the preferred unit of temperature is changed on the UIS Controller, a reboot of Home Assistant is required to
+update the user interface controls with the correct min/max values.  That being said, these fields should still continue
+to function correctly when interfacing with the UIS API, even without a reboot.
+</sub>
+
+### Outside Climate
+
+- `Outside Temperature`: Sets whether the exterior temperature is neutral to, higher, or lower than your interior space.
+- `Outside Humidity`: Sets whether the exterior humidity is neutral to, higher, or lower than your interior space.
+
+## Device Settings
+These entities correspond to fields found in the `Port` tab of the device settings in the AC Infinity App.
+
+- `Device Type`: The type of device plugged into the port (i.e. Fan, Grow Lights, etc... )
+- `On Speed`: The device will run at this level when triggered ON
+- `Off Speed`: The device will run at this level even when triggered OFF
+
+### Dynamic Response
+
+The dynamic response type can be changed via the `Dynamic Response` setting.
+- `Transition`: UIS Devices will ramp up in levels when trigger to run in AUTO and VPD Modes (see Device Controls section below).  Set a transition threshold X.  For every multiple of X that the probe temperature, humidity and VPD has surpassed your trigger points, the UIS Device will increase by one level.
+- `Buffer`: UIS and Outlet Devices will have a gap created on their temperature, humidity, and VPD triggers to prevent devices from turning on and off too frequently.
+
+#### Transition Mode
+- `Transition Temperature`: Set a transition threshold X.  For every multiple of X that the probe temperature has surpassed your trigger points, the UIS Device will increase by one level.
+- `Transition Humidity`: Set a transition threshold X.  For every multiple of X that the probe humidity has surpassed your trigger points, the UIS Device will increase by one level.
+- `Transition VPD`: Set a transition threshold X.  For every multiple of X that the probe VPD has surpassed your trigger points, the UIS Device will increase by one level.
+
+&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/transition-setting.html)</sub>
+#### Buffer Mode
+
+- `Buffer Temperature`: Set a buffer X. Triggers won't deactivate until the temperature falls X degrees below the trigger temperature for high triggers, or X degrees above the trigger temperature for low triggers.
+- `Buffer Humidity`: Set a buffer X. Triggers won't deactivate until the humidity falls X percentage points below the trigger humidity for high triggers, or X percentage points above the trigger humidity for low triggers.
+- `Buffer VPD`: Set a buffer X. Triggers won't deactivate until the VPD falls X kPa below the trigger VPD for high triggers, or X kPa above the trigger VPD for low triggers.
+
+&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/buffer-setting.html)</sub>
+
+### Sunrise / Sunset Duration
+Only valid for Grow Light devices operating in `Cycle` or `Schedule` mode.
+
+- `Sunrise/Sunset Enabled`: Enables or disables simulating the sun when transitioning the light between on and off states.
+- `Sunrise/Sunset Minute`: Sets the time it will take to fully brighten or dim your grow lights to simulate the sun.
 
 ## Device Sensors
 Read Only sensors reported from each device
 - `Status`: Indicates if a device plugged in and active on that port
 - `State`: Indicates if the device is following the `On Power` or `Off Power` setting
 - `Power`: Current power of the device, governed by the `On Power` and `Off Power` settings
-
-![AC-Infinity](/images/ac-infinity-device.png)
 
 ## Device Controls
 Read/Write controls that define if a device runs in an ON or OFF state.  Each control is associated to a mode, and is only relevant when the device is operating in that mode.
@@ -164,57 +217,3 @@ Device is toggled based on VPD triggers
 - `VPD High Trigger`: If trigger is enabled, device will be turned on if VPD exceeds configured value.
 - `VPD Low Enabled`: Enable or disable low VPD trigger while in VPD mode
 - `VPD Low Trigger`: If trigger is enabled, device will be turned on if VPD drops below configured value.
-
-## Controller Settings
-These entities correspond to fields found in the `Controller` tab of the device settings in the AC Infinity App.
-
-### Sensor / VPD Calibration
-
-- `Calibrate Temperature`:  Adjusts the temperature reading from the sensor probe, up to ±10C or ±20F
-- `Calibrate Humidity`:  Adjusts the humidity reading from the sensor probe, up to ±10%
-- `VPD Leaf Temperature Offset`:  Adjusts the leaf temperature in VPD calculation, up to ±10C or ±20F
-
-<sub>
-Note: If the preferred unit of temperature is changed on the UIS Controller, a reboot of Home Assistant is required to
-update the user interface controls with the correct min/max values.  That being said, these fields should still continue
-to function correctly when interfacing with the UIS API, even without a reboot.
-</sub>
-
-### Outside Climate
-
-- `Outside Temperature`: Sets whether the exterior temperature is neutral to, higher, or lower than your interior space.
-- `Outside Humidity`: Sets whether the exterior humidity is neutral to, higher, or lower than your interior space.
-
-## Device Settings
-These entities correspond to fields found in the `Port` tab of the device settings in the AC Infinity App.
-
-### Level Status
-These settings control the power level of a device when in a given trigger state.
-- `On Speed`: Go to OFF MODE to set. The device will run at this level when triggered ON
-- `Off Speed`: Go to ON MODE to set.  The device will run at this level even when triggered OFF
-
-### Dynamic Response
-
-The dynamic response type can be changed via the `Dynamic Response` setting.
-- `Transition`: UIS Devices will ramp up in levels when trigger to run in AUTO and VPD Modes (see Device Controls section below).  Set a transition threshold X.  For every multiple of X that the probe temperature, humidity and VPD has surpassed your trigger points, the UIS Device will increase by one level.
-- `Buffer`: UIS and Outlet Devices will have a gap created on their temperature, humidity, and VPD triggers to prevent devices from turning on and off too frequently.
-
-#### Transition Mode
-- `Transition Temperature`: Set a transition threshold X.  For every multiple of X that the probe temperature has surpassed your trigger points, the UIS Device will increase by one level.
-- `Transition Humidity`: Set a transition threshold X.  For every multiple of X that the probe humidity has surpassed your trigger points, the UIS Device will increase by one level.
-- `Transition VPD`: Set a transition threshold X.  For every multiple of X that the probe VPD has surpassed your trigger points, the UIS Device will increase by one level.
-
-&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/transition-setting.html)</sub>
-#### Buffer Mode
-
-- `Buffer Temperature`: Set a buffer X. Triggers won't deactivate until the temperature falls X degrees below the trigger temperature for high triggers, or X degrees above the trigger temperature for low triggers.
-- `Buffer Humidity`: Set a buffer X. Triggers won't deactivate until the humidity falls X percentage points below the trigger humidity for high triggers, or X percentage points above the trigger humidity for low triggers.
-- `Buffer VPD`: Set a buffer X. Triggers won't deactivate until the VPD falls X kPa below the trigger VPD for high triggers, or X kPa above the trigger VPD for low triggers.
-
-&nbsp;&nbsp;&nbsp;&nbsp;<sub>[Official Documentation](https://acinfinity.com/pages/controller-programming/buffer-setting.html)</sub>
-
-### Sunrise / Sunset Duration
-Only valid for Grow Light devices operating in `Cycle` or `Schedule` mode.
-
-- `Sunrise/Sunset Enabled`: Enables or disables simulating the sun when transitioning the light between on and off states.
-- `Sunrise/Sunset Minute`: Sets the time it will take to fully brighten or dim your grow lights to simulate the sun.

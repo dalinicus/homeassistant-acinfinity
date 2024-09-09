@@ -130,6 +130,9 @@
       "active_mode": {
         "name": "Active Mode"
       },
+      "device_load_type": {
+        "name": "Device Type"
+      },
       "dynamic_response_type": {
         "name": "Dynamic Response"
       },

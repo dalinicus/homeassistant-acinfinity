@@ -67,6 +67,14 @@ DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
 
 OUTSIDE_CLIMATE_OPTIONS = ["Neutral", "Lower", "Higher"]
 
+DEVICE_LOAD_TYPE_OPTIONS = {
+    1: "Grow Light",
+    2: "Humidifier",
+    4: "Heater",
+    5: "AC",
+    6: "Fan",
+}
+
 
 def __get_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController
@@ -134,6 +142,29 @@ def __set_value_fn_dynamic_response_type(
     )
 
 
+def __get_value_fn_device_load_type(entity: ACInfinityEntity, port: ACInfinityPort):
+    value = entity.ac_infinity.get_port_setting(
+        port.controller.device_id, port.port_index, AdvancedSettingsKey.DEVICE_LOAD_TYPE
+    )
+
+    return DEVICE_LOAD_TYPE_OPTIONS.get(value, "Unknown Device Type")
+
+
+def __set_value_fn_device_load_type(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+):
+    for key, val in DEVICE_LOAD_TYPE_OPTIONS.items():
+        if val == value:
+            return entity.ac_infinity.update_port_setting(
+                port.controller.device_id,
+                port.port_index,
+                AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+                key,
+            )
+
+    raise ValueError(f"Unknown Device Type: {value}")
+
+
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(
         key=AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
@@ -161,6 +192,14 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+    ),
+    ACInfinityPortSelectEntityDescription(
+        key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        translation_key="device_load_type",
+        options=list(DEVICE_LOAD_TYPE_OPTIONS.values()),
+        suitable_fn=suitable_fn_port_setting_default,
+        get_value_fn=__get_value_fn_device_load_type,
+        set_value_fn=__set_value_fn_device_load_type,
     ),
     ACInfinityPortSelectEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,

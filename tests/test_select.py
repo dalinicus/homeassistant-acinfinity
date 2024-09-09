@@ -42,7 +42,7 @@ class TestSelectors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 10
+        assert len(test_objects.entities._added_entities) == 14
 
     @pytest.mark.parametrize(
         "setting",
@@ -287,3 +287,90 @@ class TestSelectors:
             str(DEVICE_ID), port, AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "load_type,expected",
+        [
+            (1, "Grow Light"),
+            (2, "Humidifier"),
+            (3, "Unknown Device Type"),
+            (4, "Heater"),
+            (5, "AC"),
+            (6, "Fan"),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_load_type_value_correct(
+        self, setup, load_type, expected, port
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup,
+            async_setup_entry,
+            port,
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        )
+
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE
+        ] = load_type
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert entity.current_option == expected
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "expected,load_type_string",
+        [
+            (1, "Grow Light"),
+            (2, "Humidifier"),
+            (4, "Heater"),
+            (5, "AC"),
+            (6, "Fan"),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_load_type(
+        self, setup, load_type_string, expected, port
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup,
+            async_setup_entry,
+            port,
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        )
+
+        assert isinstance(entity, ACInfinityPortSelectEntity)
+        await entity.async_select_option(load_type_string)
+
+        test_objects.port_setting_set_mock.assert_called_with(
+            str(DEVICE_ID), port, AdvancedSettingsKey.DEVICE_LOAD_TYPE, expected
+        )
+        test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_load_type_unknown_device_type(
+        self, setup, port
+    ):
+        """Error is thrown if device type is updated to an unknown value"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        entity = await execute_and_get_port_entity(
+            setup,
+            async_setup_entry,
+            port,
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        )
+
+        assert isinstance(entity, ACInfinityPortSelectEntity)
+        with pytest.raises(ValueError):
+            await entity.async_select_option("Pizza")

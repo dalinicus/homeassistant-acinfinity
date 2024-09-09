@@ -63,6 +63,7 @@ class AdvancedSettingsKey:
     OUTSIDE_HUMIDITY_COMPARE = "humiCompare"
 
     # fields associated with port advanced settings
+    DEVICE_LOAD_TYPE = "loadType"
     DYNAMIC_RESPONSE_TYPE = "isFlag"
     DYNAMIC_TRANSITION_TEMP = "devTt"
     DYNAMIC_TRANSITION_TEMP_F = "devTth"

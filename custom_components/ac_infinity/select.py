@@ -75,6 +75,11 @@ DEVICE_LOAD_TYPE_OPTIONS = {
     6: "Fan",
 }
 
+SETTINGS_MODE_OPTIONS = [
+    "Auto",
+    "Target",
+]
+
 
 def __get_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController
@@ -94,6 +99,25 @@ def __set_value_fn_outside_climate(
         controller.device_id,
         entity.entity_description.key,
         OUTSIDE_CLIMATE_OPTIONS.index(value),
+    )
+
+
+def __get_value_fn_setting_mode(entity: ACInfinityEntity, port: ACInfinityPort):
+    return SETTINGS_MODE_OPTIONS[
+        entity.ac_infinity.get_port_control(
+            port.controller.device_id, port.port_index, entity.entity_description.key
+        )
+    ]
+
+
+def __set_value_fn_setting_mode(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+):
+    return entity.ac_infinity.update_port_control(
+        port.controller.device_id,
+        port.port_index,
+        entity.entity_description.key,
+        SETTINGS_MODE_OPTIONS.index(value),
     )
 
 
@@ -192,6 +216,22 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         suitable_fn=suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+    ),
+    ACInfinityPortSelectEntityDescription(
+        key=PortControlKey.AUTO_SETTINGS_MODE,
+        translation_key="auto_settings_mode",
+        options=SETTINGS_MODE_OPTIONS,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_setting_mode,
+        set_value_fn=__set_value_fn_setting_mode,
+    ),
+    ACInfinityPortSelectEntityDescription(
+        key=PortControlKey.VPD_SETTINGS_MODE,
+        translation_key="vpd_settings_mode",
+        options=SETTINGS_MODE_OPTIONS,
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_setting_mode,
+        set_value_fn=__set_value_fn_setting_mode,
     ),
     ACInfinityPortSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,

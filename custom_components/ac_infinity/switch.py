@@ -98,6 +98,17 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         set_value_fn=set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
+        key=PortControlKey.VPD_TARGET_ENABLED,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_vpd_enabled",
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
+    ),
+    ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_TEMP_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
@@ -137,6 +148,28 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
+    ),
+    ACInfinityPortSwitchEntityDescription(
+        key=PortControlKey.AUTO_TARGET_TEMP_ENABLED,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_temp_enabled",
+        suitable_fn=suitable_fn_port_control_default,
+        get_value_fn=get_value_fn_port_control_default,
+        set_value_fn=set_value_fn_port_control_default,
+    ),
+    ACInfinityPortSwitchEntityDescription(
+        key=PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_humidity_enabled",
         suitable_fn=suitable_fn_port_control_default,
         get_value_fn=get_value_fn_port_control_default,
         set_value_fn=set_value_fn_port_control_default,

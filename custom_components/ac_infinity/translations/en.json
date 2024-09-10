@@ -83,17 +83,26 @@
       "vpd_mode_high_trigger": {
         "name": "VPD High Trigger"
       },
+      "target_vpd": {
+        "name": "Target VPD"
+      },
       "auto_mode_humidity_low_trigger": {
         "name": "Humidity Low Trigger"
       },
       "auto_mode_humidity_high_trigger": {
         "name": "Humidity High Trigger"
       },
+      "target_humidity": {
+        "name": "Target Humidity"
+      },
       "auto_mode_temp_low_trigger": {
         "name": "Temperature Low Trigger"
       },
       "auto_mode_temp_high_trigger": {
         "name": "Temperature High Trigger"
+      },
+      "target_temp": {
+        "name": "Target Temperature"
       },
       "temperature_calibration": {
         "name": "Temperature Calibration"
@@ -141,6 +150,12 @@
       },
       "outside_climate_humidity": {
         "name": "Outside Humidity"
+      },
+      "auto_settings_mode": {
+        "name": "Auto Settings Mode"
+      },
+      "vpd_settings_mode": {
+        "name": "VPD Settings Mode"
       }
     },
     "sensor": {
@@ -167,6 +182,9 @@
       "vpd_mode_high_enabled": {
         "name": "VPD High Trigger Enabled"
       },
+      "target_vpd_enabled": {
+        "name": "Target VPD Enabled"
+      },
       "auto_mode_humidity_low_enabled": {
         "name": "Humidity Low Trigger Enabled"
       },
@@ -178,6 +196,12 @@
       },
       "auto_mode_temp_high_enabled": {
         "name": "Temperature High Trigger Enabled"
+      },
+      "target_temp_enabled": {
+        "name": "Target Temperature Enabled"
+      },
+      "target_humidity_enabled": {
+        "name": "Target Humidity Enabled"
       },
       "schedule_mode_on_time_enabled": {
         "name": "Scheduled On-Time Enabled"

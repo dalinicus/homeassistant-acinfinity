@@ -41,7 +41,7 @@ class TestSwitches:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 36
+        assert len(test_objects.entities._added_entities) == 48
 
     @pytest.mark.parametrize(
         "setting",
@@ -50,8 +50,11 @@ class TestSwitches:
             PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
             PortControlKey.AUTO_TEMP_HIGH_ENABLED,
             PortControlKey.AUTO_TEMP_LOW_ENABLED,
+            PortControlKey.AUTO_TARGET_TEMP_ENABLED,
+            PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
             PortControlKey.VPD_HIGH_ENABLED,
             PortControlKey.VPD_LOW_ENABLED,
+            PortControlKey.VPD_TARGET_ENABLED,
             PortControlKey.SCHEDULED_START_TIME,
             PortControlKey.SCHEDULED_END_TIME,
             AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
@@ -79,8 +82,11 @@ class TestSwitches:
             (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1, True),
             (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1, True),
             (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1, True),
+            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 1, True),
+            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 1, True),
             (PortControlKey.VPD_HIGH_ENABLED, 1, True),
             (PortControlKey.VPD_LOW_ENABLED, 1, True),
+            (PortControlKey.VPD_TARGET_ENABLED, 1, True),
             (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
             (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
             # disabled
@@ -88,8 +94,11 @@ class TestSwitches:
             (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0, False),
             (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0, False),
             (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0, False),
+            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 0, False),
+            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 0, False),
             (PortControlKey.VPD_HIGH_ENABLED, 0, False),
             (PortControlKey.VPD_LOW_ENABLED, 0, False),
+            (PortControlKey.VPD_TARGET_ENABLED, 0, False),
             (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
             (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
         ],
@@ -157,8 +166,11 @@ class TestSwitches:
             (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1),
             (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1),
             (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1),
+            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 1),
+            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 1),
             (PortControlKey.VPD_HIGH_ENABLED, 1),
             (PortControlKey.VPD_LOW_ENABLED, 1),
+            (PortControlKey.VPD_TARGET_ENABLED, 1),
             (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
             (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
         ],
@@ -225,8 +237,11 @@ class TestSwitches:
             (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0),
             (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0),
             (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0),
+            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 0),
+            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 0),
             (PortControlKey.VPD_HIGH_ENABLED, 0),
             (PortControlKey.VPD_LOW_ENABLED, 0),
+            (PortControlKey.VPD_TARGET_ENABLED, 0),
             (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
             (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
         ],

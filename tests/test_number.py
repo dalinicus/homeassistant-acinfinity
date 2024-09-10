@@ -43,7 +43,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 79
+        assert len(test_objects.entities._added_entities) == 91
 
     @pytest.mark.parametrize(
         "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
@@ -180,15 +180,16 @@ class TestNumbers:
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "key,label",
+        "key",
         [
-            (PortControlKey.VPD_HIGH_TRIGGER, "High"),
-            (PortControlKey.VPD_LOW_TRIGGER, "Low"),
+            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            PortControlKey.AUTO_TARGET_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_setup_vpd_trigger_setup_for_each_port(
-        self, setup, key, port, label
+    async def test_async_setup_humidity_trigger_setup_for_each_port(
+        self, setup, key, port
     ):
         """Setting for vpd trigger setup for each port"""
 
@@ -198,19 +199,37 @@ class TestNumbers:
         assert entity.device_info is not None
 
     @pytest.mark.parametrize(
-        "setting,enabled_setting",
+        "key",
         [
-            (PortControlKey.VPD_LOW_TRIGGER, PortControlKey.VPD_LOW_ENABLED),
-            (PortControlKey.VPD_HIGH_TRIGGER, PortControlKey.VPD_HIGH_ENABLED),
+            PortControlKey.VPD_HIGH_TRIGGER,
+            PortControlKey.VPD_LOW_TRIGGER,
+            PortControlKey.VPD_TARGET,
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_vpd_trigger_setup_for_each_port(self, setup, key, port):
+        """Setting for vpd trigger setup for each port"""
+
+        entity = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+
+        assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            PortControlKey.AUTO_TARGET_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize(
         "value,expected",
-        [(55, 5.5), (0, 0)],  # minutes to seconds
+        [(55, 55), (0, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
-    async def test_async_update_value_vpd(
-        self, setup, setting, value, expected, port, enabled_setting
+    async def test_async_update_value_humidity(
+        self, setup, setting, value, expected, port
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -231,6 +250,72 @@ class TestNumbers:
         [
             PortControlKey.VPD_LOW_TRIGGER,
             PortControlKey.VPD_HIGH_TRIGGER,
+            PortControlKey.VPD_TARGET,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "value,expected",
+        [(55, 5.5), (0, 0)],  # minutes to seconds
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_value_vpd(self, setup, setting, value, expected, port):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert entity.native_value == expected
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            PortControlKey.AUTO_TARGET_HUMIDITY,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "expected,value,prev_value",
+        [(55, 55, 45), (0, 0, 45)],  # minutes to seconds
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_humidity(
+        self, setup, setting, value, expected, port, prev_value
+    ):
+        """Reported entity value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+            setting
+        ] = prev_value
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+
+        assert isinstance(entity, ACInfinityPortNumberEntity)
+        await entity.async_set_native_value(value)
+
+        test_objects.port_control_set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, expected
+        )
+        test_objects.refresh_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            PortControlKey.VPD_LOW_TRIGGER,
+            PortControlKey.VPD_HIGH_TRIGGER,
+            PortControlKey.VPD_TARGET,
         ],
     )
     @pytest.mark.parametrize(
@@ -346,6 +431,7 @@ class TestNumbers:
                 PortControlKey.AUTO_TEMP_LOW_TRIGGER,
                 PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
+            (PortControlKey.AUTO_TARGET_TEMP, PortControlKey.AUTO_TARGET_TEMP_F),
         ],
     )
     @pytest.mark.parametrize(
@@ -392,6 +478,7 @@ class TestNumbers:
                 PortControlKey.AUTO_TEMP_LOW_TRIGGER,
                 PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
+            (PortControlKey.AUTO_TARGET_TEMP, PortControlKey.AUTO_TARGET_TEMP_F),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

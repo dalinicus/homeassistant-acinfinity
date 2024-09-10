@@ -42,7 +42,7 @@ class TestSelectors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 14
+        assert len(test_objects.entities._added_entities) == 22
 
     @pytest.mark.parametrize(
         "setting",
@@ -374,3 +374,70 @@ class TestSelectors:
         assert isinstance(entity, ACInfinityPortSelectEntity)
         with pytest.raises(ValueError):
             await entity.async_select_option("Pizza")
+
+    @pytest.mark.parametrize(
+        "setting", [PortControlKey.AUTO_SETTINGS_MODE, PortControlKey.VPD_SETTINGS_MODE]
+    )
+    @pytest.mark.parametrize(
+        "setting_mode,expected",
+        [
+            (0, "Auto"),
+            (1, "Target"),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_settings_mode_value_correct(
+        self, setup, setting_mode, expected, port, setting
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup,
+            async_setup_entry,
+            port,
+            setting,
+        )
+
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+            setting
+        ] = setting_mode
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert entity.current_option == expected
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize(
+        "setting", [PortControlKey.AUTO_SETTINGS_MODE, PortControlKey.VPD_SETTINGS_MODE]
+    )
+    @pytest.mark.parametrize(
+        "expected,setting_mode_string",
+        [
+            (0, "Auto"),
+            (1, "Target"),
+        ],
+    )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_set_native_value_setting_mode(
+        self, setup, setting_mode_string, expected, port, setting
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_port_entity(
+            setup,
+            async_setup_entry,
+            port,
+            setting,
+        )
+
+        assert isinstance(entity, ACInfinityPortSelectEntity)
+        await entity.async_select_option(setting_mode_string)
+
+        test_objects.port_control_set_mock.assert_called_with(
+            str(DEVICE_ID), port, setting, expected
+        )
+        test_objects.refresh_mock.assert_called()

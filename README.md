@@ -29,11 +29,15 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
     - [On Mode](#on-mode)
     - [Off Mode](#off-mode)
     - [Auto Mode](#auto-mode)
+      - [Auto Settings Mode](#auto-setting-mode)
+      - [Target Settings Mode](#target-settings-mode)
     - [Timer to On Mode](#timer-to-on-mode)
     - [Timer to Off Mode](#timer-to-off-mode)
     - [Cycle Mode](#cycle-mode)
     - [Schedule Mode](#schedule-mode)
     - [VPD Mode](#vpd-mode)
+      - [Auto Settings Mode](#auto-setting-mode-1)
+      - [Target Settings Mode](#target-settings-mode-1)
   - [Device Settings](#device-settings)
     - [Dynamic Response](#dynamic-response)
       - [Transition Mode](#transition-mode)
@@ -183,7 +187,12 @@ Device is always set to the on speed . This mode has no unique controls.
 Device is always set to the off speed . This mode has no unique controls.
 
 ### Auto Mode
-Device toggled based on temperature and/or humidity triggers
+Device toggled based on temperature and/or humidity triggers.  This mode is split into two sub modes: Auto and Target.
+
+- `Auto Settings Mode`: Swap between `Auto` and `Target` setting mode types.  `Target` mode is not valid for some device types.
+
+#### Auto Setting Mode
+
 - `High Temp Enabled`: Enable or disable high temp trigger while in Auto mode
 - `High Temp Trigger`: If trigger is enabled, device will be turned on if temp exceeds configured value.
 - `Low Temp Enabled`: Enable or disable low temp trigger while in Auto mode
@@ -192,6 +201,16 @@ Device toggled based on temperature and/or humidity triggers
 - `High Humidity Trigger`: If trigger is enabled, device will be turned on if humidity exceeds configured value.
 - `Low Humidity Enabled`: Enable or disable low humidity trigger while in Auto mode
 - `Low Humidity Trigger`: If trigger is enabled, device will be turned on if humidity drops below configured value.
+
+#### Target Settings Mode
+
+- `Target Temp Enabled`: Enabled or disable the target temperature target. *
+- `Target Temp`: If enabled, target temperature to maintain. *
+- `Target Humidity Enabled`: Enable or disable the target humidity target. **
+- `Target Humidity`: If enabled, the target humidity to maintain. **
+
+<sub>* Only valid for AC or Heater devices</sub>
+<sub>** Only valid for Humidifier devices</sub>
 
 ### Timer to On Mode
 Device is turned on after a set duration
@@ -213,7 +232,19 @@ Device is toggled based on a schedule
 
 ### VPD Mode
 Device is toggled based on VPD triggers
+
+- `VPD Settings Mode`: Swap between `Auto` and `Target` setting mode types.  `Target` mode is not valid for some device types.
+
+#### Auto Setting Mode
+
 - `VPD High Enabled`: Enable or disable high VPD trigger while in VPD mode
 - `VPD High Trigger`: If trigger is enabled, device will be turned on if VPD exceeds configured value.
 - `VPD Low Enabled`: Enable or disable low VPD trigger while in VPD mode
 - `VPD Low Trigger`: If trigger is enabled, device will be turned on if VPD drops below configured value.
+
+#### Target Settings Mode
+
+- `Target VPD Enabled`: Enable or disable the target VPD target *
+- `Target VPD`: If enabled, the target VPD to maintain *
+
+<sub>* Only valid for AC, Heater, and Humidifier devices</sub>

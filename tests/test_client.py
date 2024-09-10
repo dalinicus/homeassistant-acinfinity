@@ -245,9 +245,10 @@ class TestACInfinityClient:
 
         assert isinstance(dev_mode_settings["data"], dict)
         dev_mode_settings["data"][PortControlKey.SURPLUS] = set_value
-        dev_mode_settings["data"][PortControlKey.TARGET_TEMPERATURE_SWITCH] = set_value
-        dev_mode_settings["data"][PortControlKey.TARGET_HUMIDITY_SWITCH] = set_value
-        dev_mode_settings["data"][PortControlKey.TARGET_VPD_SWITCH] = set_value
+        dev_mode_settings["data"][
+            PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED
+        ] = set_value
+        dev_mode_settings["data"][PortControlKey.VPD_TARGET_ENABLED] = set_value
         dev_mode_settings["data"][PortControlKey.EC_OR_TDS] = set_value
         dev_mode_settings["data"][PortControlKey.MASTER_PORT] = set_value
 
@@ -257,9 +258,8 @@ class TestACInfinityClient:
 
         expected = set_value if set_value else 0
         assert payload[PortControlKey.SURPLUS] == expected
-        assert payload[PortControlKey.TARGET_HUMIDITY_SWITCH] == expected
-        assert payload[PortControlKey.TARGET_TEMPERATURE_SWITCH] == expected
-        assert payload[PortControlKey.TARGET_VPD_SWITCH] == expected
+        assert payload[PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED] == expected
+        assert payload[PortControlKey.VPD_TARGET_ENABLED] == expected
         assert payload[PortControlKey.EC_OR_TDS] == expected
         assert payload[PortControlKey.MASTER_PORT] == expected
 

@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
-import pytz
-from dateutil import tz
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -21,7 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import StateType
-from pytz.tzinfo import DstTzInfo
+from zoneinfo import ZoneInfo
 
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -35,14 +33,13 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortReadOnlyMixin,
     get_value_fn_port_property_default,
     suitable_fn_controller_property_default,
-    suitable_fn_port_control_default,
     suitable_fn_port_property_default,
 )
 
 from .const import (
-    CustomKey, DOMAIN,
+    DOMAIN,
     ControllerPropertyKey,
-    PortControlKey,
+    CustomPortPropertyKey,
     PortPropertyKey,
 )
 
@@ -95,6 +92,7 @@ def __get_value_fn_port_property_default_zero(
         port.controller.device_id, port.port_index, entity.entity_description.key, 0
     )
 
+
 def __get_next_mode_change_timestamp(
     entity: ACInfinityEntity, port: ACInfinityPort
 ) -> datetime | None:
@@ -102,10 +100,15 @@ def __get_next_mode_change_timestamp(
         port.controller.device_id, port.port_index, PortPropertyKey.REMAINING_TIME, 0
     )
 
+    timezone = entity.ac_infinity.get_controller_property(
+        port.controller.device_id, ControllerPropertyKey.TIME_ZONE
+    )
+
     if remaining_seconds <= 0:
         return None
 
-    return datetime.now(port.controller.timezone) + timedelta(seconds = remaining_seconds)
+    return datetime.now(ZoneInfo(timezone)) + timedelta(seconds=remaining_seconds)
+
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
@@ -167,16 +170,16 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         get_value_fn=__get_value_fn_port_property_default_zero,
     ),
     ACInfinityPortSensorEntityDescription(
-        key=CustomKey.NEXT_STATE_CHANGE,
+        key=CustomPortPropertyKey.NEXT_STATE_CHANGE,
         device_class=SensorDeviceClass.TIMESTAMP,
         native_unit_of_measurement=None,
         icon=None,  # default
         translation_key="next_state_change",
         suggested_unit_of_measurement=None,
         state_class=None,
-        suitable_fn=lambda x,y: True,
+        suitable_fn=lambda x, y: True,
         get_value_fn=__get_next_mode_change_timestamp,
-    )
+    ),
 ]
 
 

@@ -17,9 +17,11 @@ CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
 DEFAULT_POLLING_INTERVAL = 10
 
-class CustomKey:
+
+class CustomPortPropertyKey:
     # Derived sensors
     NEXT_STATE_CHANGE = "nextStateChange"
+
 
 # noinspection SpellCheckingInspection
 class ControllerPropertyKey:

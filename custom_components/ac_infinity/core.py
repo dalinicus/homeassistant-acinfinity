@@ -220,17 +220,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_controller_properties_json(
-        self, controller_id: (str | int), json: Any
-    ) -> None:
-        """sets the json properties data for a given controller
-
-        Args:
-            controller_id: the device id of the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._controller_properties[str(controller_id)] = json
-
     def get_port_property_exists(
         self,
         controller_id: (str | int),
@@ -273,18 +262,6 @@ class ACInfinityService:
                 return value if value is not None else default_value
 
         return default_value
-
-    def __set_port_properties_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json properties data for a given controller and port
-
-        Args:
-            controller_id: the device id of the controller
-            port_index: the index of the port on the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._port_properties[(controller_id, port_index)] = json
 
     def get_controller_setting_exists(
         self, controller_id: (str | int), setting_key: str
@@ -351,17 +328,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_settings_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json settings data for a given controller
-
-        Args:
-            controller_id: the device id of the controller
-            json: he relevant json snippet from the returned API payload
-        """
-        self._device_settings[(controller_id, port_index)] = json
-
     def get_port_control_exists(
         self,
         controller_id: (str | int),
@@ -411,18 +377,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_port_controls_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json setting data for a given controller and port
-
-        Args:
-            controller_id: the device id of the controller
-            port_index: the index of the port on the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._port_controls[(controller_id, port_index)] = json
-
     async def refresh(self) -> None:
         """refreshes the values of properties and settings from the AC infinity API"""
         try_count = 0
@@ -438,15 +392,15 @@ class ACInfinityService:
                     ]
 
                     # set controller properties; readings for temp, vpd, humidity, etc...
-                    self.__set_controller_properties_json(
-                        controller_id, controller_properties_json
-                    )
+                    self._controller_properties[
+                        str(controller_id)
+                    ] = controller_properties_json
 
                     # retrieve and set controller settings; temperature, humidity, and vpd offsets
                     controller_settings_json = await self._client.get_device_settings(
                         controller_id, 0
                     )
-                    self.__set_settings_json(controller_id, 0, controller_settings_json)
+                    self._device_settings[(controller_id, 0)] = controller_settings_json
 
                     for port_properties_json in controller_properties_json[
                         ControllerPropertyKey.DEVICE_INFO
@@ -454,9 +408,9 @@ class ACInfinityService:
                         port_index = port_properties_json[PortPropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self.__set_port_properties_json(
-                            controller_id, port_index, port_properties_json
-                        )
+                        self._port_properties[
+                            (controller_id, port_index)
+                        ] = port_properties_json
 
                         # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
                         port_controls_json = (
@@ -464,17 +418,18 @@ class ACInfinityService:
                                 controller_id, port_index
                             )
                         )
-                        self.__set_port_controls_json(
-                            controller_id, port_index, port_controls_json
-                        )
+                        self._port_controls[
+                            (controller_id, port_index)
+                        ] = port_controls_json
 
                         # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
                         port_settings_json = await self._client.get_device_settings(
                             controller_id, port_index
                         )
-                        self.__set_settings_json(
-                            controller_id, port_index, port_settings_json
-                        )
+                        self._device_settings[
+                            (controller_id, port_index)
+                        ] = port_settings_json
+
                 return  # update successful.  eject from the infinite while loop.
             except BaseException as ex:
                 if try_count < 2:

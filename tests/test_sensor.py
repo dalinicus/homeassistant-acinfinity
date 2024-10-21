@@ -1,4 +1,7 @@
+from datetime import datetime
+
 import pytest
+from freezegun import freeze_time
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -6,11 +9,12 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from pytest_mock import MockFixture
+from zoneinfo import ZoneInfo
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
-    PortControlKey,
+    CustomPortPropertyKey,
     PortPropertyKey,
 )
 from custom_components.ac_infinity.sensor import (
@@ -45,7 +49,7 @@ class TestSensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 11
+        assert len(test_objects.entities._added_entities) == 15
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup"""
@@ -155,14 +159,29 @@ class TestSensors:
         """Sensor for device port surplus created on setup"""
 
         entity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortControlKey.SURPLUS
+            setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
         )
 
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortControlKey.SURPLUS}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortPropertyKey.REMAINING_TIME}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.DURATION
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_setup_next_state_change_for_each_port(self, setup, port):
+        """Sensor for device port surplus created on setup"""
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
+        )
+
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{CustomPortPropertyKey.NEXT_STATE_CHANGE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TIMESTAMP
         assert entity.device_info is not None
 
     @pytest.mark.parametrize(
@@ -199,11 +218,50 @@ class TestSensors:
         test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_port_entity(
-            setup, async_setup_entry, port, PortControlKey.SURPLUS
+            setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
-            PortControlKey.SURPLUS
+        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
+            PortPropertyKey.REMAINING_TIME
+        ] = value
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityPortSensorEntity)
+        assert entity.native_value == expected
+        test_objects.write_ha_mock.assert_called()
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (500, datetime(2023, 1, 1, 0, 8, 20, tzinfo=ZoneInfo("America/Chicago"))),
+            (
+                12345,
+                datetime(2023, 1, 1, 3, 25, 45, tzinfo=ZoneInfo("America/Chicago")),
+            ),
+            (None, None),
+            (0, None),
+        ],
+    )
+    @freeze_time(
+        "2023-01-01 12:00:00", tz_offset=-6
+    )  # Freezing time to a consistent value
+    async def test_async_next_state_change_value_correct(
+        self, setup, port, value, expected
+    ):
+        """Reported sensor value matches the value in the json payload"""
+        test_objects: ACTestObjects = setup
+
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
+        )
+
+        test_objects.ac_infinity._controller_properties[(str(DEVICE_ID))][
+            ControllerPropertyKey.TIME_ZONE
+        ] = "America/Chicago"
+
+        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
+            PortPropertyKey.REMAINING_TIME
         ] = value
         entity._handle_coordinator_update()
 

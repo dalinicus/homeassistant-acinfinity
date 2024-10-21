@@ -172,6 +172,9 @@
       },
       "remaining_time": {
         "name": "Remaining Time"
+      },
+      "next_state_change": {
+        "name": "Next State Change"
       }
     },
     "switch": {

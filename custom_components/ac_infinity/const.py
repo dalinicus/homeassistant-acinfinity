@@ -17,6 +17,9 @@ CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
 DEFAULT_POLLING_INTERVAL = 10
 
+class CustomKey:
+    # Derived sensors
+    NEXT_STATE_CHANGE = "nextStateChange"
 
 # noinspection SpellCheckingInspection
 class ControllerPropertyKey:
@@ -33,6 +36,7 @@ class ControllerPropertyKey:
     HUMIDITY = "humidity"
     VPD = "vpdnums"
     ONLINE = "online"
+    TIME_ZONE = "zoneId"
 
 
 # noinspection SpellCheckingInspection
@@ -43,6 +47,7 @@ class PortPropertyKey:
     SPEAK = "speak"
     ONLINE = "online"
     STATE = "loadState"
+    REMAINING_TIME = "remainTime"
 
 
 # noinspection SpellCheckingInspection

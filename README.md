@@ -161,6 +161,8 @@ Read Only sensors reported from each device
 - `Status`: Indicates if a device plugged in and active on that port
 - `State`: Indicates if the device is following the `On Power` or `Off Power` setting
 - `Power`: Current power of the device, governed by the `On Power` and `Off Power` settings
+- `Remaining Time`: Number of seconds until the next state change when using timer or schedule based modes.
+- `Next State Change`: The timestamp of the next state change when using timer or schedule based modes, calculated based on the controller's configured time zone.
 
 ## Device Controls
 Read/Write controls that define if a device runs in an ON or OFF state.  Each control is associated to a mode, and is only relevant when the device is operating in that mode.

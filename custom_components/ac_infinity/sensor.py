@@ -1,8 +1,10 @@
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+import pytz
+from dateutil import tz
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -19,6 +21,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import StateType
+from pytz.tzinfo import DstTzInfo
 
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -37,7 +40,7 @@ from custom_components.ac_infinity.core import (
 )
 
 from .const import (
-    DOMAIN,
+    CustomKey, DOMAIN,
     ControllerPropertyKey,
     PortControlKey,
     PortPropertyKey,
@@ -85,13 +88,24 @@ def __get_value_fn_floating_point_as_int(
     )
 
 
-def __get_value_fn_port_setting_default_zero(
+def __get_value_fn_port_property_default_zero(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
-    return entity.ac_infinity.get_port_control(
-        port.controller.device_id, port.port_index, PortControlKey.SURPLUS, 0
+    return entity.ac_infinity.get_port_property(
+        port.controller.device_id, port.port_index, entity.entity_description.key, 0
     )
 
+def __get_next_mode_change_timestamp(
+    entity: ACInfinityEntity, port: ACInfinityPort
+) -> datetime | None:
+    remaining_seconds = entity.ac_infinity.get_port_property(
+        port.controller.device_id, port.port_index, PortPropertyKey.REMAINING_TIME, 0
+    )
+
+    if remaining_seconds <= 0:
+        return None
+
+    return datetime.now(port.controller.timezone) + timedelta(seconds = remaining_seconds)
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ACInfinityControllerSensorEntityDescription(
@@ -142,16 +156,27 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         get_value_fn=get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
-        key=PortControlKey.SURPLUS,
+        key=PortPropertyKey.REMAINING_TIME,
         device_class=SensorDeviceClass.DURATION,
         native_unit_of_measurement=UnitOfTime.SECONDS,
         icon=None,  # default
         translation_key="remaining_time",
         suggested_unit_of_measurement=None,
         state_class=None,
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_setting_default_zero,
+        suitable_fn=suitable_fn_port_property_default,
+        get_value_fn=__get_value_fn_port_property_default_zero,
     ),
+    ACInfinityPortSensorEntityDescription(
+        key=CustomKey.NEXT_STATE_CHANGE,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        native_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="next_state_change",
+        suggested_unit_of_measurement=None,
+        state_class=None,
+        suitable_fn=lambda x,y: True,
+        get_value_fn=__get_next_mode_change_timestamp,
+    )
 ]
 
 

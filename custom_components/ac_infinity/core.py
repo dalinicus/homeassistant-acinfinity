@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Any, Awaitable, Callable, Tuple
 
 import async_timeout
+import pytz
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import (
@@ -13,6 +14,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from pytz.tzinfo import DstTzInfo
 
 from custom_components.ac_infinity.client import ACInfinityClient
 
@@ -33,7 +35,7 @@ class ACInfinityController:
     A UIS enabled AC Infinity Controller
     """
 
-    def __init__(self, controller_json: dict[str, Any]) -> None:
+    def __init__(self, controller_json: dict[str, Any], timezone: DstTzInfo) -> None:
         """
         Args:
             controller_json: Json of an individual controller. This is typically obtained from
@@ -44,6 +46,7 @@ class ACInfinityController:
         self._device_id = str(controller_json[ControllerPropertyKey.DEVICE_ID])
         self._mac_addr = controller_json[ControllerPropertyKey.MAC_ADDR]
         self._device_name = controller_json[ControllerPropertyKey.DEVICE_NAME]
+        self._timezone = timezone
         self._identifier = (DOMAIN, self._device_id)
         self._ports = [
             ACInfinityPort(self, port)
@@ -92,6 +95,11 @@ class ACInfinityController:
     def identifier(self) -> tuple[str, str]:
         """The unique identifier for the HAAS device in the device manager."""
         return self._identifier
+
+    @property
+    def timezone(self) -> DstTzInfo:
+        """The python timezone of the controller representative of the IANA Time Zone configured"""
+        return self._timezone
 
     @staticmethod
     def __get_device_model_by_device_type(device_type: int) -> str:
@@ -163,6 +171,9 @@ class ACInfinityService:
     # api/user/devInfoListAll json organized by controller device id
     _controller_properties: dict[str, Any] = {}
 
+    # python timezones for each controller, from IANA Time Zones strings available from _controller_properties
+    _controller_timezones: dict[str, Any] = {}
+
     # api/user/devInfoListAll json organized by controller device id and port index
     _port_properties: dict[Tuple[str, int], Any] = {}
 
@@ -220,16 +231,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_controller_properties_json(
-        self, controller_id: (str | int), json: Any
-    ) -> None:
-        """sets the json properties data for a given controller
-
-        Args:
-            controller_id: the device id of the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._controller_properties[str(controller_id)] = json
 
     def get_port_property_exists(
         self,
@@ -273,18 +274,6 @@ class ACInfinityService:
                 return value if value is not None else default_value
 
         return default_value
-
-    def __set_port_properties_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json properties data for a given controller and port
-
-        Args:
-            controller_id: the device id of the controller
-            port_index: the index of the port on the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._port_properties[(controller_id, port_index)] = json
 
     def get_controller_setting_exists(
         self, controller_id: (str | int), setting_key: str
@@ -351,16 +340,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_settings_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json settings data for a given controller
-
-        Args:
-            controller_id: the device id of the controller
-            json: he relevant json snippet from the returned API payload
-        """
-        self._device_settings[(controller_id, port_index)] = json
 
     def get_port_control_exists(
         self,
@@ -411,17 +390,6 @@ class ACInfinityService:
 
         return default_value
 
-    def __set_port_controls_json(
-        self, controller_id: str, port_index: int, json: Any
-    ) -> None:
-        """sets the json setting data for a given controller and port
-
-        Args:
-            controller_id: the device id of the controller
-            port_index: the index of the port on the controller
-            json: the relevant json snippet from the returned API payload
-        """
-        self._port_controls[(controller_id, port_index)] = json
 
     async def refresh(self) -> None:
         """refreshes the values of properties and settings from the AC infinity API"""
@@ -438,15 +406,17 @@ class ACInfinityService:
                     ]
 
                     # set controller properties; readings for temp, vpd, humidity, etc...
-                    self.__set_controller_properties_json(
-                        controller_id, controller_properties_json
+                    self._controller_properties[str(controller_id)] = controller_properties_json
+                    self._controller_timezones[str(controller_id)] = await asyncio.to_thread(
+                        pytz.timezone,
+                        self._controller_properties[str(controller_id)][ControllerPropertyKey.TIME_ZONE]
                     )
 
                     # retrieve and set controller settings; temperature, humidity, and vpd offsets
                     controller_settings_json = await self._client.get_device_settings(
                         controller_id, 0
                     )
-                    self.__set_settings_json(controller_id, 0, controller_settings_json)
+                    self._device_settings[(controller_id, 0)] = controller_settings_json
 
                     for port_properties_json in controller_properties_json[
                         ControllerPropertyKey.DEVICE_INFO
@@ -454,9 +424,7 @@ class ACInfinityService:
                         port_index = port_properties_json[PortPropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self.__set_port_properties_json(
-                            controller_id, port_index, port_properties_json
-                        )
+                        self._port_properties[(controller_id, port_index)] = port_properties_json
 
                         # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
                         port_controls_json = (
@@ -464,17 +432,14 @@ class ACInfinityService:
                                 controller_id, port_index
                             )
                         )
-                        self.__set_port_controls_json(
-                            controller_id, port_index, port_controls_json
-                        )
+                        self._port_controls[(controller_id, port_index)] = port_controls_json
 
                         # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
                         port_settings_json = await self._client.get_device_settings(
                             controller_id, port_index
                         )
-                        self.__set_settings_json(
-                            controller_id, port_index, port_settings_json
-                        )
+                        self._device_settings[(controller_id, port_index)] = port_settings_json
+
                 return  # update successful.  eject from the infinite while loop.
             except BaseException as ex:
                 if try_count < 2:
@@ -497,7 +462,7 @@ class ACInfinityService:
             return []
 
         return [
-            ACInfinityController(device)
+            ACInfinityController(device, self._controller_timezones[device[ControllerPropertyKey.DEVICE_ID]])
             for device in self._controller_properties.values()
         ]
 

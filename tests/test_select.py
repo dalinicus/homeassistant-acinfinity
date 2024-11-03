@@ -93,7 +93,7 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "value,expected",
-        [(0, "Neutral"), (1, "Lower"), (2, "Higher")],
+        [(None, "Neutral"), (0, "Neutral"), (1, "Lower"), (2, "Higher")],
     )
     @pytest.mark.parametrize(
         "setting",
@@ -157,6 +157,7 @@ class TestSelectors:
     @pytest.mark.parametrize(
         "at_type,expected",
         [
+            (None, "Off"),
             (1, "Off"),
             (2, "On"),
             (3, "Auto"),
@@ -230,6 +231,7 @@ class TestSelectors:
     @pytest.mark.parametrize(
         "value,expected",
         [
+            (None, "Transition"),
             (0, "Transition"),
             (1, "Buffer"),
         ],
@@ -291,6 +293,7 @@ class TestSelectors:
     @pytest.mark.parametrize(
         "load_type,expected",
         [
+            (None, "Grow Light"),
             (1, "Grow Light"),
             (2, "Humidifier"),
             (3, "Unknown Device Type"),
@@ -381,6 +384,7 @@ class TestSelectors:
     @pytest.mark.parametrize(
         "setting_mode,expected",
         [
+            (None, "Auto"),
             (0, "Auto"),
             (1, "Target"),
         ],

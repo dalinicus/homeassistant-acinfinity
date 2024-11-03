@@ -52,7 +52,7 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro
 - Controller 69 Pro+
 
-This integration requires the controller be connected to Wifi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
+This integration requires the controller be connected to Wi-fi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 
 # Installation
 
@@ -60,7 +60,7 @@ This integration requires the controller be connected to Wifi, and thus is not c
 
 This integration is made available through the Home Assistant Community Store default feed.  Simply search for "AC Infinity" and install it directly from HACS.
 
-![HACS-Instal](/images/hacs-install.png)
+![HACS-Install](/images/hacs-install.png)
 
 Please see the [official HACS documentation](https://hacs.xyz) for information on how to install and use HACS.
 

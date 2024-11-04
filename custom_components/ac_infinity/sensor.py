@@ -69,6 +69,7 @@ class ACInfinityPortSensorEntityDescription(
 ):
     """Describes ACInfinity Number Sensor Entities."""
 
+
 def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
@@ -76,15 +77,20 @@ def __suitable_fn_controller_property_default(
         controller.device_id, entity.entity_description.key
     )
 
+
 def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_property_exists(
         port.controller.device_id, port.port_index, entity.entity_description.key
     )
 
-def __get_value_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
+
+def __get_value_fn_port_property_default(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
     return entity.ac_infinity.get_port_property(
         port.controller.device_id, port.port_index, entity.entity_description.key, 0
     )
+
 
 def __get_value_fn_floating_point_as_int(
     entity: ACInfinityEntity, controller: ACInfinityController
@@ -96,6 +102,7 @@ def __get_value_fn_floating_point_as_int(
         )
         / 100
     )
+
 
 def __get_next_mode_change_timestamp(
     entity: ACInfinityEntity, port: ACInfinityPort

@@ -77,6 +77,7 @@ SETTINGS_MODE_OPTIONS = [
     "Target",
 ]
 
+
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
@@ -84,15 +85,18 @@ def __suitable_fn_controller_setting_default(
         controller.device_id, entity.entity_description.key
     )
 
+
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
         port.controller.device_id, port.port_index, entity.entity_description.key
     )
 
+
 def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting_exists(
         port.controller.device_id, port.port_index, entity.entity_description.key
     )
+
 
 def __get_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController
@@ -103,12 +107,14 @@ def __get_value_fn_outside_climate(
         )
     ]
 
+
 def __get_value_fn_setting_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return SETTINGS_MODE_OPTIONS[
         entity.ac_infinity.get_port_control(
             port.controller.device_id, port.port_index, entity.entity_description.key, 0
         )
     ]
+
 
 def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return MODE_OPTIONS[
@@ -118,6 +124,7 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
         )
         - 1
     ]
+
 
 def __get_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, port: ACInfinityPort
@@ -131,6 +138,7 @@ def __get_value_fn_dynamic_response_type(
         )
     ]
 
+
 def __get_value_fn_device_load_type(entity: ACInfinityEntity, port: ACInfinityPort):
     value = entity.ac_infinity.get_port_setting(
         port.controller.device_id,
@@ -141,6 +149,7 @@ def __get_value_fn_device_load_type(entity: ACInfinityEntity, port: ACInfinityPo
 
     return DEVICE_LOAD_TYPE_OPTIONS.get(value, "Unknown Device Type")
 
+
 def __set_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController, value: str
 ):
@@ -149,6 +158,7 @@ def __set_value_fn_outside_climate(
         entity.entity_description.key,
         OUTSIDE_CLIMATE_OPTIONS.index(value),
     )
+
 
 def __set_value_fn_setting_mode(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
@@ -159,6 +169,7 @@ def __set_value_fn_setting_mode(
         entity.entity_description.key,
         SETTINGS_MODE_OPTIONS.index(value),
     )
+
 
 def __set_value_fn_active_mode(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str
@@ -181,6 +192,7 @@ def __set_value_fn_dynamic_response_type(
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         DYNAMIC_RESPONSE_OPTIONS.index(value),
     )
+
 
 def __set_value_fn_device_load_type(
     entity: ACInfinityEntity, port: ACInfinityPort, value: str

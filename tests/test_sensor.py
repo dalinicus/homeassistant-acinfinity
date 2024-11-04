@@ -70,7 +70,7 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
-    @pytest.mark.parametrize("value,expected", [(0,0), (3215, 32.15), (None, 0)])
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
     async def test_async_update_temperature_value_correct(self, setup, value, expected):
         """Reported sensor value matches the value in the json payload"""
 

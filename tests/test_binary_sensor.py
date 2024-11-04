@@ -89,7 +89,9 @@ class TestBinarySensors:
             (1, True),
         ],
     )
-    async def test_async_update_entity_controller_value_correct(self, setup, value, expected):
+    async def test_async_update_entity_controller_value_correct(
+        self, setup, value, expected
+    ):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup

@@ -156,10 +156,7 @@ class TestSwitches:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_port_entity(
-            setup,
-            async_setup_entry,
-            port,
-            setting
+            setup, async_setup_entry, port, setting
         )
 
         test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][

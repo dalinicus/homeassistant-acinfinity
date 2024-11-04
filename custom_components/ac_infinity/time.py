@@ -61,10 +61,12 @@ class ACInfinityPortTimeEntityDescription(
 ):
     """Describes ACInfinity Time Entities."""
 
+
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
         port.controller.device_id, port.port_index, entity.entity_description.key
     )
+
 
 def __get_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort):
     return __get_time_from_total_minutes(
@@ -72,7 +74,7 @@ def __get_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort):
             port.controller.device_id,
             port.port_index,
             entity.entity_description.key,
-            None
+            None,
         )
     )
 

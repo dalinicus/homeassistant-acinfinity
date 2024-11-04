@@ -70,16 +70,23 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
-    async def test_async_update_temperature_value_correct(self, setup):
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
+    async def test_async_update_temperature_value_correct(self, setup, value, expected):
         """Reported sensor value matches the value in the json payload"""
 
+        test_objects: ACTestObjects = setup
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerPropertyKey.TEMPERATURE
         )
+
+        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+            ControllerPropertyKey.TEMPERATURE
+        ] = value
+
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSensorEntity)
-        assert entity.native_value == 24.17
+        assert entity.native_value == expected
 
     async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
@@ -97,16 +104,22 @@ class TestSensors:
 
         assert entity.device_info is not None
 
-    async def test_async_update_humidity_value_correct(self, setup):
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
+    async def test_async_update_humidity_value_correct(self, setup, value, expected):
         """Reported sensor value matches the value in the json payload"""
 
+        test_objects: ACTestObjects = setup
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerPropertyKey.HUMIDITY
         )
+
+        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+            ControllerPropertyKey.HUMIDITY
+        ] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSensorEntity)
-        assert entity.native_value == 72
+        assert entity.native_value == expected
 
     async def test_async_setup_entry_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
@@ -127,16 +140,22 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
-    async def test_async_update_vpd_value_correct(self, setup):
+    @pytest.mark.parametrize("value,expected", [(0, 0), (105, 1.05), (None, 0)])
+    async def test_async_update_vpd_value_correct(self, setup, value, expected):
         """Reported sensor value matches the value in the json payload"""
 
+        test_objects: ACTestObjects = setup
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerPropertyKey.VPD
         )
+
+        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+            ControllerPropertyKey.VPD
+        ] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSensorEntity)
-        assert entity.native_value == 0.83
+        assert entity.native_value == expected
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_power_created_for_each_port(
@@ -184,23 +203,17 @@ class TestSensors:
         assert entity.entity_description.device_class == SensorDeviceClass.TIMESTAMP
         assert entity.device_info is not None
 
-    @pytest.mark.parametrize(
-        "port,expected",
-        [
-            (1, 5),
-            (2, 7),
-            (3, 5),
-            (4, 0),
-        ],
-    )
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3, 3), (None, 0)])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_current_power_value_correct(
-        self, setup, port, expected
+        self, setup, port, value, expected
     ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
             PortPropertyKey.SPEAK
-        ] = expected
+        ] = value
+
         entity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, PortPropertyKey.SPEAK
         )

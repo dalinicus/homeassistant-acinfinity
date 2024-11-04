@@ -31,9 +31,6 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
-    get_value_fn_port_property_default,
-    suitable_fn_controller_property_default,
-    suitable_fn_port_property_default,
 )
 
 from .const import (
@@ -73,23 +70,37 @@ class ACInfinityPortSensorEntityDescription(
     """Describes ACInfinity Number Sensor Entities."""
 
 
+def __suitable_fn_controller_property_default(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return entity.ac_infinity.get_controller_property_exists(
+        controller.device_id, entity.entity_description.key
+    )
+
+
+def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_property_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+
+def __get_value_fn_port_property_default(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
+    return entity.ac_infinity.get_port_property(
+        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+    )
+
+
 def __get_value_fn_floating_point_as_int(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     # value stored as an integer, but represents a 2 digit precision float
     return (
         entity.ac_infinity.get_controller_property(
-            controller.device_id, entity.entity_description.key
+            controller.device_id, entity.entity_description.key, 0
         )
         / 100
-    )
-
-
-def __get_value_fn_port_property_default_zero(
-    entity: ACInfinityEntity, port: ACInfinityPort
-):
-    return entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
     )
 
 
@@ -119,7 +130,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="temperature",
         suggested_unit_of_measurement=None,
-        suitable_fn=suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -130,7 +141,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="humidity",
         suggested_unit_of_measurement=None,
-        suitable_fn=suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -141,7 +152,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
         translation_key="vapor_pressure_deficit",
-        suitable_fn=suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
 ]
@@ -155,8 +166,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         icon=None,  # default
         translation_key="current_power",
         suggested_unit_of_measurement=None,
-        suitable_fn=suitable_fn_port_property_default,
-        get_value_fn=get_value_fn_port_property_default,
+        suitable_fn=__suitable_fn_port_property_default,
+        get_value_fn=__get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
         key=PortPropertyKey.REMAINING_TIME,
@@ -166,8 +177,8 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         translation_key="remaining_time",
         suggested_unit_of_measurement=None,
         state_class=None,
-        suitable_fn=suitable_fn_port_property_default,
-        get_value_fn=__get_value_fn_port_property_default_zero,
+        suitable_fn=__suitable_fn_port_property_default,
+        get_value_fn=__get_value_fn_port_property_default,
     ),
     ACInfinityPortSensorEntityDescription(
         key=CustomPortPropertyKey.NEXT_STATE_CHANGE,

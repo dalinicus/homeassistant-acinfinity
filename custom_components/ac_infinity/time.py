@@ -20,7 +20,6 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    suitable_fn_port_control_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,12 +62,19 @@ class ACInfinityPortTimeEntityDescription(
     """Describes ACInfinity Time Entities."""
 
 
+def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_control_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+
 def __get_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort):
     return __get_time_from_total_minutes(
         entity.ac_infinity.get_port_control(
             port.controller.device_id,
             port.port_index,
             entity.entity_description.key,
+            None,
         )
     )
 
@@ -87,7 +93,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         key=PortControlKey.SCHEDULED_START_TIME,
         icon=None,  # default
         translation_key="schedule_mode_on_time",
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
     ),
@@ -95,7 +101,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         key=PortControlKey.SCHEDULED_END_TIME,
         icon=None,  # default
         translation_key="schedule_mode_off_time",
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
     ),

@@ -22,13 +22,10 @@ from .core import (
     ACInfinityControllerReadOnlyMixin,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
+    ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
-    get_value_fn_controller_property_default,
-    get_value_fn_port_property_default,
-    suitable_fn_controller_property_default,
-    suitable_fn_port_property_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,14 +55,44 @@ class ACInfinityPortBinarySensorEntityDescription(
     """Describes ACInfinity Binary Sensor Port Entities."""
 
 
+def __suitable_fn_controller_property_default(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return entity.ac_infinity.get_controller_property_exists(
+        controller.device_id, entity.entity_description.key
+    )
+
+
+def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_property_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+
+def __get_value_fn_controller_property_default(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return entity.ac_infinity.get_controller_property(
+        controller.device_id, entity.entity_description.key, False
+    )
+
+
+def __get_value_fn_port_property_default(
+    entity: ACInfinityEntity, port: ACInfinityPort
+):
+    return entity.ac_infinity.get_port_property(
+        port.controller.device_id, port.port_index, entity.entity_description.key, False
+    )
+
+
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription] = [
     ACInfinityControllerBinarySensorEntityDescription(
         key=ControllerPropertyKey.ONLINE,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:power-plug",
         translation_key="controller_online",
-        suitable_fn=suitable_fn_controller_property_default,
-        get_value_fn=get_value_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_property_default,
+        get_value_fn=__get_value_fn_controller_property_default,
     )
 ]
 
@@ -75,16 +102,16 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:power-plug",
         translation_key="port_online",
-        suitable_fn=suitable_fn_port_property_default,
-        get_value_fn=get_value_fn_port_property_default,
+        suitable_fn=__suitable_fn_port_property_default,
+        get_value_fn=__get_value_fn_port_property_default,
     ),
     ACInfinityPortBinarySensorEntityDescription(
         key=PortPropertyKey.STATE,
         device_class=BinarySensorDeviceClass.POWER,
         icon="mdi:power",
         translation_key="port_state",
-        suitable_fn=suitable_fn_port_property_default,
-        get_value_fn=get_value_fn_port_property_default,
+        suitable_fn=__suitable_fn_port_property_default,
+        get_value_fn=__get_value_fn_port_property_default,
     ),
 ]
 

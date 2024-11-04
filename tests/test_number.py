@@ -67,16 +67,21 @@ class TestNumbers:
         assert entity.device_info is not None
 
     @pytest.mark.parametrize(
-        "setting,expected",
-        [(PortControlKey.OFF_SPEED, 0), (PortControlKey.ON_SPEED, 5)],
+        "setting",
+        [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED],
     )
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    @pytest.mark.parametrize("value,expected", [(None, 0), (0, 0), (7, 7)])
     async def test_async_update_current_speed_value_correct(
-        self, setup, setting, expected
+        self, setup, setting, port, value, expected
     ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(setup, async_setup_entry, 1, setting)
+        entity = await execute_and_get_port_entity(
+            setup, async_setup_entry, port, setting
+        )
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
@@ -124,7 +129,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "value,expected",
-        [(86400, 1440), (1440, 24), (0, 0)],  # minutes to seconds
+        [(86400, 1440), (1440, 24), (0, 0), (None, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_timer_value_correct(
@@ -225,7 +230,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "value,expected",
-        [(55, 55), (0, 0)],  # minutes to seconds
+        [(55, 55), (0, 0), (None, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_value_humidity(
@@ -255,7 +260,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "value,expected",
-        [(55, 5.5), (0, 0)],  # minutes to seconds
+        [(55, 5.5), (0, 0), (None, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_value_vpd(self, setup, setting, value, expected, port):
@@ -366,7 +371,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "value,expected",
-        [(86400, 1440), (1440, 24), (0, 0)],  # minutes to seconds
+        [(86400, 1440), (1440, 24), (0, 0), (None, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_cycle_timer_value_correct(
@@ -421,31 +426,24 @@ class TestNumbers:
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting, f_setting",
+        "setting",
         [
-            (
-                PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
-                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
-            ),
-            (
-                PortControlKey.AUTO_TEMP_LOW_TRIGGER,
-                PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
-            ),
-            (PortControlKey.AUTO_TARGET_TEMP, PortControlKey.AUTO_TARGET_TEMP_F),
+            PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
+            PortControlKey.AUTO_TEMP_LOW_TRIGGER,
+            PortControlKey.AUTO_TARGET_TEMP,
         ],
     )
     @pytest.mark.parametrize(
-        "c,f",
-        [(0, 32), (90, 194), (46, 115)],
+        "value, expected",
+        [(0, 0), (90, 90), (None, 0)],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_temp_trigger_correct(
         self,
         setup,
         setting,
-        f_setting,
-        c,
-        f,
+        value,
+        expected,
         port,
     ):
         """Reported sensor value matches the value in the json payload"""
@@ -455,12 +453,11 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = c
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][f_setting] = f
+        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityPortNumberEntity)
-        assert entity.native_value == c
+        assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -568,8 +565,11 @@ class TestNumbers:
             AdvancedSettingsKey.CALIBRATE_HUMIDITY,
         ],
     )
-    @pytest.mark.parametrize("value", [-10, 0, 5])
-    async def test_async_update_calibration(self, setup, setting, value):
+    @pytest.mark.parametrize("value,expected", [(-10, -10), (0, 0), (5, 5), (None, 0)])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    async def test_async_update_calibration(
+        self, setup, setting, value, expected, port
+    ):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
@@ -577,11 +577,13 @@ class TestNumbers:
             setup, async_setup_entry, setting
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][setting] = value
+        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+            setting
+        ] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerNumberEntity)
-        assert entity.native_value == value
+        assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
@@ -771,11 +773,17 @@ class TestNumbers:
         "setting,value,expected",
         [
             (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, None, 0),
             (AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, None, 0),
             (AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, 8, 0.8),
+            (AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD, None, 0),
             (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, None, 0),
             (AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY, 8, 8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY, None, 0),
             (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, 8, 0.8),
+            (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, None, 0),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -874,10 +882,10 @@ class TestNumbers:
             AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY,
         ],
     )
-    @pytest.mark.parametrize("value", [0, 5, 10])
+    @pytest.mark.parametrize("value,expected", [(0, 0), (5, 5), (10, 10), (None, 0)])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_dynamic_response_humidity(
-        self, setup, value, port, setting
+        self, setup, value, expected, port, setting
     ):
         """Reported sensor value matches the value in the json payload"""
         future: Future = asyncio.Future()

@@ -25,16 +25,9 @@ from custom_components.ac_infinity.core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadWriteMixin,
-    get_value_fn_port_control_default,
-    get_value_fn_port_setting_default,
-    set_value_fn_port_control_default,
-    set_value_fn_port_setting_default,
-    suitable_fn_port_control_default,
-    suitable_fn_port_setting_default,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
 
 @dataclass
 class ACInfinitySwitchOnOffValuesMixin:
@@ -64,13 +57,46 @@ class ACInfinityPortSwitchEntityDescription(
 ):
     """Describes ACInfinity Switch Entities."""
 
+def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_setting_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_control_exists(
+        port.controller.device_id, port.port_index, entity.entity_description.key
+    )
+
+def __get_value_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_control(
+        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+    )
+
+def __get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
+    return entity.ac_infinity.get_port_setting(
+        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+    )
 
 def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPort):
     return (
         entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, entity.entity_description.key
+            port.controller.device_id, port.port_index, entity.entity_description.key, SCHEDULE_DISABLED_VALUE
         )
         < SCHEDULE_EOD_VALUE + 1
+    )
+
+def __set_value_fn_port_control_default(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
+    return entity.ac_infinity.update_port_control(
+        port.controller.device_id, port.port_index, entity.entity_description.key, value
+    )
+
+def __set_value_fn_port_setting_default(
+    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+):
+    return entity.ac_infinity.update_port_setting(
+        port.controller.device_id, port.port_index, entity.entity_description.key, value
     )
 
 
@@ -82,9 +108,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_high_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.VPD_LOW_ENABLED,
@@ -93,9 +119,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_low_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.VPD_TARGET_ENABLED,
@@ -104,9 +130,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="target_vpd_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_TEMP_HIGH_ENABLED,
@@ -115,9 +141,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_high_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_TEMP_LOW_ENABLED,
@@ -126,9 +152,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_low_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
@@ -137,9 +163,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_high_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
@@ -148,9 +174,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_TARGET_TEMP_ENABLED,
@@ -159,9 +185,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="target_temp_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
@@ -170,9 +196,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="target_humidity_enabled",
-        suitable_fn=suitable_fn_port_control_default,
-        get_value_fn=get_value_fn_port_control_default,
-        set_value_fn=set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
+        get_value_fn=__get_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.SCHEDULED_START_TIME,
@@ -181,9 +207,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_on_time_enabled",
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=set_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=PortControlKey.SCHEDULED_END_TIME,
@@ -192,9 +218,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_off_time_enabled",
-        suitable_fn=suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=set_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_port_control_default,
     ),
     ACInfinityPortSwitchEntityDescription(
         key=AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
@@ -203,9 +229,9 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="sunrise_timer_enabled",
-        suitable_fn=suitable_fn_port_setting_default,
-        get_value_fn=get_value_fn_port_setting_default,
-        set_value_fn=set_value_fn_port_setting_default,
+        suitable_fn=__suitable_fn_port_setting_default,
+        get_value_fn=__get_value_fn_port_setting_default,
+        set_value_fn=__set_value_fn_port_setting_default,
     ),
 ]
 

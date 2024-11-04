@@ -101,6 +101,18 @@ class TestSwitches:
             (PortControlKey.VPD_TARGET_ENABLED, 0, False),
             (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
             (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
+            # None
+            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, None, False),
+            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, None, False),
+            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, None, False),
+            (PortControlKey.AUTO_TEMP_LOW_ENABLED, None, False),
+            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, None, False),
+            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, None, False),
+            (PortControlKey.VPD_HIGH_ENABLED, None, False),
+            (PortControlKey.VPD_LOW_ENABLED, None, False),
+            (PortControlKey.VPD_TARGET_ENABLED, None, False),
+            (PortControlKey.SCHEDULED_START_TIME, None, False),
+            (PortControlKey.SCHEDULED_END_TIME, None, False),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -132,11 +144,13 @@ class TestSwitches:
             (AdvancedSettingsKey.SUNRISE_TIMER_ENABLED, 1, True),
             # disabled
             (AdvancedSettingsKey.SUNRISE_TIMER_ENABLED, 0, False),
+            # None
+            (AdvancedSettingsKey.SUNRISE_TIMER_ENABLED, None, False),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_update_port_setting_value_correct(
-        self, setup, setting, expected, port, value
+        self, setup, setting, value, expected, port
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -145,7 +159,7 @@ class TestSwitches:
             setup,
             async_setup_entry,
             port,
-            setting,
+            setting
         )
 
         test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][

@@ -24,7 +24,7 @@ from tests import (
     execute_and_get_port_entity,
     setup_entity_mocks,
 )
-from tests.data_models import MAC_ADDR
+from tests.data_models import DEVICE_ID, MAC_ADDR
 
 
 @pytest.fixture
@@ -81,32 +81,45 @@ class TestBinarySensors:
         assert sensor.entity_description.device_class == expected_class
         assert sensor.device_info is not None
 
-    async def test_async_update_entity_controller_value_correct(self, setup):
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (None, False),
+            (0, False),
+            (1, True),
+        ],
+    )
+    async def test_async_update_entity_controller_value_correct(self, setup, value, expected):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
         sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerPropertyKey.ONLINE
         )
+
+        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+            ControllerPropertyKey.ONLINE
+        ] = value
+
         sensor._handle_coordinator_update()
 
         assert isinstance(sensor, ACInfinityControllerBinarySensorEntity)
-        assert sensor.is_on
+        assert sensor.is_on == expected
 
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize("setting", [PortPropertyKey.STATE, PortPropertyKey.ONLINE])
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
     @pytest.mark.parametrize(
-        "port,expected",
+        "value,expected",
         [
+            (None, False),
+            (0, False),
             (1, True),
-            (2, True),
-            (3, True),
-            (4, False),
         ],
     )
     async def test_async_update_entity_port_value_correct(
-        self, setup, port, setting, expected
+        self, setup, port, setting, value, expected
     ):
         """Reported sensor value matches the value in the json payload"""
 
@@ -114,6 +127,11 @@ class TestBinarySensors:
         sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
             setup, async_setup_entry, port, setting
         )
+
+        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
+            setting
+        ] = value
+
         sensor._handle_coordinator_update()
 
         assert isinstance(sensor, ACInfinityPortBinarySensorEntity)

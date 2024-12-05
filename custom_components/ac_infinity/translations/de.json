@@ -1,0 +1,228 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert"
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen",
+      "invalid_auth": "Ungültige Authentifizierung",
+      "unknown": "Unerwarteter Fehler"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "polling_interval": "Abfrageintervall (Sekunden)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AC Infinity Konfiguration",
+        "data": {
+          "polling_interval": "Abfrageintervall (Sekunden)",
+          "update_password": "Passwort aktualisieren"
+        },
+        "data_description": {
+          "update_password": "Das Aktualisieren des Passworts erfordert einen Neustart von Home Assistant."
+        }
+      },
+      "notify_restart": {
+        "title": "Neustart erforderlich",
+        "description": "Ein Neustart von Home Assistant ist erforderlich, damit die Passwortänderung wirksam wird.",
+        "menu_options": {
+            "restart_yes": "Jetzt neu starten",
+            "restart_no": "Später neu starten"
+        }
+      }
+    },
+    "error": {
+      "invalid_polling_interval": "Das Abfrageintervall darf nicht weniger als 5 Sekunden betragen",
+      "cannot_connect": "Verbindung fehlgeschlagen",
+      "invalid_auth": "Ungültige Authentifizierung",
+      "unknown": "Unerwarteter Fehler"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "controller_online": {
+        "name": "Status"
+      },
+      "port_online": {
+        "name": "Status"
+      },
+      "port_state": {
+        "name": "Zustand"
+      }
+    },
+    "number": {
+      "on_power": {
+        "name": "Eingeschaltete Leistung"
+      },
+      "off_power": {
+        "name": "Ausgeschaltete Leistung"
+      },
+      "timer_mode_minutes_to_on": {
+        "name": "Timer Minuten bis Einschalten"
+      },
+      "timer_mode_minutes_to_off": {
+        "name": "Timer Minuten bis Ausschalten"
+      },
+      "cycle_mode_minutes_on": {
+        "name": "Zyklus Minuten Ein"
+      },
+      "cycle_mode_minutes_off": {
+        "name": "Zyklus Minuten Aus"
+      },
+      "vpd_mode_low_trigger": {
+        "name": "VPD Niedriger Auslöser"
+      },
+      "vpd_mode_high_trigger": {
+        "name": "VPD Hoher Auslöser"
+      },
+      "target_vpd": {
+        "name": "Ziel-VPD"
+      },
+      "auto_mode_humidity_low_trigger": {
+        "name": "Feuchtigkeit Niedriger Auslöser"
+      },
+      "auto_mode_humidity_high_trigger": {
+        "name": "Feuchtigkeit Hoher Auslöser"
+      },
+      "target_humidity": {
+        "name": "Ziel-Feuchtigkeit"
+      },
+      "auto_mode_temp_low_trigger": {
+        "name": "Temperatur Niedriger Auslöser"
+      },
+      "auto_mode_temp_high_trigger": {
+        "name": "Temperatur Hoher Auslöser"
+      },
+      "target_temp": {
+        "name": "Ziel-Temperatur"
+      },
+      "temperature_calibration": {
+        "name": "Temperaturkalibrierung"
+      },
+      "humidity_calibration": {
+        "name": "Feuchtigkeitskalibrierung"
+      },
+      "vpd_leaf_temperature_offset" : {
+        "name": "VPD-Blatttemperatur-Offset"
+      },
+      "dynamic_transition_temp": {
+        "name": "Übergangstemperatur"
+      },
+      "dynamic_transition_humidity": {
+        "name": "Übergangsfeuchtigkeit"
+      },
+      "dynamic_transition_vpd": {
+        "name": "Übergangs-VPD"
+      },
+      "dynamic_buffer_temp": {
+        "name": "Puffer-Temperatur"
+      },
+      "dynamic_buffer_humidity": {
+        "name": "Puffer-Feuchtigkeit"
+      },
+      "dynamic_buffer_vpd": {
+        "name": "Puffer-VPD"
+      },
+      "sunrise_timer_minutes": {
+        "name": "Sonnenaufgang/-untergang Minuten"
+      }
+    },
+    "select": {
+      "active_mode": {
+        "name": "Aktiver Modus"
+      },
+      "device_load_type": {
+        "name": "Gerätetyp"
+      },
+      "dynamic_response_type": {
+        "name": "Dynamische Reaktion"
+      },
+      "outside_climate_temperature": {
+        "name": "Außentemperatur"
+      },
+      "outside_climate_humidity": {
+        "name": "Außenfeuchtigkeit"
+      },
+      "auto_settings_mode": {
+        "name": "Automatikmodus"
+      },
+      "vpd_settings_mode": {
+        "name": "VPD-Modus"
+      }
+    },
+    "sensor": {
+      "temperature": {
+        "name": "Temperatur"
+      },
+      "humidity": {
+        "name": "Feuchtigkeit"
+      },
+      "vapor_pressure_deficit": {
+        "name": "VPD"
+      },
+      "current_power": {
+        "name": "Aktuelle Leistung"
+      },
+      "remaining_time": {
+        "name": "Verbleibende Zeit"
+      },
+      "next_state_change": {
+        "name": "Nächste Zustandsänderung"
+      }
+    },
+    "switch": {
+      "vpd_mode_low_enabled": {
+        "name": "VPD Niedriger Auslöser Aktiviert"
+      },
+      "vpd_mode_high_enabled": {
+        "name": "VPD Hoher Auslöser Aktiviert"
+      },
+      "target_vpd_enabled": {
+        "name": "Ziel-VPD Aktiviert"
+      },
+      "auto_mode_humidity_low_enabled": {
+        "name": "Feuchtigkeit Niedriger Auslöser Aktiviert"
+      },
+      "auto_mode_humidity_high_enabled": {
+        "name": "Feuchtigkeit Hoher Auslöser Aktiviert"
+      },
+      "auto_mode_temp_low_enabled": {
+        "name": "Temperatur Niedriger Auslöser Aktiviert"
+      },
+      "auto_mode_temp_high_enabled": {
+        "name": "Temperatur Hoher Auslöser Aktiviert"
+      },
+      "target_temp_enabled": {
+        "name": "Ziel-Temperatur Aktiviert"
+      },
+      "target_humidity_enabled": {
+        "name": "Ziel-Feuchtigkeit Aktiviert"
+      },
+      "schedule_mode_on_time_enabled": {
+        "name": "Geplante Ein-Zeit Aktiviert"
+      },
+      "schedule_mode_off_time_enabled": {
+        "name": "Geplante Aus-Zeit Aktiviert"
+      },
+      "sunrise_timer_enabled": {
+        "name": "Sonnenaufgang/-untergang Aktiviert"
+      }
+    },
+    "time": {
+      "schedule_mode_on_time": {
+        "name": "Geplante Ein-Zeit"
+      },
+      "schedule_mode_off_time": {
+        "name": "Geplante Aus-Zeit"
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@ pytest-asyncio
 aioresponses~=0.7.6
 black
 codespell
-ruff
+ruff==0.5.7
 aioresponses
 mypy
 python-dateutil~=2.9.0.post0

@@ -22,6 +22,6 @@ jobs:
         - name: Black
           run : black .
         - name: Codespell
-          run: codespell --ignore-words-list=hass --skip "custom_components/ac_infinity/translations/*"
+          run: codespell --ignore-words-list=hass --skip translations
         - name: MyPy
           run: mypy --ignore-missing-imports --explicit-package-bases --check-untyped-defs .

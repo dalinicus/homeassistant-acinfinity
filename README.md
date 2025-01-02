@@ -9,6 +9,20 @@
 [![Code Style](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml)
 [![CodeQL](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml)
 
+---
+***January 2nd 2025***
+
+***Unfortunetly, the integration does not currently support the new AC Infinity API.  I have an AI controller coming, but was delayed due to how AC Infinity bundles multiple pre-orders.  I should receive it sometime this January, at which point I'll start working on support ASAP***
+
+***If you'd like to join the discussion, please use [Issue #88](https://github.com/dalinicus/homeassistant-acinfinity/issues/88)***
+
+***Thanks for all the kind words;  I hope to have this working for you soon :)***
+
+***Thanks,***<br>
+***Dalinicus***
+
+---
+
 This is a custom component for [Home Assistant](http://home-assistant.io) that adds support for [AC Infinity](https://acinfinity.com/) grow tent devices within the [Smart UIS Controller](https://acinfinity.com/smart-controllers/) cloud ecosystem.
 
 - [Compatibility](#compatibility)

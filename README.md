@@ -12,7 +12,7 @@
 ---
 ***January 2nd 2025***
 
-***Unfortunetly, the integration does not currently support the new AC Infinity API.  I have an AI controller coming, but was delayed due to how AC Infinity bundles multiple pre-orders.  I should receive it sometime this January, at which point I'll start working on support ASAP***
+***Unfortunetly, the integration does not currently support the recently released AI Controller.  I have an AI controller coming, but was delayed due to how AC Infinity bundles multiple pre-orders.  I should receive it sometime this January, at which point I'll start working on support ASAP***
 
 ***If you'd like to join the discussion, please use [Issue #88](https://github.com/dalinicus/homeassistant-acinfinity/issues/88)***
 

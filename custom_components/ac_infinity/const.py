@@ -39,11 +39,19 @@ class ControllerPropertyKey:
     VPD = "vpdnums"
     ONLINE = "online"
     TIME_ZONE = "zoneId"
+    SENSORS = "sensors"
 
+class SensorPropertyKey:
+    # /api/dev/devInfoListAll via "sensors" property
+    ACCESS_PORT = "accessPort"
+    SENSOR_TYPE = "sensorType"
+    SENSOR_UNIT = "sensorUnit"
+    SENSOR_PRECISION = "sensorPrecision"
+    SENSOR_DATA = "sensorData"
 
 # noinspection SpellCheckingInspection
 class PortPropertyKey:
-    # /api/dev/devInfoListAll
+    # /api/dev/devInfoListAll via "ports" property
     PORT = "port"
     NAME = "portName"
     SPEAK = "speak"

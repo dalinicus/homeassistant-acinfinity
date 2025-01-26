@@ -22,7 +22,7 @@ from .const import (
     MANUFACTURER,
     ControllerPropertyKey,
     PortControlKey,
-    PortPropertyKey,
+    PortPropertyKey, SensorPropertyKey,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -163,6 +163,9 @@ class ACInfinityService:
     # api/user/devInfoListAll json organized by controller device id
     _controller_properties: dict[str, Any] = {}
 
+    # api/user/devInfoListAll json organized by controller device id, sensor access port index, and sensor type.
+    _sensor_properties: dict[Tuple[str, int, int], Any] = {}
+
     # api/user/devInfoListAll json organized by controller device id and port index
     _port_properties: dict[Tuple[str, int], Any] = {}
 
@@ -220,23 +223,38 @@ class ACInfinityService:
 
         return default_value
 
+    def get_sensor_property_exists(self, controller_id: (str | int), sensor_port:int, sensor_type:int, property_key: str) -> bool:
+        """returns if a given sensor property exists on a given controller.
+
+        Args:
+            controller_id: the device id of the controller
+            access_port: the port on the AI controller the sensor is plugged into
+            sensor_type: the type of sensor plugged into the port
+            property_key: the json field name for the data being retrieved
+        """
+        normalized_id = (str(controller_id), sensor_port, sensor_type)
+        return (
+            normalized_id in self._sensor_properties
+            and property_key in self._sensor_properties[normalized_id]
+        )
+
     def get_port_property_exists(
         self,
         controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
+        device_port: int,
+        property_key: str,
     ) -> bool:
         """return if a given property key exists on a given device port
 
         Args:
             controller_id: the device id of the controller
-            port_index: the index of the port on the controller
-            setting_key: the setting to pull the value of
+            device_port: the index of the port on the controller
+            property_key: the setting to pull the value of
         """
-        normalized_id = (str(controller_id), port_index)
+        normalized_id = (str(controller_id), device_port)
         return (
-            normalized_id in self._port_properties
-            and setting_key in self._port_properties[normalized_id]
+                normalized_id in self._port_properties
+                and property_key in self._port_properties[normalized_id]
         )
 
     def get_port_property(
@@ -401,6 +419,21 @@ class ACInfinityService:
                         controller_id, 0
                     )
                     self._device_settings[(controller_id, 0)] = controller_settings_json
+
+                    # controller AI will have a sensor array.
+                    if ControllerPropertyKey.SENSORS in controller_properties_json[
+                        ControllerPropertyKey.DEVICE_INFO] and \
+                            controller_properties_json[ControllerPropertyKey.DEVICE_INFO][
+                                ControllerPropertyKey.SENSORS] is not None:
+
+                        for sensor_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][
+                            ControllerPropertyKey.SENSORS]:
+                            access_port_index = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
+                            sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
+
+                            # set sensor properties; sensor value, unit, and display precision
+                            self._sensor_properties[
+                                (controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
                     for port_properties_json in controller_properties_json[
                         ControllerPropertyKey.DEVICE_INFO

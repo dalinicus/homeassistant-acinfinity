@@ -22,7 +22,7 @@ from .const import (
     MANUFACTURER,
     ControllerPropertyKey,
     PortControlKey,
-    PortPropertyKey, SensorPropertyKey,
+    PortPropertyKey, SensorPropertyKey, SensorType, ControllerType,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,6 +51,14 @@ class ACInfinityController:
                 ControllerPropertyKey.PORTS
             ]
         ]
+
+        # controller AI will have a sensor array.
+        self._sensors = [
+            ACInfinitySensor(self, sensor)
+            for sensor in controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS]
+        ] if ControllerPropertyKey.SENSORS in controller_json[
+            ControllerPropertyKey.DEVICE_INFO] and controller_json[ControllerPropertyKey.DEVICE_INFO][
+                 ControllerPropertyKey.SENSORS] is not None else []
 
         self._device_info = DeviceInfo(
             identifiers={self._identifier},
@@ -84,6 +92,11 @@ class ACInfinityController:
         return self._ports
 
     @property
+    def sensors(self) -> list["ACInfinitySensor"]:
+        """A list of USB-C sensors associated with this controller and their associated settings."""
+        return self._sensors
+
+    @property
     def device_info(self) -> DeviceInfo:
         """A HAAS device definition visible in the device manager."""
         return self._device_info
@@ -96,12 +109,88 @@ class ACInfinityController:
     @staticmethod
     def __get_device_model_by_device_type(device_type: int) -> str:
         match device_type:
-            case 11:
+            case ControllerType.UIS_69_PRO:
                 return "UIS Controller 69 Pro (CTR69P)"
-            case 18:
-                return "UIS CONTROLLER 69 Pro+ (CTR69Q)"
+            case ControllerType.UIS_69_PRO_PLUS:
+                return "UIS Controller 69 Pro+ (CTR69Q)"
+            case ControllerType.UIS_89_AI_PLUS:
+                return "UIS Controller AI+ (CTR89Q)"
             case _:
                 return f"UIS Controller Type {device_type}"
+
+
+class ACInfinitySensor:
+    """
+    A USB-C port associated with this controller and its associated settings,
+    with or without a UIS child device (fan, light, etc...) plugged into it.
+    """
+
+    def __init__(
+            self, controller: ACInfinityController, sensor_json: dict[str, Any]
+    ) -> None:
+        """
+        Args:
+            controller: The controller that the USB-C port is attached to
+            sensor_json: Json of an individual sensor. This is typically obtained from
+            the sensor field of a single controller returned from the /api/user/devInfoListAll endpoint.
+            See the ports property on ACInfinityController.
+        """
+
+        self._controller = controller
+        self._sensor_port = sensor_json[SensorPropertyKey.ACCESS_PORT]
+        self._sensor_type = sensor_json[SensorPropertyKey.SENSOR_TYPE]
+
+        self._device_info = self.__get_device_info(self._controller, self._sensor_port, self._sensor_type)
+
+    @staticmethod
+    def __get_device_info(controller: ACInfinityController, sensor_port: int, sensor_type: int):
+        match sensor_type:
+            case SensorType.PROBE_TEMPERATURE | SensorType.PROBE_HUMIDITY | SensorType.PROBE_VPD:
+                return DeviceInfo(
+                    identifiers={(DOMAIN, f"{controller.device_id}_{sensor_port}_spc24")},
+                    name=f"{controller.device_name} Probe Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model="UIS Controller Sensor Probe (AC-SPC24)"
+                )
+            case SensorType.CO2 | SensorType.LIGHT:
+                return DeviceInfo(
+                    identifiers={(DOMAIN, f"{controller.device_id}_{sensor_port}_cos3")},
+                    name=f"{controller.device_name} CO2 + Light Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model="UIS CO2 + Light Sensor (AC-COS3)"
+                )
+            case SensorType.EXTERNAL_TEMPERATURE | SensorType.EXTERNAL_HUMIDITY | SensorType.EXTERNAL_VPD:
+                return controller.device_info
+            case _:
+                return DeviceInfo(
+                    identifiers={(DOMAIN, f"{controller.device_id}_{sensor_port}_unknown{sensor_type}")},
+                    name=f"{controller.device_name} Unknown Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model=f"UIS Sensor Type {sensor_type}"
+                )
+
+    @property
+    def controller(self) -> ACInfinityController:
+        """The parent controller for this USB-C port"""
+        return self._controller
+
+    @property
+    def sensor_port(self) -> int:
+        """The index of the USB-C sensor port, as labeled on the controller"""
+        return self._sensor_port
+
+    @property
+    def sensor_type(self) -> int:
+        """The type of sensor plugged into the USB-C sensor port"""
+        return self._sensor_port
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """A HAAS device definition visible in the device manager. Will be a child to the device associated with the parent controller."""
+        return self._device_info
 
 
 class ACInfinityPort:
@@ -111,7 +200,7 @@ class ACInfinityPort:
     """
 
     def __init__(
-        self, controller: ACInfinityController, port_json: dict[str, Any]
+            self, controller: ACInfinityController, port_json: dict[str, Any]
     ) -> None:
         """
         Args:
@@ -124,10 +213,9 @@ class ACInfinityPort:
         self._controller = controller
         self._port_index = port_json[PortPropertyKey.PORT]
         self._port_name = port_json[PortPropertyKey.NAME]
-        self._identifier = (DOMAIN, f"{controller.device_id}_{self._port_index}")
 
         self._device_info = DeviceInfo(
-            identifiers={self._identifier},
+            identifiers={(DOMAIN, f"{controller.device_id}_{self._port_index}")},
             name=f"{controller.device_name} {self.port_name}",
             manufacturer=MANUFACTURER,
             via_device=controller.identifier,
@@ -141,12 +229,12 @@ class ACInfinityPort:
 
     @property
     def port_index(self) -> int:
-        """The index of the USB-C port, as labeled on the controller"""
+        """The index of the USB-C device port, as labeled on the controller"""
         return self._port_index
 
     @property
     def port_name(self) -> str:
-        """The name of the USB-C port, as set by the user in the Android/iOS app"""
+        """The name of the USB-C device port, as set by the user in the Android/iOS app"""
         return self._port_name
 
     @property
@@ -184,7 +272,7 @@ class ACInfinityService:
         self._client = ACInfinityClient(HOST, email, password)
 
     def get_controller_property_exists(
-        self, controller_id: (str | int), property_key: str
+            self, controller_id: (str | int), property_key: str
     ) -> bool:
         """returns if a given property exists on a given controller.
 
@@ -202,7 +290,7 @@ class ACInfinityService:
         return False
 
     def get_controller_property(
-        self, controller_id: (str | int), property_key: str, default_value=None
+            self, controller_id: (str | int), property_key: str, default_value=None
     ):
         """gets a property value for a given controller, if both the property and controller exist.
 
@@ -223,26 +311,53 @@ class ACInfinityService:
 
         return default_value
 
-    def get_sensor_property_exists(self, controller_id: (str | int), sensor_port:int, sensor_type:int, property_key: str) -> bool:
+    def get_sensor_property_exists(self, controller_id: (str | int), sensor_port: int, sensor_type: int,
+                                   property_key: str) -> bool:
         """returns if a given sensor property exists on a given controller.
 
         Args:
             controller_id: the device id of the controller
-            access_port: the port on the AI controller the sensor is plugged into
+            sensor_port: the sensor port on the AI controller the sensor is plugged into
             sensor_type: the type of sensor plugged into the port
             property_key: the json field name for the data being retrieved
         """
         normalized_id = (str(controller_id), sensor_port, sensor_type)
         return (
-            normalized_id in self._sensor_properties
-            and property_key in self._sensor_properties[normalized_id]
+                normalized_id in self._sensor_properties
+                and property_key in self._sensor_properties[normalized_id]
         )
 
+    def get_sensor_property(
+            self,
+            controller_id: (str | int),
+            sensor_port: int,
+            sensor_type: int,
+            property_key: str,
+            default_value=None,
+    ):
+        """gets a property value for a given sensor on a controller, if the property, controller, access port, and sensor all exist.
+
+        Args:
+            controller_id:  the device id of the controller
+            sensor_port: the index of the sensor port on the controller
+            sensor_type: the type of sensor
+            property_key: the json filed name for the data being retrieved
+            default_value: the default value to return if the controller, port, or property doesn't exist
+        """
+        normalized_id = (str(controller_id), sensor_port, sensor_type)
+        if normalized_id in self._sensor_properties:
+            found = self._sensor_properties[normalized_id]
+            if property_key in found:
+                value = found[property_key]
+                return value if value is not None else default_value
+
+        return default_value
+
     def get_port_property_exists(
-        self,
-        controller_id: (str | int),
-        device_port: int,
-        property_key: str,
+            self,
+            controller_id: (str | int),
+            device_port: int,
+            property_key: str,
     ) -> bool:
         """return if a given property key exists on a given device port
 
@@ -258,11 +373,11 @@ class ACInfinityService:
         )
 
     def get_port_property(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        property_key: str,
-        default_value=None,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            property_key: str,
+            default_value=None,
     ):
         """gets a property value for a given port on a controller, if the property, controller and port all exist.
 
@@ -282,7 +397,7 @@ class ACInfinityService:
         return default_value
 
     def get_controller_setting_exists(
-        self, controller_id: (str | int), setting_key: str
+            self, controller_id: (str | int), setting_key: str
     ) -> bool:
         """returns if a given setting exists on a given controller.
 
@@ -293,7 +408,7 @@ class ACInfinityService:
         return self.get_port_setting_exists(controller_id, 0, setting_key)
 
     def get_controller_setting(
-        self, controller_id: (str | int), setting_key: str, default_value=None
+            self, controller_id: (str | int), setting_key: str, default_value=None
     ):
         """gets a property value for a given controller, if both the property and controller exist.
 
@@ -305,7 +420,7 @@ class ACInfinityService:
         return self.get_port_setting(controller_id, 0, setting_key, default_value)
 
     def get_port_setting_exists(
-        self, controller_id: (str | int), port_index: int, setting_key: str
+            self, controller_id: (str | int), port_index: int, setting_key: str
     ) -> bool:
         """returns if a given setting exists on a given controller.
 
@@ -323,11 +438,11 @@ class ACInfinityService:
         ]
 
     def get_port_setting(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
-        default_value=None,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            setting_key: str,
+            default_value=None,
     ):
         """gets a property value for a given device, if both the setting and device exist.
 
@@ -347,10 +462,10 @@ class ACInfinityService:
         return default_value
 
     def get_port_control_exists(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            setting_key: str,
     ) -> bool:
         """return if a given setting key exists on a given device port
 
@@ -369,11 +484,11 @@ class ACInfinityService:
         return False
 
     def get_port_control(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
-        default_value=None,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            setting_key: str,
+            default_value=None,
     ):
         """gets the current set value for a given device setting
 
@@ -490,10 +605,10 @@ class ACInfinityService:
         ]
 
     async def update_controller_setting(
-        self,
-        controller_id: (str | int),
-        setting_key: str,
-        new_value: int,
+            self,
+            controller_id: (str | int),
+            setting_key: str,
+            new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
@@ -505,7 +620,7 @@ class ACInfinityService:
         await self.update_controller_settings(controller_id, [(setting_key, new_value)])
 
     async def update_controller_settings(
-        self, controller_id: (str | int), key_values: list[Tuple[str, int]]
+            self, controller_id: (str | int), key_values: list[Tuple[str, int]]
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -519,11 +634,11 @@ class ACInfinityService:
         await self.__update_advanced_settings(controller_id, 0, device_name, key_values)
 
     async def update_port_setting(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
-        new_value: int,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            setting_key: str,
+            new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
@@ -538,10 +653,10 @@ class ACInfinityService:
         )
 
     async def update_port_settings(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        key_values: list[Tuple[str, int]],
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            key_values: list[Tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -558,11 +673,11 @@ class ACInfinityService:
         )
 
     async def __update_advanced_settings(
-        self,
-        controller_id: (str | int),
-        port: int,
-        device_name: str,
-        key_values: list[Tuple[str, int]],
+            self,
+            controller_id: (str | int),
+            port: int,
+            device_name: str,
+            key_values: list[Tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -595,11 +710,11 @@ class ACInfinityService:
                     raise
 
     async def update_port_control(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        setting_key: str,
-        new_value: int,
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            setting_key: str,
+            new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
@@ -614,10 +729,10 @@ class ACInfinityService:
         )
 
     async def update_port_controls(
-        self,
-        controller_id: (str | int),
-        port_index: int,
-        key_values: list[tuple[str, int]],
+            self,
+            controller_id: (str | int),
+            port_index: int,
+            key_values: list[tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -682,10 +797,9 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
     _attr_has_entity_name = True
 
     def __init__(
-        self, coordinator: ACInfinityDataUpdateCoordinator, data_key: str, platform: str
+            self, coordinator: ACInfinityDataUpdateCoordinator, platform: str
     ):
         super().__init__(coordinator)
-        self._data_key = data_key
         self._platform_name = platform
 
     @property
@@ -715,15 +829,16 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
 
 class ACInfinityControllerEntity(ACInfinityEntity):
     def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        controller: ACInfinityController,
-        suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
-        data_key: str,
-        platform: str,
+            self,
+            coordinator: ACInfinityDataUpdateCoordinator,
+            controller: ACInfinityController,
+            suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
+            data_key: str,
+            platform: str,
     ):
-        super().__init__(coordinator, data_key, platform)
+        super().__init__(coordinator, platform)
         self._controller = controller
+        self._data_key = data_key
         self._suitable_fn = suitable_fn
 
     @property
@@ -745,18 +860,50 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         return self._suitable_fn(self, self.controller)
 
 
+class ACInfinitySensorEntity(ACInfinityEntity):
+    def __init__(
+            self,
+            coordinator: ACInfinityDataUpdateCoordinator,
+            sensor: ACInfinitySensor,
+            suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
+            platform: str,
+    ):
+        super().__init__(coordinator, platform)
+        self._sensor = sensor
+        self._suitable_fn = suitable_fn
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID for this entity."""
+        return f"{DOMAIN}_{self._sensor.controller.mac_addr}_port_{self._sensor.sensor_port}_{self._sensor.sensor_type}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Returns the device info for the port entity"""
+        return self._sensor.device_info
+
+    @property
+    def sensor(self) -> ACInfinitySensor:
+        return self._sensor
+
+    @property
+    def is_suitable(self) -> bool:
+        return self._suitable_fn(self, self.sensor)
+
+
 class ACInfinityPortEntity(ACInfinityEntity):
     def __init__(
-        self,
-        coordinator: ACInfinityDataUpdateCoordinator,
-        port: ACInfinityPort,
-        suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
-        data_key: str,
-        platform: str,
+            self,
+            coordinator: ACInfinityDataUpdateCoordinator,
+            port: ACInfinityPort,
+            suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
+            data_key: str,
+            platform: str,
     ):
-        super().__init__(coordinator, data_key, platform)
+        super().__init__(coordinator, platform)
         self._port = port
         self._suitable_fn = suitable_fn
+        self._data_key = data_key
 
     @property
     def unique_id(self) -> str:
@@ -795,6 +942,16 @@ class ACInfinityControllerReadWriteMixin(ACInfinityControllerReadOnlyMixin):
         [ACInfinityEntity, ACInfinityController, StateType], Awaitable[None]
     ]
     """Input data object, device id, port number, and desired value."""
+
+
+@dataclass
+class ACInfinitySensorReadOnlyMixin:
+    """Mixin for retrieving values for controller level sensors"""
+
+    suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool]
+    """Input data object and a device id; output if suitable"""
+    get_value_fn: Callable[[ACInfinityEntity, ACInfinitySensor], StateType]
+    """Input data object and a device id; output the value."""
 
 
 @dataclass

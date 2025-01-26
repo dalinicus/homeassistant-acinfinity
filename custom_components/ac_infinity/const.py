@@ -41,6 +41,13 @@ class ControllerPropertyKey:
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
 
+
+class ControllerType:
+    UIS_69_PRO = 11
+    UIS_69_PRO_PLUS = 18
+    UIS_89_AI_PLUS = 20
+
+
 class SensorPropertyKey:
     # /api/dev/devInfoListAll via "sensors" property
     ACCESS_PORT = "accessPort"
@@ -48,6 +55,18 @@ class SensorPropertyKey:
     SENSOR_UNIT = "sensorUnit"
     SENSOR_PRECISION = "sensorPrecision"
     SENSOR_DATA = "sensorData"
+
+
+class SensorType:
+    PROBE_TEMPERATURE = 0
+    PROBE_HUMIDITY = 2
+    PROBE_VPD = 3
+    EXTERNAL_TEMPERATURE = 4
+    EXTERNAL_HUMIDITY = 6
+    EXTERNAL_VPD = 7
+    CO2 = 11
+    LIGHT = 12
+
 
 # noinspection SpellCheckingInspection
 class PortPropertyKey:

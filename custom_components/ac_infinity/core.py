@@ -55,6 +55,17 @@ class ACInfinityController:
             ]
         ]
 
+        self._device_info = DeviceInfo(
+            identifiers={self._identifier},
+            name=self._device_name,
+            manufacturer=MANUFACTURER,
+            hw_version=controller_json[ControllerPropertyKey.HW_VERSION],
+            sw_version=controller_json[ControllerPropertyKey.SW_VERSION],
+            model=self.__get_device_model_by_device_type(
+                controller_json[ControllerPropertyKey.DEVICE_TYPE]
+            ),
+        )
+
         # controller AI will have a sensor array.
         self._sensors = (
             [
@@ -70,17 +81,6 @@ class ACInfinityController:
             ]
             is not None
             else []
-        )
-
-        self._device_info = DeviceInfo(
-            identifiers={self._identifier},
-            name=self._device_name,
-            manufacturer=MANUFACTURER,
-            hw_version=controller_json[ControllerPropertyKey.HW_VERSION],
-            sw_version=controller_json[ControllerPropertyKey.SW_VERSION],
-            model=self.__get_device_model_by_device_type(
-                controller_json[ControllerPropertyKey.DEVICE_TYPE]
-            ),
         )
 
     @property
@@ -210,7 +210,7 @@ class ACInfinitySensor:
     @property
     def sensor_type(self) -> int:
         """The type of sensor plugged into the USB-C sensor port"""
-        return self._sensor_port
+        return self._sensor_type
 
     @property
     def device_info(self) -> DeviceInfo:

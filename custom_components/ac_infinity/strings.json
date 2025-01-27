@@ -167,6 +167,24 @@
       "vapor_pressure_deficit": {
         "name": "VPD"
       },
+      "probe_temperature": {
+        "name": "Probe Temperature"
+      },
+      "probe_humidity": {
+        "name": "Probe Humidity"
+      },
+      "probe_vapor_pressure_deficit": {
+        "name": "Probe VPD"
+      },
+      "external_temperature": {
+        "name": "External Temperature"
+      },
+      "external_humidity": {
+        "name": "External Humidity"
+      },
+      "external_vapor_pressure_deficit": {
+        "name": "External VPD"
+      },
       "current_power": {
         "name": "Current Power"
       },

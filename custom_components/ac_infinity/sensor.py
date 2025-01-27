@@ -54,7 +54,6 @@ _LOGGER = logging.getLogger(__name__)
 class ACInfinitySensorEntityDescription(SensorEntityDescription):
     """Describes ACInfinity Number Sensor Entities."""
 
-    key: str
     icon: str | None
     translation_key: str | None
     device_class: SensorDeviceClass | None
@@ -69,6 +68,8 @@ class ACInfinityControllerSensorEntityDescription(
 ):
     """Describes ACInfinity Controller Sensor Entities."""
 
+    key: str
+
 
 @dataclass
 class ACInfinitySensorSensorEntityDescription(
@@ -82,6 +83,8 @@ class ACInfinityPortSensorEntityDescription(
     ACInfinitySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Device Sensor Entities."""
+
+    key: str
 
 
 def __suitable_fn_controller_property_default(
@@ -125,7 +128,8 @@ def __get_value_fn_sensor_value_default(
         0,
     )
 
-    return data / (10 * (precision - 1)) if precision > 1 else data
+    # if statement prevents floating point numbers for integer data in the UI
+    return data / (10 ** (precision - 1)) if precision > 1 else data
 
 
 def __suitable_fn_sensor_temperature(
@@ -180,7 +184,7 @@ def __get_value_fn_sensor_value_temperature(
         0,
     )
 
-    value = data / (10 * (precision - 1)) if precision > 1 else data
+    value = data / (10 ** (precision - 1)) if precision > 1 else data
     return value if unit > 0 else round((5 * (value - 32) / 9), precision - 1)
 
 
@@ -263,9 +267,8 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
     ),
 ]
 
-SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.PROBE_TEMPERATURE,
+SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
+    SensorType.PROBE_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -275,8 +278,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.PROBE_HUMIDITY,
+    SensorType.PROBE_HUMIDITY: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -286,8 +288,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.PROBE_VPD,
+    SensorType.PROBE_VPD: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -297,8 +298,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.EXTERNAL_TEMPERATURE,
+    SensorType.EXTERNAL_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -308,8 +308,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.EXTERNAL_HUMIDITY,
+    SensorType.EXTERNAL_HUMIDITY: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -319,8 +318,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.EXTERNAL_VPD,
+    SensorType.EXTERNAL_VPD: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -330,8 +328,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.CO2,
+    SensorType.CO2: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
@@ -341,8 +338,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    ACInfinitySensorSensorEntityDescription(
-        key=SensorType.LIGHT,
+    SensorType.LIGHT: ACInfinitySensorSensorEntityDescription(
         device_class=SensorDeviceClass.ILLUMINANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=LIGHT_LUX,
@@ -352,7 +348,7 @@ SENSOR_DESCRIPTIONS: list[ACInfinitySensorSensorEntityDescription] = [
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-]
+}
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
     ACInfinityPortSensorEntityDescription(
@@ -468,9 +464,9 @@ async def async_setup_entry(
             entities.append_if_suitable(entity)
 
         for sensor in controller.sensors:
-            for description in SENSOR_DESCRIPTIONS:
-                entity = ACInfinitySensorSensorEntity(coordinator, description, sensor)
-                entities.append_if_suitable(entity)
+            description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
+            entity = ACInfinitySensorSensorEntity(coordinator, description, sensor)
+            entities.append_if_suitable(entity)
 
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:

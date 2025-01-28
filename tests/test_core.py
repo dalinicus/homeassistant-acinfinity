@@ -312,7 +312,8 @@ class TestACInfinity:
         "dev_type,expected_model",
         [
             (11, "UIS Controller 69 Pro (CTR69P)"),
-            (18, "UIS CONTROLLER 69 Pro+ (CTR69Q)"),
+            (18, "UIS Controller 69 Pro+ (CTR69Q)"),
+            (20, "UIS Controller AI+ (CTR89Q)"),
             (3, "UIS Controller Type 3"),
         ],
     )

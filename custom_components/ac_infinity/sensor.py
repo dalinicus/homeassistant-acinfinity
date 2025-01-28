@@ -54,6 +54,7 @@ _LOGGER = logging.getLogger(__name__)
 class ACInfinitySensorEntityDescription(SensorEntityDescription):
     """Describes ACInfinity Number Sensor Entities."""
 
+    key: str
     icon: str | None
     translation_key: str | None
     device_class: SensorDeviceClass | None
@@ -68,8 +69,6 @@ class ACInfinityControllerSensorEntityDescription(
 ):
     """Describes ACInfinity Controller Sensor Entities."""
 
-    key: str
-
 
 @dataclass
 class ACInfinitySensorSensorEntityDescription(
@@ -83,8 +82,6 @@ class ACInfinityPortSensorEntityDescription(
     ACInfinitySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
     """Describes ACInfinity Device Sensor Entities."""
-
-    key: str
 
 
 def __suitable_fn_controller_property_default(
@@ -269,6 +266,8 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
 
 SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
     SensorType.PROBE_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
+        # key is not used for sensors.
+        key="probeTemperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -279,6 +278,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.PROBE_HUMIDITY: ACInfinitySensorSensorEntityDescription(
+        key="probeHumidity",
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -289,6 +289,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.PROBE_VPD: ACInfinitySensorSensorEntityDescription(
+        key="probeVaporPressureDeficit",
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -299,6 +300,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.EXTERNAL_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
+        key="externalTemperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -309,6 +311,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.EXTERNAL_HUMIDITY: ACInfinitySensorSensorEntityDescription(
+        key="externalHumidity",
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -319,6 +322,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.EXTERNAL_VPD: ACInfinitySensorSensorEntityDescription(
+        key="externalVaporPressureDeficit",
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -329,6 +333,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.CO2: ACInfinitySensorSensorEntityDescription(
+        key="co2Sensor",
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
@@ -339,6 +344,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.LIGHT: ACInfinitySensorSensorEntityDescription(
+        key="lightSensor",
         device_class=SensorDeviceClass.ILLUMINANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=LIGHT_LUX,

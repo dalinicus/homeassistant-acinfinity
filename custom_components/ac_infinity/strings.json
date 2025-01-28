@@ -185,6 +185,12 @@
       "external_vapor_pressure_deficit": {
         "name": "External VPD"
       },
+      "co2_sensor": {
+        "name": "CO2"
+      },
+      "light_sensor": {
+        "name": "Light Level"
+      },
       "current_power": {
         "name": "Current Power"
       },

@@ -1,5 +1,4 @@
 """Constants for the AC Infinity integration."""
-
 from homeassistant.const import Platform
 
 MANUFACTURER = "AC Infinity"
@@ -16,6 +15,7 @@ HOST = "http://www.acinfinityserver.com"
 CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
 DEFAULT_POLLING_INTERVAL = 10
+ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
 
 class CustomPortPropertyKey:
@@ -58,14 +58,27 @@ class SensorPropertyKey:
 
 
 class SensorType:
-    PROBE_TEMPERATURE = 0
+    PROBE_TEMPERATURE_F = 0
+    PROBE_TEMPERATURE_C = 1
     PROBE_HUMIDITY = 2
     PROBE_VPD = 3
-    EXTERNAL_TEMPERATURE = 4
+    EXTERNAL_TEMPERATURE_F = 4
+    EXTERNAL_TEMPERATURE_C = 4
     EXTERNAL_HUMIDITY = 6
     EXTERNAL_VPD = 7
     CO2 = 11
     LIGHT = 12
+
+
+class SensorKeys:
+    PROBE_TEMPERATURE = "probeTemperature"
+    PROBE_HUMIDITY = "probeHumidity"
+    PROBE_VPD = "probeVaporPressureDeficit"
+    EXTERNAL_TEMPERATURE = "externalTemperature"
+    EXTERNAL_HUMIDITY = "externalHumidity"
+    EXTERNAL_VPD = "externalVaporPressureDeficit"
+    CO2_SENSOR = "co2Sensor"
+    LIGHT_SENSOR = "lightSensor"
 
 
 # noinspection SpellCheckingInspection

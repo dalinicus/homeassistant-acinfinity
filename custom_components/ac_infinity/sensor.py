@@ -40,9 +40,11 @@ from custom_components.ac_infinity.core import (
 
 from .const import (
     DOMAIN,
+    ISSUE_URL,
     ControllerPropertyKey,
     CustomPortPropertyKey,
     PortPropertyKey,
+    SensorKeys,
     SensorPropertyKey,
     SensorType,
 )
@@ -265,9 +267,19 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
 ]
 
 SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
-    SensorType.PROBE_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
-        # key is not used for sensors.
-        key="probeTemperature",
+    SensorType.PROBE_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.PROBE_TEMPERATURE,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon=None,  # default
+        translation_key="probe_temperature",
+        suggested_unit_of_measurement=None,
+        suitable_fn=__suitable_fn_sensor_temperature,
+        get_value_fn=__get_value_fn_sensor_value_temperature,
+    ),
+    SensorType.PROBE_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.PROBE_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -278,7 +290,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.PROBE_HUMIDITY: ACInfinitySensorSensorEntityDescription(
-        key="probeHumidity",
+        key=SensorKeys.PROBE_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -289,7 +301,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.PROBE_VPD: ACInfinitySensorSensorEntityDescription(
-        key="probeVaporPressureDeficit",
+        key=SensorKeys.PROBE_VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -299,8 +311,19 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    SensorType.EXTERNAL_TEMPERATURE: ACInfinitySensorSensorEntityDescription(
-        key="externalTemperature",
+    SensorType.EXTERNAL_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.EXTERNAL_TEMPERATURE,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        icon=None,  # default
+        translation_key="external_temperature",
+        suggested_unit_of_measurement=None,
+        suitable_fn=__suitable_fn_sensor_temperature,
+        get_value_fn=__get_value_fn_sensor_value_temperature,
+    ),
+    SensorType.EXTERNAL_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.EXTERNAL_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -311,7 +334,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.EXTERNAL_HUMIDITY: ACInfinitySensorSensorEntityDescription(
-        key="externalHumidity",
+        key=SensorKeys.EXTERNAL_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -322,7 +345,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.EXTERNAL_VPD: ACInfinitySensorSensorEntityDescription(
-        key="externalVaporPressureDeficit",
+        key=SensorKeys.EXTERNAL_VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -333,7 +356,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.CO2: ACInfinitySensorSensorEntityDescription(
-        key="co2Sensor",
+        key=SensorKeys.CO2_SENSOR,
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
@@ -344,7 +367,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.LIGHT: ACInfinitySensorSensorEntityDescription(
-        key="lightSensor",
+        key=SensorKeys.LIGHT_SENSOR,
         device_class=SensorDeviceClass.ILLUMINANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=LIGHT_LUX,
@@ -470,9 +493,16 @@ async def async_setup_entry(
             entities.append_if_suitable(entity)
 
         for sensor in controller.sensors:
-            description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
-            entity = ACInfinitySensorSensorEntity(coordinator, description, sensor)
-            entities.append_if_suitable(entity)
+            if sensor.sensor_type in SENSOR_DESCRIPTIONS:
+                description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
+                entity = ACInfinitySensorSensorEntity(coordinator, description, sensor)
+                entities.append_if_suitable(entity)
+            else:
+                logging.warning(
+                    'Unknown sensor type "%s". Please fill out an issue at %s with this error message.',
+                    sensor.sensor_type,
+                    ISSUE_URL,
+                )
 
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:

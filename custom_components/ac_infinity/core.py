@@ -161,7 +161,7 @@ class ACInfinitySensor:
         controller: ACInfinityController, sensor_port: int, sensor_type: int
     ):
         match sensor_type:
-            case SensorType.PROBE_TEMPERATURE | SensorType.PROBE_HUMIDITY | SensorType.PROBE_VPD:
+            case SensorType.PROBE_TEMPERATURE_F | SensorType.PROBE_TEMPERATURE_C | SensorType.PROBE_HUMIDITY | SensorType.PROBE_VPD:
                 return DeviceInfo(
                     identifiers={
                         (DOMAIN, f"{controller.device_id}_{sensor_port}_spc24")
@@ -181,7 +181,7 @@ class ACInfinitySensor:
                     via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
-            case SensorType.EXTERNAL_TEMPERATURE | SensorType.EXTERNAL_HUMIDITY | SensorType.EXTERNAL_VPD:
+            case SensorType.EXTERNAL_TEMPERATURE_F | SensorType.EXTERNAL_HUMIDITY | SensorType.EXTERNAL_VPD:
                 return controller.device_info
             case _:
                 return DeviceInfo(
@@ -912,7 +912,7 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{DOMAIN}_{self._sensor.controller.mac_addr}_port_{self._sensor.sensor_port}_{self._sensor.sensor_type}"
+        return f"{DOMAIN}_{self._sensor.controller.mac_addr}_sensor_{self._sensor.sensor_port}_{self.entity_description.key}"
 
     @property
     def device_info(self) -> DeviceInfo:

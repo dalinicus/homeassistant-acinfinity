@@ -177,14 +177,14 @@
       "probe_vapor_pressure_deficit": {
         "name": "Sonden-VPD"
       },
-      "external_temperature": {
-        "name": "Externe Temperatur"
+      "controller_temperature": {
+        "name": "Regler Temperatur"
       },
-      "external_humidity": {
-        "name": "Externe Luftfeuchtigkeit"
+      "controller_humidity": {
+        "name": "Regler Luftfeuchtigkeit"
       },
-      "external_vapor_pressure_deficit": {
-        "name": "Externer VPD"
+      "controller_vapor_pressure_deficit": {
+        "name": "Regler VPD"
       },
       "co2_sensor": {
         "name": "CO2"

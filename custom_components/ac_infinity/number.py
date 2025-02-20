@@ -13,7 +13,7 @@ from homeassistant.const import Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN,
+    ControllerType, DOMAIN,
     AdvancedSettingsKey,
     PortControlKey,
 )
@@ -827,6 +827,10 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
+        if controller.device_type == ControllerType.UIS_89_AI_PLUS:
+            # controls and settings not yet supported for the AI controller
+            continue
+
         temp_unit = coordinator.ac_infinity.get_controller_setting(
             controller.device_id, AdvancedSettingsKey.TEMP_UNIT
         )

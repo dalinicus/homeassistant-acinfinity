@@ -39,7 +39,7 @@ from custom_components.ac_infinity.core import (
 )
 
 from .const import (
-    DOMAIN,
+    ControllerType, DOMAIN,
     ISSUE_URL,
     ControllerPropertyKey,
     CustomPortPropertyKey,
@@ -317,7 +317,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon=None,  # default
-        translation_key="external_temperature",
+        translation_key="controller_temperature",
         suggested_unit_of_measurement=None,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
@@ -328,7 +328,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         icon=None,  # default
-        translation_key="external_temperature",
+        translation_key="controller_temperature",
         suggested_unit_of_measurement=None,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
@@ -339,7 +339,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         icon=None,  # default
-        translation_key="external_humidity",
+        translation_key="controller_humidity",
         suggested_unit_of_measurement=None,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
@@ -351,7 +351,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=UnitOfPressure.KPA,
         native_unit_of_measurement=UnitOfPressure.KPA,
         icon="mdi:water-thermometer",
-        translation_key="external_vapor_pressure_deficit",
+        translation_key="controller_vapor_pressure_deficit",
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -368,10 +368,10 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
     ),
     SensorType.LIGHT: ACInfinitySensorSensorEntityDescription(
         key=SensorKeys.LIGHT_SENSOR,
-        device_class=SensorDeviceClass.ILLUMINANCE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=LIGHT_LUX,
-        icon=None,  # default
+        native_unit_of_measurement=PERCENTAGE,
+        icon="mdi:lightbulb-on-outline",
         translation_key="light_sensor",
         suggested_unit_of_measurement=None,
         suitable_fn=__suitable_fn_sensor_default,
@@ -487,6 +487,12 @@ async def async_setup_entry(
     entities = ACInfinityEntities()
     for controller in controllers:
         for description in CONTROLLER_DESCRIPTIONS:
+            if controller.device_type == ControllerType.UIS_89_AI_PLUS:
+                # The AI controller has two temperature measurements; controller temperature and probe temperature.
+                # These values are available in the sensor array.  The external values are duplicated on the old fields used by
+                # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here.
+                continue
+
             entity = ACInfinityControllerSensorEntity(
                 coordinator, description, controller
             )

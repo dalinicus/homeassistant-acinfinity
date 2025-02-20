@@ -47,6 +47,7 @@ class ACInfinityController:
         self._device_id = str(controller_json[ControllerPropertyKey.DEVICE_ID])
         self._mac_addr = controller_json[ControllerPropertyKey.MAC_ADDR]
         self._device_name = controller_json[ControllerPropertyKey.DEVICE_NAME]
+        self._device_type = controller_json[ControllerPropertyKey.DEVICE_TYPE]
         self._identifier = (DOMAIN, self._device_id)
         self._ports = [
             ACInfinityPort(self, port)
@@ -92,6 +93,11 @@ class ACInfinityController:
     def device_name(self) -> str:
         """The name of the controller as set in the Android/iOS app"""
         return self._device_name
+
+    @property
+    def device_type(self) -> str:
+        """The integer id of the device type of this controller (Pro, Pro+, AI+, etc...)"""
+        return self._device_type
 
     @property
     def mac_addr(self) -> str:

@@ -1,9 +1,12 @@
+from custom_components.ac_infinity.const import ControllerType
+
 HOST = "https://unittest.abcxyz"
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
 
 USER_ID = "11763238626156107487"
 DEVICE_ID = 54929097239553773072
+AI_DEVICE_ID = 87210463819275016439
 MODE_SET_ID = 8473928473928473928
 DEVICE_NAME = "Grow Tent"
 MAC_ADDR = "2B120D62DC00"
@@ -116,7 +119,7 @@ CONTROLLER_PROPERTIES = {
     "devId": str(DEVICE_ID),
     "devCode": "ABCDEFG",
     "devName": DEVICE_NAME,
-    "devType": 11,
+    "devType": ControllerType.UIS_69_PRO,
     "devAccesstime": 1692328784,
     "devPortCount": 4,
     "devOfftime": 1692328718,
@@ -166,6 +169,147 @@ CONTROLLER_PROPERTIES = {
         "ecUnit": None,
         "sensorCount": None,
         "sensors": None,
+        "overcurrentStatus": 0,
+        "vpdnums": 83,
+        "vpdstatus": 0,
+    },
+    "appEmail": EMAIL,
+    "devTimeZone": "GMT+00:00",
+    "createTime": None,
+    "timeGMT": None,
+    "timeZone": None,
+    "firmwareVersion": "3.2.25",
+    "hardwareVersion": "1.1",
+    "workMode": 1,
+    "zoneId": "America/Chicago",
+    "wifiName": None,
+}
+
+AI_CONTROLLER_PROPERTIES = {
+    "devId": str(AI_DEVICE_ID),
+    "devCode": "ABCDEFG",
+    "devName": DEVICE_NAME,
+    "devType": ControllerType.UIS_89_AI_PLUS,
+    "devAccesstime": 1692328784,
+    "devPortCount": 4,
+    "devOfftime": 1692328718,
+    "devMacAddr": MAC_ADDR,
+    "devVersion": 7,
+    "online": 1,
+    "isShare": 0,
+    "devExternalList": None,
+    "deviceInfo": {
+        "devId": AI_DEVICE_ID,
+        "temperature": 2417,
+        "temperatureF": 7551,
+        "humidity": 7200,
+        "tTrend": 0,
+        "hTrend": 0,
+        "unit": 0,
+        "speak": 0,
+        "trend": 0,
+        "curMode": 3,
+        "remainTime": None,
+        "modeTye": 15,
+        "advTriggerInfo": None,
+        "notificationTrigger": None,
+        "alertTrigger": None,
+        "online": 1,
+        "lkType": None,
+        "endTime": 1692328718,
+        "master": 0,
+        "masterPort": 2,
+        "allPortStatus": 7,
+        "ports": [
+            PORT_PROPERTY_ONE,
+            PORT_PROPERTY_TWO,
+            PORT_PROPERTY_THREE,
+            PORT_PROPERTY_FOUR,
+        ],
+        "sensors": [
+            {
+                "sensorType": 0,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 2,
+                "accessPort": 1,
+                "sensorData": 7480
+            },
+            {
+                "sensorType": 2,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 1,
+                "accessPort": 1,
+                "sensorData": 3080
+            },
+            {
+                "sensorType": 3,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 2,
+                "accessPort": 1,
+                "sensorData": 204
+            },
+            {
+                "sensorType": 11,
+                "sensorUnit": 0,
+                "sensorPrecision": 1,
+                "sensorTrend": 1,
+                "accessPort": 2,
+                "sensorData": 723
+            },
+            {
+                "sensorType": 12,
+                "sensorUnit": 0,
+                "sensorPrecision": 2,
+                "sensorTrend": 1,
+                "accessPort": 2,
+                "sensorData": 79
+            },
+            {
+                "sensorType": 4,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 0,
+                "accessPort": 7,
+                "sensorData": 7610
+            },
+            {
+                "sensorType": 6,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 2,
+                "accessPort": 7,
+                "sensorData": 3160
+            },
+            {
+                "sensorType": 7,
+                "sensorUnit": 0,
+                "sensorPrecision": 3,
+                "sensorTrend": 0,
+                "accessPort": 7,
+                "sensorData": 205
+            }
+        ],
+        "sensorCalibrationState": [
+            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
+            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
+            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
+            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0}
+        ],
+        "logCreateTime": None,
+        "isOpenAutomation": 0,
+        "advUpdateTime": None,
+        "loadState": 0,
+        "abnormalState": 0,
+        "deviceInfoI": None,
+        "tempCompare": 1,
+        "humiCompare": 2,
+        "ectdsType": None,
+        "tdsUnit": None,
+        "ecUnit": None,
+        "sensorCount": None,
         "overcurrentStatus": 0,
         "vpdnums": 83,
         "vpdstatus": 0,
@@ -407,7 +551,10 @@ GET_DEV_MODE_SETTING_LIST_PAYLOAD = {"msg": "操作成功", "code": 200, "data":
 GET_DEV_SETTINGS_PAYLOAD = {"msg": "操作成功", "code": 200, "data": DEVICE_SETTINGS}
 UPDATE_SUCCESS_PAYLOAD = {"msg": "操作成功", "code": 200}
 
-CONTROLLER_PROPERTIES_DATA = {str(DEVICE_ID): CONTROLLER_PROPERTIES}
+CONTROLLER_PROPERTIES_DATA = {
+    str(DEVICE_ID): CONTROLLER_PROPERTIES,
+    str(AI_DEVICE_ID): AI_CONTROLLER_PROPERTIES
+}
 DEVICE_SETTINGS_DATA = {
     (str(DEVICE_ID), 0): DEVICE_SETTINGS,
     (str(DEVICE_ID), 1): DEVICE_SETTINGS,

@@ -178,13 +178,13 @@
         "name": "Sonden-VPD"
       },
       "controller_temperature": {
-        "name": "Regler Temperatur"
+        "name": "Controller Temperatur"
       },
       "controller_humidity": {
-        "name": "Regler Luftfeuchtigkeit"
+        "name": "Controller Luftfeuchtigkeit"
       },
       "controller_vapor_pressure_deficit": {
-        "name": "Regler VPD"
+        "name": "Controller VPD"
       },
       "co2_sensor": {
         "name": "CO2"

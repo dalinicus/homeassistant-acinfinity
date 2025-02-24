@@ -10,6 +10,7 @@ AI_DEVICE_ID = 87210463819275016439
 MODE_SET_ID = 8473928473928473928
 DEVICE_NAME = "Grow Tent"
 MAC_ADDR = "2B120D62DC00"
+AI_MAC_ADDR = "3C450E78AB12"
 
 ENTRY_ID = f"ac_infinity-{EMAIL}"
 POLLING_INTERVAL = 15
@@ -193,7 +194,7 @@ AI_CONTROLLER_PROPERTIES = {
     "devAccesstime": 1692328784,
     "devPortCount": 4,
     "devOfftime": 1692328718,
-    "devMacAddr": MAC_ADDR,
+    "devMacAddr": AI_MAC_ADDR,
     "devVersion": 7,
     "online": 1,
     "isShare": 0,
@@ -233,7 +234,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 2,
                 "accessPort": 1,
-                "sensorData": 7480
+                "sensorData": 7480,
             },
             {
                 "sensorType": 2,
@@ -241,7 +242,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 1,
                 "accessPort": 1,
-                "sensorData": 3080
+                "sensorData": 3080,
             },
             {
                 "sensorType": 3,
@@ -249,7 +250,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 2,
                 "accessPort": 1,
-                "sensorData": 204
+                "sensorData": 204,
             },
             {
                 "sensorType": 11,
@@ -257,7 +258,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 1,
                 "sensorTrend": 1,
                 "accessPort": 2,
-                "sensorData": 723
+                "sensorData": 723,
             },
             {
                 "sensorType": 12,
@@ -265,7 +266,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 2,
                 "sensorTrend": 1,
                 "accessPort": 2,
-                "sensorData": 79
+                "sensorData": 79,
             },
             {
                 "sensorType": 4,
@@ -273,7 +274,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 0,
                 "accessPort": 7,
-                "sensorData": 7610
+                "sensorData": 7610,
             },
             {
                 "sensorType": 6,
@@ -281,7 +282,7 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 2,
                 "accessPort": 7,
-                "sensorData": 3160
+                "sensorData": 3160,
             },
             {
                 "sensorType": 7,
@@ -289,14 +290,14 @@ AI_CONTROLLER_PROPERTIES = {
                 "sensorPrecision": 3,
                 "sensorTrend": 0,
                 "accessPort": 7,
-                "sensorData": 205
-            }
+                "sensorData": 205,
+            },
         ],
         "sensorCalibrationState": [
             {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
             {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
             {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
-            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0}
+            {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
         ],
         "logCreateTime": None,
         "isOpenAutomation": 0,
@@ -553,8 +554,9 @@ UPDATE_SUCCESS_PAYLOAD = {"msg": "操作成功", "code": 200}
 
 CONTROLLER_PROPERTIES_DATA = {
     str(DEVICE_ID): CONTROLLER_PROPERTIES,
-    str(AI_DEVICE_ID): AI_CONTROLLER_PROPERTIES
+    str(AI_DEVICE_ID): AI_CONTROLLER_PROPERTIES,
 }
+
 DEVICE_SETTINGS_DATA = {
     (str(DEVICE_ID), 0): DEVICE_SETTINGS,
     (str(DEVICE_ID), 1): DEVICE_SETTINGS,

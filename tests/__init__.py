@@ -25,6 +25,7 @@ from tests.data_models import (
     DEVICE_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
+    MAC_ADDR,
     PASSWORD,
     PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
@@ -54,7 +55,7 @@ class EntitiesTracker:
 
 
 async def execute_and_get_controller_entity(
-    setup_fixture, async_setup_entry, property_key: str
+    setup_fixture, async_setup_entry, property_key: str, mac_addr: str = MAC_ADDR
 ) -> ACInfinityControllerEntity:
     test_objects: ACTestObjects = setup_fixture
 
@@ -67,7 +68,9 @@ async def execute_and_get_controller_entity(
     found = [
         entity
         for entity in test_objects.entities.added_entities
-        if property_key in entity.unique_id and "port_" not in entity.unique_id
+        if mac_addr in entity.unique_id
+        and property_key in entity.unique_id
+        and "port_" not in entity.unique_id
     ]
     assert len(found) == 1
     entity = found[0]
@@ -77,10 +80,7 @@ async def execute_and_get_controller_entity(
 
 
 async def execute_and_get_port_entity(
-    setup_fixture,
-    async_setup_entry,
-    port: int,
-    data_key: str,
+    setup_fixture, async_setup_entry, port: int, data_key: str, mac_addr: str = MAC_ADDR
 ) -> ACInfinityPortEntity:
     test_objects: ACTestObjects = setup_fixture
 
@@ -93,7 +93,9 @@ async def execute_and_get_port_entity(
     found = [
         entity
         for entity in test_objects.entities.added_entities
-        if entity.unique_id.endswith(data_key) and f"port_{port}" in entity.unique_id
+        if mac_addr in entity.unique_id
+        and entity.unique_id.endswith(data_key)
+        and f"port_{port}" in entity.unique_id
     ]
     assert len(found) == 1
     entity = found[0]

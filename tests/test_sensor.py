@@ -17,7 +17,7 @@ from custom_components.ac_infinity.const import (
     ControllerPropertyKey,
     CustomPortPropertyKey,
     PortPropertyKey,
-    SensorKeys,
+    SensorKeys, SensorPropertyKey, SensorType,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,
@@ -32,7 +32,17 @@ from tests import (
     execute_and_get_sensor_entity,
     setup_entity_mocks,
 )
-from tests.data_models import AI_MAC_ADDR, DEVICE_ID, MAC_ADDR
+from tests.data_models import (
+    AI_DEVICE_ID,
+    AI_MAC_ADDR,
+    CONTROLLER_ACCESS_PORT,
+    DEVICE_ID,
+    MAC_ADDR,
+    PROBE_ACCESS_PORT,
+    SENSOR_PROPERTY_CONTROLLER_TEMP_C,
+    SENSOR_PROPERTY_CONTROLLER_TEMP_F,
+    SENSOR_PROPERTY_PROBE_TEMP_F
+)
 
 
 @pytest.fixture
@@ -161,17 +171,21 @@ class TestSensors:
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.native_value == expected
 
-    async def test_async_setup_entry_ai_controller_temperature_created(self, setup):
+    async def test_async_setup_entry_ai_controller_f_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)] = SENSOR_PROPERTY_CONTROLLER_TEMP_F
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)] = None
+
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_TEMPERATURE
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_TEMPERATURE
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -180,34 +194,117 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
-    async def test_async_setup_entry_ai_controller_humidity_created(self, setup):
-        """Sensor for device reported humidity is created on setup"""
+    @pytest.mark.parametrize("value,expected", [(0, -17.78), (6980, 21), (None, -17.78)])
+    async def test_async_update_ai_controller_temperature_f_value_correct(self, setup, value, expected):
+        """Reported sensor value matches the value in the json payload.  Fahrenheit should be represented as Celsius"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_F)] = SENSOR_PROPERTY_CONTROLLER_TEMP_F
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)] = None
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_HUMIDITY
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_TEMPERATURE
+        )
+
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_F)][
+            SensorPropertyKey.SENSOR_DATA
+        ] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_controller_c_temperature_created(self, setup):
+        """Sensor for device reported temperature is created on setup for AI controllers"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_F)] = None
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)] = SENSOR_PROPERTY_CONTROLLER_TEMP_C
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_TEMPERATURE
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_HUMIDITY}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (2155, 21.55), (None, 0)])
+    async def test_async_update_ai_controller_temperature_c_value_correct(self, setup, value, expected):
+        """Reported sensor value matches the value in the json payload.  Celsius should continue to be represented as Celsius"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_F)] = None
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)] = SENSOR_PROPERTY_CONTROLLER_TEMP_C
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_TEMPERATURE
+        )
+
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C)][
+            SensorPropertyKey.SENSOR_DATA
+        ] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_controller_humidity_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_HUMIDITY
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_HUMIDITY}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.HUMIDITY
         assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
 
         assert entity.device_info is not None
 
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
+    async def test_async_update_ai_controller_humidity_value_correct(self, setup, value, expected):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_controller_entity(
+            setup, async_setup_entry, ControllerPropertyKey.HUMIDITY
+        )
+
+        test_objects.ac_infinity._sensor_properties[(str(DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_HUMIDITY)][
+            ControllerPropertyKey.HUMIDITY
+        ] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityControllerSensorEntity)
+        assert entity.native_value == expected
+
     async def test_async_setup_entry_ai_controller_vpd_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_VPD
+            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_VPD
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_VPD}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
         assert (
@@ -219,17 +316,39 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
+    @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
+    async def test_async_update_ai_controller_humidity_value_correct(self, setup, value, expected):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_controller_entity(
+            setup, async_setup_entry, ControllerPropertyKey.HUMIDITY
+        )
+
+        test_objects.ac_infinity._sensor_properties[(str(DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_HUMIDITY)][
+            ControllerPropertyKey.HUMIDITY
+        ] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityControllerSensorEntity)
+        assert entity.native_value == expected
+
     async def test_async_setup_entry_ai_probe_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F)] = SENSOR_PROPERTY_PROBE_TEMP_F
+        test_objects.ac_infinity._sensor_properties[(str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F)] = None
+
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, 1, SensorKeys.PROBE_TEMPERATURE
+            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_TEMPERATURE
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_1_{SensorKeys.PROBE_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorKeys.PROBE_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (

@@ -118,76 +118,97 @@ PORT_PROPERTY_FOUR = {
     "overcurrentStatus": 0,
 }
 
+PROBE_ACCESS_PORT = 1
+CO2_LIGHT_ACCESS_PORT = 2
+CONTROLLER_ACCESS_PORT = 7
+
 SENSOR_PROPERTY_CONTROLLER_TEMP_F = {
-    "sensorType": 0,
+    "sensorType": SensorType.CONTROLLER_TEMPERATURE_F,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 2,
-    "accessPort": 1,
+    "accessPort": CONTROLLER_ACCESS_PORT,
     "sensorData": 7480,
 }
 
+SENSOR_PROPERTY_CONTROLLER_TEMP_C = {
+    "sensorType": SensorType.CONTROLLER_TEMPERATURE_C,
+    "sensorUnit": 1,
+    "sensorPrecision": 3,
+    "sensorTrend": 2,
+    "accessPort": CONTROLLER_ACCESS_PORT,
+    "sensorData": 2378,
+}
+
 SENSOR_PROPERTY_CONTROLLER_HUMIDITY = {
-    "sensorType": 2,
+    "sensorType": SensorType.CONTROLLER_HUMIDITY,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 1,
-    "accessPort": 1,
+    "accessPort": CONTROLLER_ACCESS_PORT,
     "sensorData": 3080,
 }
 
 SENSOR_PROPERTY_CONTROLLER_VPD = {
-    "sensorType": 3,
+    "sensorType": SensorType.CONTROLLER_VPD,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 2,
-    "accessPort": 1,
+    "accessPort": CONTROLLER_ACCESS_PORT,
     "sensorData": 204,
 }
 
 SENSOR_PROPERTY_PROBE_TEMP_F = {
-    "sensorType": 4,
+    "sensorType": SensorType.PROBE_TEMPERATURE_F,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 0,
-    "accessPort": 7,
+    "accessPort": PROBE_ACCESS_PORT,
     "sensorData": 7610,
 }
 
+SENSOR_PROPERTY_PROBE_TEMP_C = {
+    "sensorType": SensorType.PROBE_TEMPERATURE_C,
+    "sensorUnit": 1,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": PROBE_ACCESS_PORT,
+    "sensorData": 2450,
+}
+
 SENSOR_PROPERTY_PROBE_HUMIDITY = {
-    "sensorType": 6,
+    "sensorType": SensorType.PROBE_HUMIDITY,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 2,
-    "accessPort": 7,
+    "accessPort": PROBE_ACCESS_PORT,
     "sensorData": 3160,
 }
 
 SENSOR_PROPERTY_PROBE_VPD = {
-    "sensorType": 7,
+    "sensorType": SensorType.PROBE_VPD,
     "sensorUnit": 0,
     "sensorPrecision": 3,
     "sensorTrend": 0,
-    "accessPort": 7,
+    "accessPort": PROBE_ACCESS_PORT,
     "sensorData": 205,
 }
 
-
 SENSOR_PROPERTY_CO2 = {
-    "sensorType": 11,
+    "sensorType": SensorType.CO2,
     "sensorUnit": 0,
     "sensorPrecision": 1,
     "sensorTrend": 1,
-    "accessPort": 2,
+    "accessPort": CO2_LIGHT_ACCESS_PORT,
     "sensorData": 723,
 }
 
 SENSOR_PROPERTY_LIGHT = {
-    "sensorType": 12,
+    "sensorType": SensorType.LIGHT,
     "sensorUnit": 0,
     "sensorPrecision": 2,
     "sensorTrend": 1,
-    "accessPort": 2,
+    "accessPort": CO2_LIGHT_ACCESS_PORT,
     "sensorData": 79,
 }
 
@@ -588,24 +609,24 @@ DEVICE_SETTINGS_DATA = {
 SENSOR_PROPERTIES_DATA = {
     (
         str(AI_DEVICE_ID),
-        7,
+        CONTROLLER_ACCESS_PORT,
         SensorType.CONTROLLER_TEMPERATURE_F,
     ): SENSOR_PROPERTY_CONTROLLER_TEMP_F,
     (
         str(AI_DEVICE_ID),
-        7,
+        CONTROLLER_ACCESS_PORT,
         SensorType.CONTROLLER_HUMIDITY,
     ): SENSOR_PROPERTY_CONTROLLER_HUMIDITY,
-    (str(AI_DEVICE_ID), 7, SensorType.CONTROLLER_VPD): SENSOR_PROPERTY_CONTROLLER_VPD,
+    (str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_VPD): SENSOR_PROPERTY_CONTROLLER_VPD,
     (
         str(AI_DEVICE_ID),
-        1,
+        PROBE_ACCESS_PORT,
         SensorType.PROBE_TEMPERATURE_F,
     ): SENSOR_PROPERTY_PROBE_TEMP_F,
-    (str(AI_DEVICE_ID), 1, SensorType.PROBE_HUMIDITY): SENSOR_PROPERTY_PROBE_HUMIDITY,
-    (str(AI_DEVICE_ID), 1, SensorType.PROBE_VPD): SENSOR_PROPERTY_PROBE_VPD,
-    (str(AI_DEVICE_ID), 2, SensorType.CO2): SENSOR_PROPERTY_CO2,
-    (str(AI_DEVICE_ID), 2, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT,
+    (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_HUMIDITY): SENSOR_PROPERTY_PROBE_HUMIDITY,
+    (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_VPD): SENSOR_PROPERTY_PROBE_VPD,
+    (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.CO2): SENSOR_PROPERTY_CO2,
+    (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT,
 }
 
 PORT_PROPERTIES_DATA = {

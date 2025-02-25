@@ -6,7 +6,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     PERCENTAGE,
     UnitOfPressure,
-    UnitOfTemperature,
+    UnitOfTemperature, CONCENTRATION_PARTS_PER_MILLION,
 )
 from pytest_mock import MockFixture
 from zoneinfo import ZoneInfo
@@ -20,7 +20,7 @@ from custom_components.ac_infinity.const import (
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,
     ACInfinityPortSensorEntity,
-    async_setup_entry,
+    async_setup_entry, ACInfinitySensorSensorEntity,
 )
 from tests import (
     ACTestObjects,
@@ -50,7 +50,7 @@ class TestSensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 15
+        assert len(test_objects.entities._added_entities) == 27
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for non-ai controllers"""
@@ -71,24 +71,6 @@ class TestSensors:
         )
         assert entity.device_info is not None
 
-    async def test_async_setup_entry_ai_controller_temperature_created(self, setup):
-        """Sensor for device reported temperature is created on setup for AI controllers"""
-
-        entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, 1, SensorKeys.CONTROLLER_TEMPERATURE
-        )
-
-        assert isinstance(entity, ACInfinityControllerSensorEntity)
-        assert (
-            entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{ControllerPropertyKey.TEMPERATURE}"
-        )
-        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
-        assert (
-            entity.entity_description.native_unit_of_measurement
-            == UnitOfTemperature.CELSIUS
-        )
-        assert entity.device_info is not None
 
     @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
     async def test_async_update_temperature_value_correct(self, setup, value, expected):
@@ -108,6 +90,7 @@ class TestSensors:
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.native_value == expected
 
+
     async def test_async_setup_entry_humidity_created(self, setup):
         """Sensor for device reported humidity is created on setup"""
 
@@ -123,6 +106,7 @@ class TestSensors:
         assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
 
         assert entity.device_info is not None
+
 
     @pytest.mark.parametrize("value,expected", [(0, 0), (3215, 32.15), (None, 0)])
     async def test_async_update_humidity_value_correct(self, setup, value, expected):
@@ -176,6 +160,153 @@ class TestSensors:
 
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_controller_temperature_created(self, setup):
+        """Sensor for device reported temperature is created on setup for AI controllers"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_TEMPERATURE
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+                entity.unique_id
+                == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+                entity.entity_description.native_unit_of_measurement
+                == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_controller_humidity_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_HUMIDITY
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+                entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_HUMIDITY}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.HUMIDITY
+        assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
+
+        assert entity.device_info is not None
+
+
+    async def test_async_setup_entry_ai_controller_vpd_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 7, SensorKeys.CONTROLLER_VPD
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_7_{SensorKeys.CONTROLLER_VPD}"
+        assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
+        assert (
+            entity.entity_description.suggested_unit_of_measurement
+            == UnitOfPressure.KPA
+        )
+        assert (
+            entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_probe_temperature_created(self, setup):
+        """Sensor for device reported temperature is created on setup for AI controllers"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 1, SensorKeys.PROBE_TEMPERATURE
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+                entity.unique_id
+                == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_1_{SensorKeys.PROBE_TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+                entity.entity_description.native_unit_of_measurement
+                == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_probe_humidity_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 1, SensorKeys.PROBE_HUMIDITY
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+                entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_1_{SensorKeys.PROBE_HUMIDITY}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.HUMIDITY
+        assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
+
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_probe_vpd_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 1, SensorKeys.PROBE_VPD
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_1_{SensorKeys.PROBE_VPD}"
+        assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
+        assert (
+            entity.entity_description.suggested_unit_of_measurement
+            == UnitOfPressure.KPA
+        )
+        assert (
+            entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_co2_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 2, SensorKeys.CO2_SENSOR
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_2_{SensorKeys.CO2_SENSOR}"
+        assert entity.entity_description.device_class == SensorDeviceClass.CO2
+        assert (
+            entity.entity_description.suggested_unit_of_measurement
+            == CONCENTRATION_PARTS_PER_MILLION
+        )
+        assert (
+            entity.entity_description.native_unit_of_measurement == CONCENTRATION_PARTS_PER_MILLION
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_light_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 2, SensorKeys.LIGHT_SENSOR
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.unique_id == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_2_{SensorKeys.LIGHT_SENSOR}"
+        assert entity.entity_description.device_class == SensorDeviceClass.POWER_FACTOR
+        assert (
+            entity.entity_description.suggested_unit_of_measurement
+            == PERCENTAGE
+        )
+        assert (
+            entity.entity_description.native_unit_of_measurement == PERCENTAGE
+        )
+        assert entity.device_info is not None
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_power_created_for_each_port(

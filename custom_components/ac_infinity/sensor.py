@@ -362,7 +362,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
         icon=None,  # default
         translation_key="co2_sensor",
-        suggested_unit_of_measurement=None,
+        suggested_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -373,7 +373,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         native_unit_of_measurement=PERCENTAGE,
         icon="mdi:lightbulb-on-outline",
         translation_key="light_sensor",
-        suggested_unit_of_measurement=None,
+        suggested_unit_of_measurement=PERCENTAGE,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),

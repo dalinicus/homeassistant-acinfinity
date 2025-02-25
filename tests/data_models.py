@@ -1,4 +1,4 @@
-from custom_components.ac_infinity.const import ControllerType
+from custom_components.ac_infinity.const import ControllerType, SensorPropertyKey, SensorType
 
 HOST = "https://unittest.abcxyz"
 EMAIL = "myemail@unittest.com"
@@ -115,6 +115,79 @@ PORT_PROPERTY_FOUR = {
     "overcurrentStatus": 0,
 }
 
+SENSOR_PROPERTY_CONTROLLER_TEMP_F = {
+    "sensorType": 0,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 2,
+    "accessPort": 1,
+    "sensorData": 7480,
+}
+
+SENSOR_PROPERTY_CONTROLLER_HUMIDITY = {
+    "sensorType": 2,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 1,
+    "accessPort": 1,
+    "sensorData": 3080,
+}
+
+SENSOR_PROPERTY_CONTROLLER_VPD = {
+    "sensorType": 3,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 2,
+    "accessPort": 1,
+    "sensorData": 204,
+}
+
+SENSOR_PROPERTY_PROBE_TEMP_F = {
+    "sensorType": 4,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": 7,
+    "sensorData": 7610,
+}
+
+SENSOR_PROPERTY_PROBE_HUMIDITY = {
+    "sensorType": 6,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 2,
+    "accessPort": 7,
+    "sensorData": 3160,
+}
+
+SENSOR_PROPERTY_PROBE_VPD = {
+    "sensorType": 7,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": 7,
+    "sensorData": 205,
+}
+
+
+SENSOR_PROPERTY_CO2 = {
+    "sensorType": 11,
+    "sensorUnit": 0,
+    "sensorPrecision": 1,
+    "sensorTrend": 1,
+    "accessPort": 2,
+    "sensorData": 723,
+}
+
+SENSOR_PROPERTY_LIGHT = {
+    "sensorType": 12,
+    "sensorUnit": 0,
+    "sensorPrecision": 2,
+    "sensorTrend": 1,
+    "accessPort": 2,
+    "sensorData": 79,
+}
+
 # noinspection SpellCheckingInspection
 CONTROLLER_PROPERTIES = {
     "devId": str(DEVICE_ID),
@@ -228,70 +301,14 @@ AI_CONTROLLER_PROPERTIES = {
             PORT_PROPERTY_FOUR,
         ],
         "sensors": [
-            {
-                "sensorType": 0,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 2,
-                "accessPort": 1,
-                "sensorData": 7480,
-            },
-            {
-                "sensorType": 2,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 1,
-                "accessPort": 1,
-                "sensorData": 3080,
-            },
-            {
-                "sensorType": 3,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 2,
-                "accessPort": 1,
-                "sensorData": 204,
-            },
-            {
-                "sensorType": 11,
-                "sensorUnit": 0,
-                "sensorPrecision": 1,
-                "sensorTrend": 1,
-                "accessPort": 2,
-                "sensorData": 723,
-            },
-            {
-                "sensorType": 12,
-                "sensorUnit": 0,
-                "sensorPrecision": 2,
-                "sensorTrend": 1,
-                "accessPort": 2,
-                "sensorData": 79,
-            },
-            {
-                "sensorType": 4,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 0,
-                "accessPort": 7,
-                "sensorData": 7610,
-            },
-            {
-                "sensorType": 6,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 2,
-                "accessPort": 7,
-                "sensorData": 3160,
-            },
-            {
-                "sensorType": 7,
-                "sensorUnit": 0,
-                "sensorPrecision": 3,
-                "sensorTrend": 0,
-                "accessPort": 7,
-                "sensorData": 205,
-            },
+            SENSOR_PROPERTY_CONTROLLER_TEMP_F,
+            SENSOR_PROPERTY_CONTROLLER_HUMIDITY,
+            SENSOR_PROPERTY_CONTROLLER_VPD,
+            SENSOR_PROPERTY_PROBE_TEMP_F,
+            SENSOR_PROPERTY_PROBE_HUMIDITY,
+            SENSOR_PROPERTY_PROBE_VPD,
+            SENSOR_PROPERTY_CO2,
+            SENSOR_PROPERTY_LIGHT
         ],
         "sensorCalibrationState": [
             {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
@@ -564,6 +581,18 @@ DEVICE_SETTINGS_DATA = {
     (str(DEVICE_ID), 3): DEVICE_SETTINGS,
     (str(DEVICE_ID), 4): DEVICE_SETTINGS,
 }
+
+SENSOR_PROPERTIES_DATA = {
+    (str(AI_DEVICE_ID), 1, SensorType.CONTROLLER_TEMPERATURE_F): SENSOR_PROPERTY_CONTROLLER_TEMP_F,
+    (str(AI_DEVICE_ID), 1, SensorType.CONTROLLER_HUMIDITY): SENSOR_PROPERTY_CONTROLLER_HUMIDITY,
+    (str(AI_DEVICE_ID), 1, SensorType.CONTROLLER_VPD): SENSOR_PROPERTY_CONTROLLER_VPD,
+    (str(AI_DEVICE_ID), 1, SensorType.PROBE_TEMPERATURE_F): SENSOR_PROPERTY_PROBE_TEMP_F,
+    (str(AI_DEVICE_ID), 1, SensorType.PROBE_HUMIDITY): SENSOR_PROPERTY_PROBE_HUMIDITY,
+    (str(AI_DEVICE_ID), 1, SensorType.PROBE_VPD): SENSOR_PROPERTY_PROBE_VPD,
+    (str(AI_DEVICE_ID), 1, SensorType.CO2): SENSOR_PROPERTY_CO2,
+    (str(AI_DEVICE_ID), 1, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT
+}
+
 PORT_PROPERTIES_DATA = {
     (str(DEVICE_ID), 1): PORT_PROPERTY_ONE,
     (str(DEVICE_ID), 2): PORT_PROPERTY_TWO,

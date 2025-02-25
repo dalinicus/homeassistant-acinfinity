@@ -18,7 +18,7 @@ from custom_components.ac_infinity.switch import (
 )
 from tests import (
     ACTestObjects,
-    execute_and_get_port_entity,
+    execute_and_get_device_entity,
     setup_entity_mocks,
 )
 from tests.data_models import DEVICE_ID, MAC_ADDR
@@ -64,7 +64,7 @@ class TestSwitches:
     async def test_async_setup_mode_created_for_each_port(self, setup, port, setting):
         """Sensor for device port mode created on setup"""
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,
@@ -122,7 +122,7 @@ class TestSwitches:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,
@@ -155,7 +155,7 @@ class TestSwitches:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -195,7 +195,7 @@ class TestSwitches:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,
@@ -226,7 +226,7 @@ class TestSwitches:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,
@@ -266,7 +266,7 @@ class TestSwitches:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,
@@ -294,7 +294,7 @@ class TestSwitches:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup,
             async_setup_entry,
             port,

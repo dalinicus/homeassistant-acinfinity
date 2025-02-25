@@ -187,7 +187,7 @@ class ACInfinitySensor:
                     via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
-            case SensorType.EXTERNAL_TEMPERATURE_F | SensorType.EXTERNAL_TEMPERATURE_C | SensorType.EXTERNAL_HUMIDITY | SensorType.EXTERNAL_VPD:
+            case SensorType.CONTROLLER_TEMPERATURE_F | SensorType.CONTROLLER_TEMPERATURE_C | SensorType.CONTROLLER_HUMIDITY | SensorType.CONTROLLER_VPD:
                 return controller.device_info
             case _:
                 return DeviceInfo(

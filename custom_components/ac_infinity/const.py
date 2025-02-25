@@ -62,21 +62,23 @@ class SensorType:
     PROBE_TEMPERATURE_C = 1
     PROBE_HUMIDITY = 2
     PROBE_VPD = 3
-    EXTERNAL_TEMPERATURE_F = 4
-    EXTERNAL_TEMPERATURE_C = 5
-    EXTERNAL_HUMIDITY = 6
-    EXTERNAL_VPD = 7
+    CONTROLLER_TEMPERATURE_F = 4
+    CONTROLLER_TEMPERATURE_C = 5
+    CONTROLLER_HUMIDITY = 6
+    CONTROLLER_VPD = 7
     CO2 = 11
     LIGHT = 12
 
 
 class SensorKeys:
+    # Sensor keys for known sensor values; arbitrary values not tied to the API data model.
+    # Used to create unique keys for HASS entities.  Only valid for AI Controllers with the sensor usb ports.
     PROBE_TEMPERATURE = "probeTemperature"
     PROBE_HUMIDITY = "probeHumidity"
     PROBE_VPD = "probeVaporPressureDeficit"
-    EXTERNAL_TEMPERATURE = "externalTemperature"
-    EXTERNAL_HUMIDITY = "externalHumidity"
-    EXTERNAL_VPD = "externalVaporPressureDeficit"
+    CONTROLLER_TEMPERATURE = "controllerTemperature"
+    CONTROLLER_HUMIDITY = "controllerHumidity"
+    CONTROLLER_VPD = "controllerVaporPressureDeficit"
     CO2_SENSOR = "co2Sensor"
     LIGHT_SENSOR = "lightSensor"
 

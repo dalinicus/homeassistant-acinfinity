@@ -311,8 +311,8 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    SensorType.EXTERNAL_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.EXTERNAL_TEMPERATURE,
+    SensorType.CONTROLLER_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.CONTROLLER_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -322,8 +322,8 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
-    SensorType.EXTERNAL_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.EXTERNAL_TEMPERATURE,
+    SensorType.CONTROLLER_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.CONTROLLER_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -333,8 +333,8 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
-    SensorType.EXTERNAL_HUMIDITY: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.EXTERNAL_HUMIDITY,
+    SensorType.CONTROLLER_HUMIDITY: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.CONTROLLER_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -344,8 +344,8 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
-    SensorType.EXTERNAL_VPD: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.EXTERNAL_VPD,
+    SensorType.CONTROLLER_VPD: ACInfinitySensorSensorEntityDescription(
+        key=SensorKeys.CONTROLLER_VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,

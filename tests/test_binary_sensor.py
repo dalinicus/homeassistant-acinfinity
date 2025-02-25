@@ -21,7 +21,7 @@ from custom_components.ac_infinity.core import (
 from tests import (
     ACTestObjects,
     execute_and_get_controller_entity,
-    execute_and_get_port_entity,
+    execute_and_get_device_entity,
     setup_entity_mocks,
 )
 from tests.data_models import AI_DEVICE_ID, AI_MAC_ADDR, DEVICE_ID, MAC_ADDR
@@ -73,7 +73,7 @@ class TestBinarySensors:
     ):
         """Sensor for device port connected is created on setup"""
 
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -129,7 +129,7 @@ class TestBinarySensors:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 

@@ -15,7 +15,7 @@ from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
     CustomPortPropertyKey,
-    PortPropertyKey,
+    PortPropertyKey, SensorKeys, SensorPropertyKey,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,
@@ -25,10 +25,11 @@ from custom_components.ac_infinity.sensor import (
 from tests import (
     ACTestObjects,
     execute_and_get_controller_entity,
-    execute_and_get_port_entity,
+    execute_and_get_sensor_entity,
+    execute_and_get_device_entity,
     setup_entity_mocks,
 )
-from tests.data_models import DEVICE_ID, MAC_ADDR
+from tests.data_models import AI_MAC_ADDR, DEVICE_ID, MAC_ADDR
 
 
 @pytest.fixture
@@ -52,7 +53,7 @@ class TestSensors:
         assert len(test_objects.entities._added_entities) == 15
 
     async def test_async_setup_entry_temperature_created(self, setup):
-        """Sensor for device reported temperature is created on setup"""
+        """Sensor for device reported temperature is created on setup for non-ai controllers"""
 
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, ControllerPropertyKey.TEMPERATURE
@@ -62,6 +63,25 @@ class TestSensors:
         assert (
             entity.unique_id
             == f"{DOMAIN}_{MAC_ADDR}_{ControllerPropertyKey.TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_controller_temperature_created(self, setup):
+        """Sensor for device reported temperature is created on setup for AI controllers"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup, async_setup_entry, 1, SensorKeys.CONTROLLER_TEMPERATURE
+        )
+
+        assert isinstance(entity, ACInfinityControllerSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{ControllerPropertyKey.TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -163,7 +183,7 @@ class TestSensors:
     ):
         """Sensor for device port speak created on setup"""
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, PortPropertyKey.SPEAK
         )
 
@@ -177,7 +197,7 @@ class TestSensors:
     async def test_async_setup_remaining_time_for_each_port(self, setup, port):
         """Sensor for device port surplus created on setup"""
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
         )
 
@@ -192,7 +212,7 @@ class TestSensors:
     async def test_async_setup_next_state_change_for_each_port(self, setup, port):
         """Sensor for device port surplus created on setup"""
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
         )
 
@@ -214,7 +234,7 @@ class TestSensors:
             PortPropertyKey.SPEAK
         ] = value
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, PortPropertyKey.SPEAK
         )
         entity._handle_coordinator_update()
@@ -230,7 +250,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
         )
 
@@ -265,7 +285,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
         )
 

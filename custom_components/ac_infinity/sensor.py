@@ -12,7 +12,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
-    LIGHT_LUX,
     PERCENTAGE,
     Platform,
     UnitOfPressure,
@@ -39,9 +38,10 @@ from custom_components.ac_infinity.core import (
 )
 
 from .const import (
-    ControllerType, DOMAIN,
+    DOMAIN,
     ISSUE_URL,
     ControllerPropertyKey,
+    ControllerType,
     CustomPortPropertyKey,
     PortPropertyKey,
     SensorKeys,

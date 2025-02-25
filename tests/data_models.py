@@ -1,4 +1,7 @@
-from custom_components.ac_infinity.const import ControllerType, SensorPropertyKey, SensorType
+from custom_components.ac_infinity.const import (
+    ControllerType,
+    SensorType,
+)
 
 HOST = "https://unittest.abcxyz"
 EMAIL = "myemail@unittest.com"
@@ -308,7 +311,7 @@ AI_CONTROLLER_PROPERTIES = {
             SENSOR_PROPERTY_PROBE_HUMIDITY,
             SENSOR_PROPERTY_PROBE_VPD,
             SENSOR_PROPERTY_CO2,
-            SENSOR_PROPERTY_LIGHT
+            SENSOR_PROPERTY_LIGHT,
         ],
         "sensorCalibrationState": [
             {"sensorPort": 0, "sensorType": 0, "sensorStep": 0, "sensorState": 0},
@@ -583,14 +586,26 @@ DEVICE_SETTINGS_DATA = {
 }
 
 SENSOR_PROPERTIES_DATA = {
-    (str(AI_DEVICE_ID), 7, SensorType.CONTROLLER_TEMPERATURE_F): SENSOR_PROPERTY_CONTROLLER_TEMP_F,
-    (str(AI_DEVICE_ID), 7, SensorType.CONTROLLER_HUMIDITY): SENSOR_PROPERTY_CONTROLLER_HUMIDITY,
+    (
+        str(AI_DEVICE_ID),
+        7,
+        SensorType.CONTROLLER_TEMPERATURE_F,
+    ): SENSOR_PROPERTY_CONTROLLER_TEMP_F,
+    (
+        str(AI_DEVICE_ID),
+        7,
+        SensorType.CONTROLLER_HUMIDITY,
+    ): SENSOR_PROPERTY_CONTROLLER_HUMIDITY,
     (str(AI_DEVICE_ID), 7, SensorType.CONTROLLER_VPD): SENSOR_PROPERTY_CONTROLLER_VPD,
-    (str(AI_DEVICE_ID), 1, SensorType.PROBE_TEMPERATURE_F): SENSOR_PROPERTY_PROBE_TEMP_F,
+    (
+        str(AI_DEVICE_ID),
+        1,
+        SensorType.PROBE_TEMPERATURE_F,
+    ): SENSOR_PROPERTY_PROBE_TEMP_F,
     (str(AI_DEVICE_ID), 1, SensorType.PROBE_HUMIDITY): SENSOR_PROPERTY_PROBE_HUMIDITY,
     (str(AI_DEVICE_ID), 1, SensorType.PROBE_VPD): SENSOR_PROPERTY_PROBE_VPD,
     (str(AI_DEVICE_ID), 2, SensorType.CO2): SENSOR_PROPERTY_CO2,
-    (str(AI_DEVICE_ID), 2, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT
+    (str(AI_DEVICE_ID), 2, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT,
 }
 
 PORT_PROPERTIES_DATA = {

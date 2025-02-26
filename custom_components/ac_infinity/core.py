@@ -845,6 +845,9 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
         super().__init__(coordinator)
         self._platform_name = platform
 
+    def __repr__(self):
+        return f"<ACInfinityEntity unique_id={self.unique_id}>"
+
     @property
     def ac_infinity(self) -> ACInfinityService:
         """Returns the underlying ac_infinity api object from the assigned coordinator"""

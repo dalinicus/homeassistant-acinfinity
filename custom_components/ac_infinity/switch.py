@@ -11,11 +11,12 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    ControllerType, DOMAIN,
+    DOMAIN,
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
     SCHEDULE_MIDNIGHT_VALUE,
     AdvancedSettingsKey,
+    ControllerType,
     PortControlKey,
 )
 from custom_components.ac_infinity.core import (
@@ -297,7 +298,7 @@ async def async_setup_entry(
         if controller.device_type == ControllerType.UIS_89_AI_PLUS:
             # controls and settings not yet supported for the AI controller
             continue
-            
+
         for port in controller.ports:
             for description in PORT_DESCRIPTIONS:
                 entity = ACInfinityPortSwitchEntity(coordinator, description, port)

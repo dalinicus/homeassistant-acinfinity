@@ -18,17 +18,20 @@ from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntity,
     ACInfinityPortEntity,
-    ACInfinitySensorEntity, ACInfinityService,
+    ACInfinitySensorEntity,
+    ACInfinityService,
 )
 from tests.data_models import (
-    AI_MAC_ADDR, CONTROLLER_PROPERTIES_DATA,
+    AI_MAC_ADDR,
+    CONTROLLER_PROPERTIES_DATA,
     DEVICE_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
     MAC_ADDR,
     PASSWORD,
     PORT_CONTROLS_DATA,
-    PORT_PROPERTIES_DATA, SENSOR_PROPERTIES_DATA,
+    PORT_PROPERTIES_DATA,
+    SENSOR_PROPERTIES_DATA,
 )
 
 MockType = Union[
@@ -103,8 +106,13 @@ async def execute_and_get_device_entity(
     assert isinstance(entity, ACInfinityPortEntity)
     return entity
 
+
 async def execute_and_get_sensor_entity(
-    setup_fixture, async_setup_entry, port: int, data_key: str, mac_addr: str = AI_MAC_ADDR
+    setup_fixture,
+    async_setup_entry,
+    port: int,
+    data_key: str,
+    mac_addr: str = AI_MAC_ADDR,
 ) -> ACInfinitySensorEntity:
     test_objects: ACTestObjects = setup_fixture
 
@@ -126,6 +134,7 @@ async def execute_and_get_sensor_entity(
 
     assert isinstance(entity, ACInfinitySensorEntity)
     return entity
+
 
 def setup_entity_mocks(mocker: MockFixture):
     future: Future = asyncio.Future()

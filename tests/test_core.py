@@ -15,6 +15,8 @@ from custom_components.ac_infinity.const import (
     ControllerPropertyKey,
     PortControlKey,
     PortPropertyKey,
+    SensorPropertyKey,
+    SensorType,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -28,6 +30,8 @@ from custom_components.ac_infinity.sensor import (
 
 from . import ACTestObjects, setup_entity_mocks
 from .data_models import (
+    AI_DEVICE_ID,
+    CONTROLLER_ACCESS_PORT,
     CONTROLLER_PROPERTIES,
     CONTROLLER_PROPERTIES_DATA,
     DEVICE_ID,
@@ -41,6 +45,7 @@ from .data_models import (
     PASSWORD,
     PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
+    SENSOR_PROPERTIES_DATA,
 )
 
 
@@ -124,12 +129,18 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         await ac_infinity.refresh()
 
-        assert len(ac_infinity._controller_properties) == 1
+        assert len(ac_infinity._controller_properties) == 2
         assert (
             ac_infinity._controller_properties[str(DEVICE_ID)][
                 ControllerPropertyKey.DEVICE_NAME
             ]
             == "Grow Tent"
+        )
+        assert (
+            ac_infinity._controller_properties[str(AI_DEVICE_ID)][
+                ControllerPropertyKey.DEVICE_NAME
+            ]
+            == "Grow Tent AI"
         )
 
     async def test_update_retried_on_failure(self, mocker: MockFixture):
@@ -221,6 +232,100 @@ class TestACInfinity:
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property(device_id, property_key)
+        assert result is None
+
+    @pytest.mark.parametrize(
+        "property_key, value",
+        [
+            (SensorPropertyKey.SENSOR_DATA, True),
+            (SensorPropertyKey.SENSOR_PRECISION, True),
+            ("keyNoExist", False),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [AI_DEVICE_ID, str(AI_DEVICE_ID), "12345"])
+    async def test_get_sensor_property_exists_returns_correct_value(
+        self, device_id, property_key: str, value
+    ):
+        """getting a device property returns the correct value"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
+
+        result = ac_infinity.get_sensor_property_exists(
+            device_id,
+            CONTROLLER_ACCESS_PORT,
+            SensorType.CONTROLLER_HUMIDITY,
+            property_key,
+        )
+        assert result == (value if device_id != "12345" else False)
+
+    @pytest.mark.parametrize(
+        "property_key, value",
+        [
+            (SensorPropertyKey.SENSOR_DATA, 3080),
+            (SensorPropertyKey.SENSOR_PRECISION, 3),
+        ],
+    )
+    @pytest.mark.parametrize("device_id", [AI_DEVICE_ID, str(AI_DEVICE_ID)])
+    async def test_get_sensor_property_gets_correct_property(
+        self, device_id, property_key: str, value
+    ):
+        """getting a device property returns the correct value"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
+
+        result = ac_infinity.get_sensor_property(
+            device_id,
+            CONTROLLER_ACCESS_PORT,
+            SensorType.CONTROLLER_HUMIDITY,
+            property_key,
+        )
+        assert result == value
+
+    @pytest.mark.parametrize(
+        "property_key, device_id, access_port, sensor_type",
+        [
+            (
+                SensorPropertyKey.SENSOR_DATA,
+                "232161",
+                CONTROLLER_ACCESS_PORT,
+                SensorType.CONTROLLER_HUMIDITY,
+            ),
+            (
+                "MyFakeField",
+                AI_DEVICE_ID,
+                CONTROLLER_ACCESS_PORT,
+                SensorType.CONTROLLER_HUMIDITY,
+            ),
+            (
+                "MyFakeField",
+                str(AI_DEVICE_ID),
+                CONTROLLER_ACCESS_PORT,
+                SensorType.CONTROLLER_HUMIDITY,
+            ),
+            (
+                SensorPropertyKey.SENSOR_DATA,
+                AI_DEVICE_ID,
+                999,
+                SensorType.CONTROLLER_HUMIDITY,
+            ),
+            (
+                SensorPropertyKey.SENSOR_DATA,
+                AI_DEVICE_ID,
+                CONTROLLER_ACCESS_PORT,
+                "fakeType",
+            ),
+        ],
+    )
+    async def test_get_sensor_property_returns_null_properly(
+        self, property_key, device_id, access_port, sensor_type: int
+    ):
+        """the absence of a value should return None instead of keyerror"""
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+
+        result = ac_infinity.get_sensor_property(
+            device_id, access_port, sensor_type, property_key
+        )
         assert result is None
 
     @pytest.mark.parametrize(

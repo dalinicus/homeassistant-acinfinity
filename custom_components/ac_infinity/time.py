@@ -9,8 +9,9 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    ControllerType, DOMAIN,
+    DOMAIN,
     SCHEDULE_DISABLED_VALUE,
+    ControllerType,
     PortControlKey,
 )
 from custom_components.ac_infinity.core import (

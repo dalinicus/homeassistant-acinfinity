@@ -118,7 +118,9 @@ class TestNumbers:
     async def test_async_setup_timer_created_for_each_port(self, setup, key, port):
         """Setting for scheduled end time created on setup"""
 
-        sensor = await execute_and_get_device_entity(setup, async_setup_entry, port, key)
+        sensor = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert sensor.device_info is not None
@@ -198,7 +200,9 @@ class TestNumbers:
     ):
         """Setting for vpd trigger setup for each port"""
 
-        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -215,7 +219,9 @@ class TestNumbers:
     async def test_async_setup_vpd_trigger_setup_for_each_port(self, setup, key, port):
         """Setting for vpd trigger setup for each port"""
 
-        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -361,7 +367,9 @@ class TestNumbers:
     ):
         """Setting for scheduled end time created on setup"""
 
-        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None

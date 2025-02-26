@@ -48,7 +48,9 @@ class TestTimes:
     ):
         """Setting for scheduled end time created on setup"""
 
-        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None

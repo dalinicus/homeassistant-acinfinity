@@ -1,5 +1,4 @@
 """Constants for the AC Infinity integration."""
-
 from homeassistant.const import Platform
 
 MANUFACTURER = "AC Infinity"
@@ -16,6 +15,7 @@ HOST = "http://www.acinfinityserver.com"
 CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
 DEFAULT_POLLING_INTERVAL = 10
+ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
 
 class CustomPortPropertyKey:
@@ -39,11 +39,53 @@ class ControllerPropertyKey:
     VPD = "vpdnums"
     ONLINE = "online"
     TIME_ZONE = "zoneId"
+    SENSORS = "sensors"
+
+
+class ControllerType:
+    UIS_69_PRO = 11
+    UIS_69_PRO_PLUS = 18
+    UIS_89_AI_PLUS = 20
+
+
+class SensorPropertyKey:
+    # /api/dev/devInfoListAll via "sensors" property
+    ACCESS_PORT = "accessPort"
+    SENSOR_TYPE = "sensorType"
+    SENSOR_UNIT = "sensorUnit"
+    SENSOR_PRECISION = "sensorPrecision"
+    SENSOR_DATA = "sensorData"
+
+
+class SensorType:
+    PROBE_TEMPERATURE_F = 0
+    PROBE_TEMPERATURE_C = 1
+    PROBE_HUMIDITY = 2
+    PROBE_VPD = 3
+    CONTROLLER_TEMPERATURE_F = 4
+    CONTROLLER_TEMPERATURE_C = 5
+    CONTROLLER_HUMIDITY = 6
+    CONTROLLER_VPD = 7
+    CO2 = 11
+    LIGHT = 12
+
+
+class SensorReferenceKey:
+    # Sensor keys for known sensor values; arbitrary values not tied to the API data model.
+    # Used to create unique keys for HASS entities.  Only valid for AI Controllers with the sensor usb ports.
+    PROBE_TEMPERATURE = "probeTemperature"
+    PROBE_HUMIDITY = "probeHumidity"
+    PROBE_VPD = "probeVaporPressureDeficit"
+    CONTROLLER_TEMPERATURE = "controllerTemperature"
+    CONTROLLER_HUMIDITY = "controllerHumidity"
+    CONTROLLER_VPD = "controllerVaporPressureDeficit"
+    CO2_SENSOR = "co2Sensor"
+    LIGHT_SENSOR = "lightSensor"
 
 
 # noinspection SpellCheckingInspection
 class PortPropertyKey:
-    # /api/dev/devInfoListAll
+    # /api/dev/devInfoListAll via "ports" property
     PORT = "port"
     NAME = "portName"
     SPEAK = "speak"

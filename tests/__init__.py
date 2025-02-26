@@ -18,16 +18,20 @@ from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntity,
     ACInfinityPortEntity,
+    ACInfinitySensorEntity,
     ACInfinityService,
 )
 from tests.data_models import (
+    AI_MAC_ADDR,
     CONTROLLER_PROPERTIES_DATA,
     DEVICE_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
+    MAC_ADDR,
     PASSWORD,
     PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
+    SENSOR_PROPERTIES_DATA,
 )
 
 MockType = Union[
@@ -54,7 +58,7 @@ class EntitiesTracker:
 
 
 async def execute_and_get_controller_entity(
-    setup_fixture, async_setup_entry, property_key: str
+    setup_fixture, async_setup_entry, property_key: str, mac_addr: str = MAC_ADDR
 ) -> ACInfinityControllerEntity:
     test_objects: ACTestObjects = setup_fixture
 
@@ -67,7 +71,9 @@ async def execute_and_get_controller_entity(
     found = [
         entity
         for entity in test_objects.entities.added_entities
-        if property_key in entity.unique_id and "port_" not in entity.unique_id
+        if mac_addr in entity.unique_id
+        and property_key in entity.unique_id
+        and "port_" not in entity.unique_id
     ]
     assert len(found) == 1
     entity = found[0]
@@ -76,11 +82,8 @@ async def execute_and_get_controller_entity(
     return entity
 
 
-async def execute_and_get_port_entity(
-    setup_fixture,
-    async_setup_entry,
-    port: int,
-    data_key: str,
+async def execute_and_get_device_entity(
+    setup_fixture, async_setup_entry, port: int, data_key: str, mac_addr: str = MAC_ADDR
 ) -> ACInfinityPortEntity:
     test_objects: ACTestObjects = setup_fixture
 
@@ -93,12 +96,43 @@ async def execute_and_get_port_entity(
     found = [
         entity
         for entity in test_objects.entities.added_entities
-        if entity.unique_id.endswith(data_key) and f"port_{port}" in entity.unique_id
+        if mac_addr in entity.unique_id
+        and entity.unique_id.endswith(data_key)
+        and f"port_{port}" in entity.unique_id
     ]
     assert len(found) == 1
     entity = found[0]
 
     assert isinstance(entity, ACInfinityPortEntity)
+    return entity
+
+
+async def execute_and_get_sensor_entity(
+    setup_fixture,
+    async_setup_entry,
+    port: int,
+    data_key: str,
+    mac_addr: str = AI_MAC_ADDR,
+) -> ACInfinitySensorEntity:
+    test_objects: ACTestObjects = setup_fixture
+
+    await async_setup_entry(
+        test_objects.hass,
+        test_objects.config_entry,
+        test_objects.entities.add_entities_callback,
+    )
+
+    found = [
+        entity
+        for entity in test_objects.entities.added_entities
+        if mac_addr in entity.unique_id
+        and entity.unique_id.endswith(data_key)
+        and f"sensor_{port}" in entity.unique_id
+    ]
+    assert len(found) == 1
+    entity = found[0]
+
+    assert isinstance(entity, ACInfinitySensorEntity)
     return entity
 
 
@@ -116,6 +150,7 @@ def setup_entity_mocks(mocker: MockFixture):
 
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+    ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
     ac_infinity._port_properties = PORT_PROPERTIES_DATA
     ac_infinity._port_controls = PORT_CONTROLS_DATA
 

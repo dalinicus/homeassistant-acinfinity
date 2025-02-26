@@ -89,11 +89,10 @@ class TestACInfinityClient:
             client = ACInfinityClient(HOST, EMAIL, password)
             await client.login()
 
-            mocked.assert_called_with(
-                url,
-                "POST",
-                data={"appEmail": "myemail@unittest.com", "appPasswordl": expected},
-            )
+            actual_password = next(iter(mocked.requests.values()))[0].kwargs["data"][
+                "appPasswordl"
+            ]
+            assert actual_password == expected
 
     @pytest.mark.parametrize("status_code", [400, 401, 403, 404, 500])
     async def test_login_api_connect_error_raised_on_http_error(self, status_code):

@@ -21,10 +21,10 @@ from custom_components.ac_infinity.core import (
 from tests import (
     ACTestObjects,
     execute_and_get_controller_entity,
-    execute_and_get_port_entity,
+    execute_and_get_device_entity,
     setup_entity_mocks,
 )
-from tests.data_models import DEVICE_ID, MAC_ADDR
+from tests.data_models import AI_DEVICE_ID, AI_MAC_ADDR, DEVICE_ID, MAC_ADDR
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class TestBinarySensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 9
+        assert len(test_objects.entities._added_entities) == 10
 
     async def test_async_setup_entry_entity_created_for_controller(self, setup):
         """Sensor for device port connected is created on setup"""
@@ -73,7 +73,7 @@ class TestBinarySensors:
     ):
         """Sensor for device port connected is created on setup"""
 
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -89,17 +89,20 @@ class TestBinarySensors:
             (1, True),
         ],
     )
+    @pytest.mark.parametrize(
+        "device_id,mac", [(DEVICE_ID, MAC_ADDR), (AI_DEVICE_ID, AI_MAC_ADDR)]
+    )
     async def test_async_update_entity_controller_value_correct(
-        self, setup, value, expected
+        self, setup, value, expected, device_id, mac
     ):
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
         sensor: ACInfinityControllerEntity = await execute_and_get_controller_entity(
-            setup, async_setup_entry, ControllerPropertyKey.ONLINE
+            setup, async_setup_entry, ControllerPropertyKey.ONLINE, mac
         )
 
-        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+        test_objects.ac_infinity._controller_properties[str(device_id)][
             ControllerPropertyKey.ONLINE
         ] = value
 
@@ -126,7 +129,7 @@ class TestBinarySensors:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        sensor: ACInfinityPortEntity = await execute_and_get_port_entity(
+        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 

@@ -20,7 +20,7 @@ from custom_components.ac_infinity.number import (
 from tests import (
     ACTestObjects,
     execute_and_get_controller_entity,
-    execute_and_get_port_entity,
+    execute_and_get_device_entity,
     setup_entity_mocks,
 )
 from tests.data_models import DEVICE_ID, MAC_ADDR
@@ -54,7 +54,7 @@ class TestNumbers:
     ):
         """Sensor for device port intensity created on setup"""
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -78,7 +78,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
         test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
@@ -98,7 +98,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -118,7 +118,9 @@ class TestNumbers:
     async def test_async_setup_timer_created_for_each_port(self, setup, key, port):
         """Setting for scheduled end time created on setup"""
 
-        sensor = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+        sensor = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert sensor.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert sensor.device_info is not None
@@ -143,7 +145,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -172,7 +174,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -198,7 +200,9 @@ class TestNumbers:
     ):
         """Setting for vpd trigger setup for each port"""
 
-        entity = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -215,7 +219,9 @@ class TestNumbers:
     async def test_async_setup_vpd_trigger_setup_for_each_port(self, setup, key, port):
         """Setting for vpd trigger setup for each port"""
 
-        entity = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -239,7 +245,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -267,7 +273,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -303,7 +309,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -340,7 +346,7 @@ class TestNumbers:
         test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -361,7 +367,9 @@ class TestNumbers:
     ):
         """Setting for scheduled end time created on setup"""
 
-        entity = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -385,7 +393,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -413,7 +421,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -449,7 +457,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -488,7 +496,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -726,7 +734,7 @@ class TestNumbers:
             if description.key == setting:
                 description.native_max_value = 20
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -754,7 +762,7 @@ class TestNumbers:
         self, setup, port, setting: str, step, max_value
     ):
         """Dynamic response temp controls setup for each port"""
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -793,7 +801,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -848,7 +856,7 @@ class TestNumbers:
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -893,7 +901,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -924,7 +932,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -943,7 +951,7 @@ class TestNumbers:
     ):
         """Setting for sunrise duration created on setup"""
 
-        sensor = await execute_and_get_port_entity(
+        sensor = await execute_and_get_device_entity(
             setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         )
 
@@ -962,7 +970,7 @@ class TestNumbers:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         )
 
@@ -983,7 +991,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         )
 

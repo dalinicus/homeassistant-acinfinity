@@ -27,15 +27,15 @@
           "update_password": "Passwort aktualisieren"
         },
         "data_description": {
-          "update_password": "Das Aktualisieren des Passworts erfordert einen Neustart von Home Assistant."
+          "update_password": "Die Aktualisierung des Passworts erfordert einen Neustart von Home Assistant."
         }
       },
       "notify_restart": {
         "title": "Neustart erforderlich",
         "description": "Ein Neustart von Home Assistant ist erforderlich, damit die Passwortänderung wirksam wird.",
         "menu_options": {
-            "restart_yes": "Jetzt neu starten",
-            "restart_no": "Später neu starten"
+          "restart_yes": "Jetzt neu starten",
+          "restart_no": "Später neu starten"
         }
       }
     },
@@ -60,10 +60,10 @@
     },
     "number": {
       "on_power": {
-        "name": "Eingeschaltete Leistung"
+        "name": "Einschaltleistung"
       },
       "off_power": {
-        "name": "Ausgeschaltete Leistung"
+        "name": "Ausschaltleistung"
       },
       "timer_mode_minutes_to_on": {
         "name": "Timer Minuten bis Einschalten"
@@ -78,28 +78,28 @@
         "name": "Zyklus Minuten Aus"
       },
       "vpd_mode_low_trigger": {
-        "name": "VPD Niedriger Auslöser"
+        "name": "VPD Untergrenze"
       },
       "vpd_mode_high_trigger": {
-        "name": "VPD Hoher Auslöser"
+        "name": "VPD Obergrenze"
       },
       "target_vpd": {
         "name": "Ziel-VPD"
       },
       "auto_mode_humidity_low_trigger": {
-        "name": "Feuchtigkeit Niedriger Auslöser"
+        "name": "Luftfeuchtigkeit Untergrenze"
       },
       "auto_mode_humidity_high_trigger": {
-        "name": "Feuchtigkeit Hoher Auslöser"
+        "name": "Luftfeuchtigkeit Obergrenze"
       },
       "target_humidity": {
-        "name": "Ziel-Feuchtigkeit"
+        "name": "Ziel-Luftfeuchtigkeit"
       },
       "auto_mode_temp_low_trigger": {
-        "name": "Temperatur Niedriger Auslöser"
+        "name": "Temperatur Untergrenze"
       },
       "auto_mode_temp_high_trigger": {
-        "name": "Temperatur Hoher Auslöser"
+        "name": "Temperatur Obergrenze"
       },
       "target_temp": {
         "name": "Ziel-Temperatur"
@@ -108,28 +108,28 @@
         "name": "Temperaturkalibrierung"
       },
       "humidity_calibration": {
-        "name": "Feuchtigkeitskalibrierung"
+        "name": "Luftfeuchtigkeitskalibrierung"
       },
-      "vpd_leaf_temperature_offset" : {
-        "name": "VPD-Blatttemperatur-Offset"
+      "vpd_leaf_temperature_offset": {
+        "name": "VPD Blatt-Temperaturversatz"
       },
       "dynamic_transition_temp": {
         "name": "Übergangstemperatur"
       },
       "dynamic_transition_humidity": {
-        "name": "Übergangsfeuchtigkeit"
+        "name": "Übergangs-Luftfeuchtigkeit"
       },
       "dynamic_transition_vpd": {
         "name": "Übergangs-VPD"
       },
       "dynamic_buffer_temp": {
-        "name": "Puffer-Temperatur"
+        "name": "Puffer Temperatur"
       },
       "dynamic_buffer_humidity": {
-        "name": "Puffer-Feuchtigkeit"
+        "name": "Puffer Luftfeuchtigkeit"
       },
       "dynamic_buffer_vpd": {
-        "name": "Puffer-VPD"
+        "name": "Puffer VPD"
       },
       "sunrise_timer_minutes": {
         "name": "Sonnenaufgang/-untergang Minuten"
@@ -149,13 +149,13 @@
         "name": "Außentemperatur"
       },
       "outside_climate_humidity": {
-        "name": "Außenfeuchtigkeit"
+        "name": "Außen-Luftfeuchtigkeit"
       },
       "auto_settings_mode": {
-        "name": "Automatikmodus"
+        "name": "Automatischer Einstellmodus"
       },
       "vpd_settings_mode": {
-        "name": "VPD-Modus"
+        "name": "VPD Einstellmodus"
       }
     },
     "sensor": {
@@ -163,10 +163,34 @@
         "name": "Temperatur"
       },
       "humidity": {
-        "name": "Feuchtigkeit"
+        "name": "Luftfeuchtigkeit"
       },
       "vapor_pressure_deficit": {
         "name": "VPD"
+      },
+      "probe_temperature": {
+        "name": "Sonden-Temperatur"
+      },
+      "probe_humidity": {
+        "name": "Sonden-Luftfeuchtigkeit"
+      },
+      "probe_vapor_pressure_deficit": {
+        "name": "Sonden-VPD"
+      },
+      "controller_temperature": {
+        "name": "Controller Temperatur"
+      },
+      "controller_humidity": {
+        "name": "Controller Luftfeuchtigkeit"
+      },
+      "controller_vapor_pressure_deficit": {
+        "name": "Controller VPD"
+      },
+      "co2_sensor": {
+        "name": "CO2"
+      },
+      "light_sensor": {
+        "name": "Lichtstärke"
       },
       "current_power": {
         "name": "Aktuelle Leistung"
@@ -175,45 +199,45 @@
         "name": "Verbleibende Zeit"
       },
       "next_state_change": {
-        "name": "Nächste Zustandsänderung"
+        "name": "Nächster Zustandswechsel"
       }
     },
     "switch": {
       "vpd_mode_low_enabled": {
-        "name": "VPD Niedriger Auslöser Aktiviert"
+        "name": "VPD-Untergrenze aktiviert"
       },
       "vpd_mode_high_enabled": {
-        "name": "VPD Hoher Auslöser Aktiviert"
+        "name": "VPD-Obergrenze aktiviert"
       },
       "target_vpd_enabled": {
-        "name": "Ziel-VPD Aktiviert"
+        "name": "Ziel-VPD aktiviert"
       },
       "auto_mode_humidity_low_enabled": {
-        "name": "Feuchtigkeit Niedriger Auslöser Aktiviert"
+        "name": "Luftfeuchtigkeit Untergrenze aktiviert"
       },
       "auto_mode_humidity_high_enabled": {
-        "name": "Feuchtigkeit Hoher Auslöser Aktiviert"
+        "name": "Luftfeuchtigkeit Obergrenze aktiviert"
       },
       "auto_mode_temp_low_enabled": {
-        "name": "Temperatur Niedriger Auslöser Aktiviert"
+        "name": "Temperatur Untergrenze aktiviert"
       },
       "auto_mode_temp_high_enabled": {
-        "name": "Temperatur Hoher Auslöser Aktiviert"
+        "name": "Temperatur Obergrenze aktiviert"
       },
       "target_temp_enabled": {
-        "name": "Ziel-Temperatur Aktiviert"
+        "name": "Ziel-Temperatur aktiviert"
       },
       "target_humidity_enabled": {
-        "name": "Ziel-Feuchtigkeit Aktiviert"
+        "name": "Ziel-Luftfeuchtigkeit aktiviert"
       },
       "schedule_mode_on_time_enabled": {
-        "name": "Geplante Ein-Zeit Aktiviert"
+        "name": "Geplante Ein-Zeit aktiviert"
       },
       "schedule_mode_off_time_enabled": {
-        "name": "Geplante Aus-Zeit Aktiviert"
+        "name": "Geplante Aus-Zeit aktiviert"
       },
       "sunrise_timer_enabled": {
-        "name": "Sonnenaufgang/-untergang Aktiviert"
+        "name": "Sonnenaufgang/-untergang aktiviert"
       }
     },
     "time": {

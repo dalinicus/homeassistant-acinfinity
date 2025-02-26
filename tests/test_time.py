@@ -14,7 +14,7 @@ from custom_components.ac_infinity.time import (
     ACInfinityPortTimeEntity,
     async_setup_entry,
 )
-from tests import ACTestObjects, execute_and_get_port_entity, setup_entity_mocks
+from tests import ACTestObjects, execute_and_get_device_entity, setup_entity_mocks
 from tests.data_models import DEVICE_ID, MAC_ADDR
 
 
@@ -48,7 +48,9 @@ class TestTimes:
     ):
         """Setting for scheduled end time created on setup"""
 
-        entity = await execute_and_get_port_entity(setup, async_setup_entry, port, key)
+        entity = await execute_and_get_device_entity(
+            setup, async_setup_entry, port, key
+        )
 
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{key}"
         assert entity.device_info is not None
@@ -74,7 +76,7 @@ class TestTimes:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -99,7 +101,7 @@ class TestTimes:
         """Reported sensor value is None (disabled) if the number of minutes is None or greater than 24 hours"""
 
         test_objects: ACTestObjects = setup
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -128,7 +130,7 @@ class TestTimes:
 
         test_objects: ACTestObjects = setup
 
-        entity = await execute_and_get_port_entity(
+        entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 

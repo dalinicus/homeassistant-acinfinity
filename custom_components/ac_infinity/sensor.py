@@ -44,8 +44,8 @@ from .const import (
     ControllerType,
     CustomPortPropertyKey,
     PortPropertyKey,
-    SensorKeys,
     SensorPropertyKey,
+    SensorReferenceKey,
     SensorType,
 )
 
@@ -268,7 +268,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
 
 SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
     SensorType.PROBE_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.PROBE_TEMPERATURE,
+        key=SensorReferenceKey.PROBE_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -279,7 +279,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.PROBE_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.PROBE_TEMPERATURE,
+        key=SensorReferenceKey.PROBE_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -290,7 +290,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.PROBE_HUMIDITY: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.PROBE_HUMIDITY,
+        key=SensorReferenceKey.PROBE_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -301,7 +301,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.PROBE_VPD: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.PROBE_VPD,
+        key=SensorReferenceKey.PROBE_VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -312,7 +312,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.CONTROLLER_TEMPERATURE_F: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.CONTROLLER_TEMPERATURE,
+        key=SensorReferenceKey.CONTROLLER_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -323,7 +323,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.CONTROLLER_TEMPERATURE_C: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.CONTROLLER_TEMPERATURE,
+        key=SensorReferenceKey.CONTROLLER_TEMPERATURE,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -334,7 +334,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
     SensorType.CONTROLLER_HUMIDITY: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.CONTROLLER_HUMIDITY,
+        key=SensorReferenceKey.CONTROLLER_HUMIDITY,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -345,7 +345,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.CONTROLLER_VPD: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.CONTROLLER_VPD,
+        key=SensorReferenceKey.CONTROLLER_VPD,
         device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_unit_of_measurement=UnitOfPressure.KPA,
@@ -356,7 +356,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.CO2: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.CO2_SENSOR,
+        key=SensorReferenceKey.CO2_SENSOR,
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
@@ -367,7 +367,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
     SensorType.LIGHT: ACInfinitySensorSensorEntityDescription(
-        key=SensorKeys.LIGHT_SENSOR,
+        key=SensorReferenceKey.LIGHT_SENSOR,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,

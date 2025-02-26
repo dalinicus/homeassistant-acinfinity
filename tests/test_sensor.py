@@ -17,8 +17,8 @@ from custom_components.ac_infinity.const import (
     ControllerPropertyKey,
     CustomPortPropertyKey,
     PortPropertyKey,
-    SensorKeys,
     SensorPropertyKey,
+    SensorReferenceKey,
     SensorType,
 )
 from custom_components.ac_infinity.sensor import (
@@ -199,13 +199,13 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_TEMPERATURE,
+            SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -243,7 +243,7 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_TEMPERATURE,
+            SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -283,13 +283,13 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_TEMPERATURE,
+            SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -325,7 +325,7 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_TEMPERATURE,
+            SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -348,13 +348,13 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_HUMIDITY,
+            SensorReferenceKey.CONTROLLER_HUMIDITY,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_HUMIDITY}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_HUMIDITY}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.HUMIDITY
         assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
@@ -372,7 +372,7 @@ class TestSensors:
             setup,
             async_setup_entry,
             CONTROLLER_ACCESS_PORT,
-            SensorKeys.CONTROLLER_HUMIDITY,
+            SensorReferenceKey.CONTROLLER_HUMIDITY,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -388,13 +388,16 @@ class TestSensors:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_VPD
+            setup,
+            async_setup_entry,
+            CONTROLLER_ACCESS_PORT,
+            SensorReferenceKey.CONTROLLER_VPD,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorKeys.CONTROLLER_VPD}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
         assert (
@@ -414,7 +417,10 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CONTROLLER_ACCESS_PORT, SensorKeys.CONTROLLER_VPD
+            setup,
+            async_setup_entry,
+            CONTROLLER_ACCESS_PORT,
+            SensorReferenceKey.CONTROLLER_VPD,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -439,13 +445,16 @@ class TestSensors:
         )
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_TEMPERATURE
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorKeys.PROBE_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -472,7 +481,10 @@ class TestSensors:
         )
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_TEMPERATURE
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -496,13 +508,16 @@ class TestSensors:
         ] = SENSOR_PROPERTY_PROBE_TEMP_C
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_TEMPERATURE
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorKeys.PROBE_TEMPERATURE}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_TEMPERATURE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
@@ -527,7 +542,10 @@ class TestSensors:
         ] = SENSOR_PROPERTY_CONTROLLER_TEMP_C
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_TEMPERATURE
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -543,13 +561,16 @@ class TestSensors:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_HUMIDITY
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_HUMIDITY,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorKeys.PROBE_HUMIDITY}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_HUMIDITY}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.HUMIDITY
         assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
@@ -564,7 +585,10 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_HUMIDITY
+            setup,
+            async_setup_entry,
+            PROBE_ACCESS_PORT,
+            SensorReferenceKey.PROBE_HUMIDITY,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -580,13 +604,13 @@ class TestSensors:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_VPD
+            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorReferenceKey.PROBE_VPD
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorKeys.PROBE_VPD}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
         assert (
@@ -606,7 +630,7 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorKeys.PROBE_VPD
+            setup, async_setup_entry, PROBE_ACCESS_PORT, SensorReferenceKey.PROBE_VPD
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -622,13 +646,16 @@ class TestSensors:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CO2_LIGHT_ACCESS_PORT, SensorKeys.CO2_SENSOR
+            setup,
+            async_setup_entry,
+            CO2_LIGHT_ACCESS_PORT,
+            SensorReferenceKey.CO2_SENSOR,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorKeys.CO2_SENSOR}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorReferenceKey.CO2_SENSOR}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.CO2
         assert (
@@ -647,7 +674,10 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CO2_LIGHT_ACCESS_PORT, SensorKeys.CO2_SENSOR
+            setup,
+            async_setup_entry,
+            CO2_LIGHT_ACCESS_PORT,
+            SensorReferenceKey.CO2_SENSOR,
         )
 
         test_objects.ac_infinity._sensor_properties[
@@ -680,13 +710,16 @@ class TestSensors:
         """Sensor for device reported humidity is created on setup"""
 
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CO2_LIGHT_ACCESS_PORT, SensorKeys.LIGHT_SENSOR
+            setup,
+            async_setup_entry,
+            CO2_LIGHT_ACCESS_PORT,
+            SensorReferenceKey.LIGHT_SENSOR,
         )
 
         assert isinstance(entity, ACInfinitySensorSensorEntity)
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorKeys.LIGHT_SENSOR}"
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorReferenceKey.LIGHT_SENSOR}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.POWER_FACTOR
         assert entity.entity_description.suggested_unit_of_measurement == PERCENTAGE
@@ -699,7 +732,10 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         entity = await execute_and_get_sensor_entity(
-            setup, async_setup_entry, CO2_LIGHT_ACCESS_PORT, SensorKeys.LIGHT_SENSOR
+            setup,
+            async_setup_entry,
+            CO2_LIGHT_ACCESS_PORT,
+            SensorReferenceKey.LIGHT_SENSOR,
         )
 
         test_objects.ac_infinity._sensor_properties[

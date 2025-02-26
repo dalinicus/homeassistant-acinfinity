@@ -70,7 +70,7 @@ class SensorType:
     LIGHT = 12
 
 
-class SensorKeys:
+class SensorReferenceKey:
     # Sensor keys for known sensor values; arbitrary values not tied to the API data model.
     # Used to create unique keys for HASS entities.  Only valid for AI Controllers with the sensor usb ports.
     PROBE_TEMPERATURE = "probeTemperature"

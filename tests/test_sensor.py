@@ -149,10 +149,7 @@ class TestSensors:
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_{ControllerPropertyKey.VPD}"
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert (
-            entity.entity_description.suggested_unit_of_measurement
-            == UnitOfPressure.KPA
-        )
+        assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
@@ -400,10 +397,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert (
-            entity.entity_description.suggested_unit_of_measurement
-            == UnitOfPressure.KPA
-        )
+        assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
@@ -613,10 +607,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert (
-            entity.entity_description.suggested_unit_of_measurement
-            == UnitOfPressure.KPA
-        )
+        assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
@@ -658,10 +649,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorReferenceKey.CO2_SENSOR}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.CO2
-        assert (
-            entity.entity_description.suggested_unit_of_measurement
-            == CONCENTRATION_PARTS_PER_MILLION
-        )
+        assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement
             == CONCENTRATION_PARTS_PER_MILLION
@@ -722,7 +710,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CO2_LIGHT_ACCESS_PORT}_{SensorReferenceKey.LIGHT_SENSOR}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.POWER_FACTOR
-        assert entity.entity_description.suggested_unit_of_measurement == PERCENTAGE
+        assert entity.entity_description.suggested_unit_of_measurement is None
         assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
         assert entity.device_info is not None
 

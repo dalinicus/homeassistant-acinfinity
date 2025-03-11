@@ -2,6 +2,7 @@
 
 import asyncio
 from asyncio import Future
+from types import MappingProxyType
 from typing import Union
 from unittest.mock import AsyncMock, MagicMock, NonCallableMagicMock
 
@@ -154,7 +155,20 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._port_properties = PORT_PROPERTIES_DATA
     ac_infinity._port_controls = PORT_CONTROLS_DATA
 
-    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
+    config_entry = ConfigEntry(
+        entry_id=ENTRY_ID,
+        data={CONF_EMAIL: ENTRY_ID},
+        domain=DOMAIN,
+        minor_version=0,
+        source="",
+        title="",
+        version=0,
+        unique_id=None,
+        options=None,
+        discovery_keys=MappingProxyType({}),
+    )
+
+    coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
 
     port_control_set_mock = mocker.patch.object(
         ac_infinity, "update_port_control", return_value=future
@@ -180,26 +194,13 @@ def setup_entity_mocks(mocker: MockFixture):
 
     hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
 
-    config_entry = ConfigEntry(
-        entry_id=ENTRY_ID,
-        data={CONF_EMAIL: ENTRY_ID},
-        domain=DOMAIN,
-        minor_version=0,
-        source="",
-        title="",
-        version=0,
-        unique_id=None,
-        options=None,
-    )
-
     entities = EntitiesTracker()
 
     update_entry = mocker.patch.object(ConfigEntries, "async_update_entry")
 
     async_call = mocker.patch.object(ServiceRegistry, "async_call")
 
-    options_flow = OptionsFlow(config_entry)
-    options_flow.config_entry = config_entry
+    options_flow = OptionsFlow()
     options_flow.hass = hass
     options_flow.hass.config_entries = MagicMock()
     options_flow.hass.config_entries.async_update_entry = update_entry

@@ -1,9 +1,10 @@
 import asyncio
 from asyncio import Future
+from types import MappingProxyType
 from unittest.mock import AsyncMock
 
 import pytest
-from homeassistant.config_entries import ConfigEntries, ConfigEntry
+from homeassistant.config_entries import ConfigEntries, ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -52,6 +53,8 @@ def setup(mocker: MockFixture):
         version=0,
         options=None,
         unique_id=None,
+        discovery_keys=MappingProxyType({}),
+        state=ConfigEntryState.SETUP_IN_PROGRESS,
     )
 
     hass = HomeAssistant("/path")
@@ -66,7 +69,6 @@ class TestInit:
     async def test_async_setup_entry_ac_infinity_init(self, setup):
         """when setting up, ac_infinity should be initialized and assigned to the hass object"""
         (hass, config_entry) = setup
-
         await async_setup_entry(hass, config_entry)
 
         assert hass.data[DOMAIN][ENTRY_ID] is not None
@@ -100,10 +102,12 @@ class TestInit:
         )
 
     async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
-        (hass, _) = setup
+        (hass, config_entry) = setup
 
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         mocker.patch.object(ac_infinity, "refresh", side_effect=Exception("unit test"))
-        coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
+        coordinator = ACInfinityDataUpdateCoordinator(
+            hass, config_entry, ac_infinity, 10
+        )
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()

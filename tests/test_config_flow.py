@@ -1,6 +1,7 @@
 import asyncio
 from asyncio import Future
 from datetime import timedelta
+from types import MappingProxyType
 from unittest.mock import ANY
 
 import pytest
@@ -151,6 +152,7 @@ class TestConfigFlow:
             version=0,
             options=None,
             unique_id=None,
+            discovery_keys=MappingProxyType({}),
         )
         result = ConfigFlow.async_get_options_flow(config_entry)
 
@@ -165,7 +167,7 @@ class TestConfigFlow:
     ):
         """If no user input provided, async_setup_init should show form with correct value"""
 
-        config_entry = ConfigEntry(
+        ConfigEntry(
             entry_id=ENTRY_ID,
             data={CONF_POLLING_INTERVAL: existing_value},
             domain=DOMAIN,
@@ -175,9 +177,10 @@ class TestConfigFlow:
             version=0,
             options=None,
             unique_id=None,
+            discovery_keys=MappingProxyType({}),
         )
 
-        flow = OptionsFlow(config_entry)
+        flow = OptionsFlow()
         await flow.async_step_init()
 
         flow.async_show_form.assert_called_with(
@@ -196,7 +199,7 @@ class TestConfigFlow:
         self, setup_options_flow
     ):
         """If no user input provided, and no interval exists in settings, async_setup_init should show form with default value"""
-        config_entry = ConfigEntry(
+        ConfigEntry(
             entry_id=ENTRY_ID,
             data={},
             domain=DOMAIN,
@@ -206,9 +209,10 @@ class TestConfigFlow:
             version=0,
             options=None,
             unique_id=None,
+            discovery_keys=MappingProxyType({}),
         )
 
-        flow = OptionsFlow(config_entry)
+        flow = OptionsFlow()
         await flow.async_step_init()
 
         flow.async_show_form.assert_called_with(
@@ -231,7 +235,7 @@ class TestConfigFlow:
     ):
         """If provided polling interval is not valid, show form with error"""
 
-        config_entry = ConfigEntry(
+        ConfigEntry(
             entry_id=ENTRY_ID,
             data={},
             domain=DOMAIN,
@@ -241,8 +245,9 @@ class TestConfigFlow:
             version=0,
             options=None,
             unique_id=None,
+            discovery_keys=MappingProxyType({}),
         )
-        flow = OptionsFlow(config_entry)
+        flow = OptionsFlow()
         await flow.async_step_init({CONF_POLLING_INTERVAL: user_input})
 
         flow.async_show_form.assert_called_with(

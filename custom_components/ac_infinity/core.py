@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Any, Awaitable, Callable, Tuple
 
 import async_timeout
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import (
@@ -811,12 +812,19 @@ class ACInfinityService:
 class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
     """Handles updating data for the integration"""
 
-    def __init__(self, hass, service: ACInfinityService, polling_interval: int):
+    def __init__(
+        self,
+        hass,
+        entry: ConfigEntry,
+        service: ACInfinityService,
+        polling_interval: int,
+    ):
         """Constructor"""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
+            config_entry=entry,
             update_interval=timedelta(seconds=polling_interval),
         )
 

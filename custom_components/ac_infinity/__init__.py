@@ -27,7 +27,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     service = ACInfinityService(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    coordinator = ACInfinityDataUpdateCoordinator(hass, service, polling_interval)
+    coordinator = ACInfinityDataUpdateCoordinator(
+        hass, entry, service, polling_interval
+    )
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 

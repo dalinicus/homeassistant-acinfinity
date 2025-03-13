@@ -201,7 +201,10 @@ def setup_entity_mocks(mocker: MockFixture):
     async_call = mocker.patch.object(ServiceRegistry, "async_call")
 
     options_flow = OptionsFlow()
+    mocker.patch.object(OptionsFlow, "config_entry")
+
     options_flow.hass = hass
+    options_flow.config_entry = config_entry
     options_flow.hass.config_entries = MagicMock()
     options_flow.hass.config_entries.async_update_entry = update_entry
     options_flow.hass.services = MagicMock()

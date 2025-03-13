@@ -166,8 +166,8 @@ class TestConfigFlow:
         self, setup_options_flow, existing_value, expected_value
     ):
         """If no user input provided, async_setup_init should show form with correct value"""
-
-        ConfigEntry(
+        mocker = setup_options_flow
+        entry = ConfigEntry(
             entry_id=ENTRY_ID,
             data={CONF_POLLING_INTERVAL: existing_value},
             domain=DOMAIN,
@@ -181,6 +181,8 @@ class TestConfigFlow:
         )
 
         flow = OptionsFlow()
+        mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
+
         await flow.async_step_init()
 
         flow.async_show_form.assert_called_with(
@@ -198,8 +200,9 @@ class TestConfigFlow:
     async def test_options_flow_handler_show_form_uninitialized(
         self, setup_options_flow
     ):
+        mocker = setup_options_flow
         """If no user input provided, and no interval exists in settings, async_setup_init should show form with default value"""
-        ConfigEntry(
+        entry = ConfigEntry(
             entry_id=ENTRY_ID,
             data={},
             domain=DOMAIN,
@@ -213,6 +216,8 @@ class TestConfigFlow:
         )
 
         flow = OptionsFlow()
+        mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
+
         await flow.async_step_init()
 
         flow.async_show_form.assert_called_with(
@@ -234,8 +239,8 @@ class TestConfigFlow:
         self, setup_options_flow, user_input
     ):
         """If provided polling interval is not valid, show form with error"""
-
-        ConfigEntry(
+        mocker = setup_options_flow
+        entry = ConfigEntry(
             entry_id=ENTRY_ID,
             data={},
             domain=DOMAIN,
@@ -247,7 +252,10 @@ class TestConfigFlow:
             unique_id=None,
             discovery_keys=MappingProxyType({}),
         )
+
         flow = OptionsFlow()
+        mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
+
         await flow.async_step_init({CONF_POLLING_INTERVAL: user_input})
 
         flow.async_show_form.assert_called_with(

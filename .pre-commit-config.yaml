@@ -10,6 +10,15 @@ repos:
       - id: detect-private-key
       - id: fix-byte-order-marker
 
+  - repo: local
+    hooks:
+      - id: update-requirements
+        name: update python packages
+        entry: pip install --upgrade -r requirements.txt
+        language: system
+        pass_filenames: false
+        types: [python]
+
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:

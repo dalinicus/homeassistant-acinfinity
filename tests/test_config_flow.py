@@ -153,6 +153,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
         result = ConfigFlow.async_get_options_flow(config_entry)
 
@@ -178,6 +179,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         flow = OptionsFlow()
@@ -213,6 +215,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         flow = OptionsFlow()
@@ -251,6 +254,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         flow = OptionsFlow()

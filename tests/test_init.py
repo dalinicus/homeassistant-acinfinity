@@ -55,6 +55,7 @@ def setup(mocker: MockFixture):
         unique_id=None,
         discovery_keys=MappingProxyType({}),
         state=ConfigEntryState.SETUP_IN_PROGRESS,
+        subentries_data=None,
     )
 
     hass = HomeAssistant("/path")

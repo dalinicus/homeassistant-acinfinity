@@ -108,9 +108,11 @@ def __get_value_fn_cal_temp(entity: ACInfinityEntity, controller: ACInfinityCont
     )
     return entity.ac_infinity.get_controller_setting(
         controller.device_id,
-        AdvancedSettingsKey.CALIBRATE_TEMP
-        if temp_unit > 0
-        else AdvancedSettingsKey.CALIBRATE_TEMP_F,
+        (
+            AdvancedSettingsKey.CALIBRATE_TEMP
+            if temp_unit > 0
+            else AdvancedSettingsKey.CALIBRATE_TEMP_F
+        ),
         0,
     )
 
@@ -123,9 +125,11 @@ def __get_value_fn_vpd_leaf_temp_offset(
     )
     return entity.ac_infinity.get_controller_setting(
         controller.device_id,
-        AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
-        if temp_unit > 0
-        else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
+        (
+            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
+            if temp_unit > 0
+            else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F
+        ),
         0,
     )
 
@@ -170,9 +174,11 @@ def __get_value_fn_dynamic_transition_temp(
     return entity.ac_infinity.get_port_setting(
         port.controller.device_id,
         port.port_index,
-        AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP
-        if temp_unit > 0
-        else AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F,
+        (
+            AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP
+            if temp_unit > 0
+            else AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F
+        ),
         0,
     )
 
@@ -185,9 +191,11 @@ def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, port: ACInfinit
     return entity.ac_infinity.get_port_setting(
         port.controller.device_id,
         port.port_index,
-        AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP
-        if temp_unit > 0
-        else AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F,
+        (
+            AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP
+            if temp_unit > 0
+            else AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F
+        ),
         0,
     )
 
@@ -232,15 +240,17 @@ def __set_value_fn_cal_temp(
 
     return entity.ac_infinity.update_controller_settings(
         controller.device_id,
-        [
-            (AdvancedSettingsKey.CALIBRATE_TEMP, value),
-            (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
-        ]
-        if temp_unit > 0
-        else [
-            (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
-            (AdvancedSettingsKey.CALIBRATE_TEMP_F, value),
-        ],
+        (
+            [
+                (AdvancedSettingsKey.CALIBRATE_TEMP, value),
+                (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
+            ]
+            if temp_unit > 0
+            else [
+                (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
+                (AdvancedSettingsKey.CALIBRATE_TEMP_F, value),
+            ]
+        ),
     )
 
 
@@ -260,9 +270,11 @@ def __set_value_fn_vpd_leaf_temp_offset(
 
     return entity.ac_infinity.update_controller_setting(
         controller.device_id,
-        AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
-        if temp_unit > 0
-        else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
+        (
+            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
+            if temp_unit > 0
+            else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F
+        ),
         value,
     )
 
@@ -366,15 +378,17 @@ def __set_value_fn_dynamic_transition_temp(
     return entity.ac_infinity.update_port_settings(
         port.controller.device_id,
         port.port_index,
-        [
-            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, value),
-            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value * 2),
-        ]
-        if temp_unit > 0
-        else [
-            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, math.floor(value / 2)),
-            (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value),
-        ],
+        (
+            [
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, value),
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value * 2),
+            ]
+            if temp_unit > 0
+            else [
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, math.floor(value / 2)),
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, value),
+            ]
+        ),
     )
 
 
@@ -393,15 +407,17 @@ def __set_value_fn_dynamic_buffer_temp(
     return entity.ac_infinity.update_port_settings(
         port.controller.device_id,
         port.port_index,
-        [
-            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, value),
-            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value * 2),
-        ]
-        if temp_unit > 0
-        else [
-            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, math.floor(value / 2)),
-            (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value),
-        ],
+        (
+            [
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, value),
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value * 2),
+            ]
+            if temp_unit > 0
+            else [
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, math.floor(value / 2)),
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, value),
+            ]
+        ),
     )
 
 

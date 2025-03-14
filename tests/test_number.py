@@ -678,9 +678,11 @@ class TestNumbers:
 
         test_objects.controller_set_mock.assert_called_with(
             str(DEVICE_ID),
-            AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
-            if temp_unit > 0
-            else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F,
+            (
+                AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
+                if temp_unit > 0
+                else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F
+            ),
             expected,
         )
 

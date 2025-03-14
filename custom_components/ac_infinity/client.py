@@ -1,5 +1,4 @@
 import logging
-from typing import Tuple
 
 import aiohttp
 import async_timeout
@@ -31,7 +30,7 @@ class ACInfinityClient:
         self._email = email
         self._password = password
 
-        self._user_id: (str | None) = None
+        self._user_id: str | None = None
 
     async def login(self):
         """Call the log in endpoint with the configured email and password, and obtain the user id to use for subsequent calls"""
@@ -65,7 +64,7 @@ class ACInfinityClient:
         )
         return json["data"]
 
-    async def get_device_mode_settings_list(self, device_id: (str | int), port_id: int):
+    async def get_device_mode_settings_list(self, device_id: str | int, port_id: int):
         """Obtains the settings for a particular port on a controller, which includes information
         like speed, sensor triggers, mode timers, etc...
 
@@ -83,7 +82,7 @@ class ACInfinityClient:
         return json["data"]
 
     async def set_device_mode_settings(
-        self, device_id: (str | int), port_id: int, key_values: list[Tuple[str, int]]
+        self, device_id: str | int, port_id: int, key_values: list[tuple[str, int]]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -128,7 +127,7 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_ADD_DEV_MODE, settings, headers)
 
-    async def get_device_settings(self, device_id: (str | int), port: int):
+    async def get_device_settings(self, device_id: str | int, port: int):
         """Gets the current values of controller specific settings;
         such as temperature, humidity, and vpd calibration values
 
@@ -147,10 +146,10 @@ class ACInfinityClient:
 
     async def update_advanced_settings(
         self,
-        device_id: (str | int),
+        device_id: str | int,
         port: int,
         device_name: str,
-        key_values: list[Tuple[str, int]],
+        key_values: list[tuple[str, int]],
     ):
         """Sets a given controller setting to a new value
 

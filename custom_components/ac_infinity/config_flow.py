@@ -1,4 +1,5 @@
 """Config flow for AC Infinity integration."""
+
 from __future__ import annotations
 
 import logging
@@ -111,7 +112,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                     _LOGGER.exception("Unexpected exception")
                     errors[CONF_UPDATE_PASSWORD] = "unknown"
 
-            if not len(errors):
+            if not errors:
                 new_data = self.config_entry.data.copy()
                 new_data[CONF_POLLING_INTERVAL] = polling_interval
                 new_data[CONF_PASSWORD] = password

@@ -1,9 +1,10 @@
 import asyncio
 import logging
 from abc import abstractmethod
+from collections.abc import Awaitable
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Awaitable, Callable, Tuple
+from typing import Any, Callable
 
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
@@ -168,7 +169,12 @@ class ACInfinitySensor:
         controller: ACInfinityController, sensor_port: int, sensor_type: int
     ):
         match sensor_type:
-            case SensorType.PROBE_TEMPERATURE_F | SensorType.PROBE_TEMPERATURE_C | SensorType.PROBE_HUMIDITY | SensorType.PROBE_VPD:
+            case (
+                SensorType.PROBE_TEMPERATURE_F
+                | SensorType.PROBE_TEMPERATURE_C
+                | SensorType.PROBE_HUMIDITY
+                | SensorType.PROBE_VPD
+            ):
                 return DeviceInfo(
                     identifiers={
                         (DOMAIN, f"{controller.device_id}_{sensor_port}_spc24")
@@ -188,7 +194,12 @@ class ACInfinitySensor:
                     via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
-            case SensorType.CONTROLLER_TEMPERATURE_F | SensorType.CONTROLLER_TEMPERATURE_C | SensorType.CONTROLLER_HUMIDITY | SensorType.CONTROLLER_VPD:
+            case (
+                SensorType.CONTROLLER_TEMPERATURE_F
+                | SensorType.CONTROLLER_TEMPERATURE_C
+                | SensorType.CONTROLLER_HUMIDITY
+                | SensorType.CONTROLLER_VPD
+            ):
                 return controller.device_info
             case _:
                 return DeviceInfo(
@@ -284,16 +295,16 @@ class ACInfinityService:
     _controller_properties: dict[str, Any] = {}
 
     # api/user/devInfoListAll json organized by controller device id, sensor access port index, and sensor type.
-    _sensor_properties: dict[Tuple[str, int, int], Any] = {}
+    _sensor_properties: dict[tuple[str, int, int], Any] = {}
 
     # api/user/devInfoListAll json organized by controller device id and port index
-    _port_properties: dict[Tuple[str, int], Any] = {}
+    _port_properties: dict[tuple[str, int], Any] = {}
 
     # api/dev/getDevModeSettingList json organized by controller device id and port index
-    _port_controls: dict[Tuple[str, int], Any] = {}
+    _port_controls: dict[tuple[str, int], Any] = {}
 
     # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
-    _device_settings: dict[Tuple[str, int], Any] = {}
+    _device_settings: dict[tuple[str, int], Any] = {}
 
     def __init__(self, email: str, password: str) -> None:
         """
@@ -304,7 +315,7 @@ class ACInfinityService:
         self._client = ACInfinityClient(HOST, email, password)
 
     def get_controller_property_exists(
-        self, controller_id: (str | int), property_key: str
+        self, controller_id: str | int, property_key: str
     ) -> bool:
         """returns if a given property exists on a given controller.
 
@@ -322,7 +333,7 @@ class ACInfinityService:
         return False
 
     def get_controller_property(
-        self, controller_id: (str | int), property_key: str, default_value=None
+        self, controller_id: str | int, property_key: str, default_value=None
     ):
         """gets a property value for a given controller, if both the property and controller exist.
 
@@ -345,7 +356,7 @@ class ACInfinityService:
 
     def get_sensor_property_exists(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         sensor_port: int,
         sensor_type: int,
         property_key: str,
@@ -366,7 +377,7 @@ class ACInfinityService:
 
     def get_sensor_property(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         sensor_port: int,
         sensor_type: int,
         property_key: str,
@@ -392,7 +403,7 @@ class ACInfinityService:
 
     def get_port_property_exists(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         device_port: int,
         property_key: str,
     ) -> bool:
@@ -411,7 +422,7 @@ class ACInfinityService:
 
     def get_port_property(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         property_key: str,
         default_value=None,
@@ -434,7 +445,7 @@ class ACInfinityService:
         return default_value
 
     def get_controller_setting_exists(
-        self, controller_id: (str | int), setting_key: str
+        self, controller_id: str | int, setting_key: str
     ) -> bool:
         """returns if a given setting exists on a given controller.
 
@@ -445,7 +456,7 @@ class ACInfinityService:
         return self.get_port_setting_exists(controller_id, 0, setting_key)
 
     def get_controller_setting(
-        self, controller_id: (str | int), setting_key: str, default_value=None
+        self, controller_id: str | int, setting_key: str, default_value=None
     ):
         """gets a property value for a given controller, if both the property and controller exist.
 
@@ -457,7 +468,7 @@ class ACInfinityService:
         return self.get_port_setting(controller_id, 0, setting_key, default_value)
 
     def get_port_setting_exists(
-        self, controller_id: (str | int), port_index: int, setting_key: str
+        self, controller_id: str | int, port_index: int, setting_key: str
     ) -> bool:
         """returns if a given setting exists on a given controller.
 
@@ -476,7 +487,7 @@ class ACInfinityService:
 
     def get_port_setting(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         setting_key: str,
         default_value=None,
@@ -500,7 +511,7 @@ class ACInfinityService:
 
     def get_port_control_exists(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         setting_key: str,
     ) -> bool:
@@ -522,7 +533,7 @@ class ACInfinityService:
 
     def get_port_control(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         setting_key: str,
         default_value=None,
@@ -562,9 +573,9 @@ class ACInfinityService:
                     ]
 
                     # set controller properties; readings for temp, vpd, humidity, etc...
-                    self._controller_properties[
-                        str(controller_id)
-                    ] = controller_properties_json
+                    self._controller_properties[str(controller_id)] = (
+                        controller_properties_json
+                    )
 
                     # retrieve and set controller settings; temperature, humidity, and vpd offsets
                     controller_settings_json = await self._client.get_device_settings(
@@ -602,9 +613,9 @@ class ACInfinityService:
                         port_index = port_properties_json[PortPropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self._port_properties[
-                            (controller_id, port_index)
-                        ] = port_properties_json
+                        self._port_properties[(controller_id, port_index)] = (
+                            port_properties_json
+                        )
 
                         # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
                         port_controls_json = (
@@ -612,17 +623,17 @@ class ACInfinityService:
                                 controller_id, port_index
                             )
                         )
-                        self._port_controls[
-                            (controller_id, port_index)
-                        ] = port_controls_json
+                        self._port_controls[(controller_id, port_index)] = (
+                            port_controls_json
+                        )
 
                         # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
                         port_settings_json = await self._client.get_device_settings(
                             controller_id, port_index
                         )
-                        self._device_settings[
-                            (controller_id, port_index)
-                        ] = port_settings_json
+                        self._device_settings[(controller_id, port_index)] = (
+                            port_settings_json
+                        )
 
                 return  # update successful.  eject from the infinite while loop.
             except BaseException as ex:
@@ -652,7 +663,7 @@ class ACInfinityService:
 
     async def update_controller_setting(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         setting_key: str,
         new_value: int,
     ):
@@ -666,7 +677,7 @@ class ACInfinityService:
         await self.update_controller_settings(controller_id, [(setting_key, new_value)])
 
     async def update_controller_settings(
-        self, controller_id: (str | int), key_values: list[Tuple[str, int]]
+        self, controller_id: str | int, key_values: list[tuple[str, int]]
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -681,7 +692,7 @@ class ACInfinityService:
 
     async def update_port_setting(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         setting_key: str,
         new_value: int,
@@ -700,9 +711,9 @@ class ACInfinityService:
 
     async def update_port_settings(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
-        key_values: list[Tuple[str, int]],
+        key_values: list[tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -720,10 +731,10 @@ class ACInfinityService:
 
     async def __update_advanced_settings(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port: int,
         device_name: str,
-        key_values: list[Tuple[str, int]],
+        key_values: list[tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -757,7 +768,7 @@ class ACInfinityService:
 
     async def update_port_control(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         setting_key: str,
         new_value: int,
@@ -776,7 +787,7 @@ class ACInfinityService:
 
     async def update_port_controls(
         self,
-        controller_id: (str | int),
+        controller_id: str | int,
         port_index: int,
         key_values: list[tuple[str, int]],
     ):

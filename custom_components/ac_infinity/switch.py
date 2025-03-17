@@ -63,25 +63,25 @@ class ACInfinityPortSwitchEntityDescription(
 
 def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __get_value_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
 def __get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
@@ -90,7 +90,7 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPo
         entity.ac_infinity.get_port_control(
             port.controller.device_id,
             port.port_index,
-            entity.entity_description.key,
+            entity.data_key,
             SCHEDULE_DISABLED_VALUE,
         )
         < SCHEDULE_EOD_VALUE + 1
@@ -101,7 +101,7 @@ def __set_value_fn_port_control_default(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     return entity.ac_infinity.update_port_control(
-        port.controller.device_id, port.port_index, entity.entity_description.key, value
+        port.controller.device_id, port.port_index, entity.data_key, value
     )
 
 
@@ -109,7 +109,7 @@ def __set_value_fn_port_setting_default(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     return entity.ac_infinity.update_port_setting(
-        port.controller.device_id, port.port_index, entity.entity_description.key, value
+        port.controller.device_id, port.port_index, entity.data_key, value
     )
 
 

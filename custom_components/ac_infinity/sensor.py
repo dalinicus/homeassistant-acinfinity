@@ -90,7 +90,7 @@ def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property_exists(
-        controller.device_id, entity.entity_description.key
+        controller.device_id, entity.data_key
     )
 
 
@@ -189,7 +189,7 @@ def __get_value_fn_sensor_value_temperature(
 
 def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_property_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -197,7 +197,7 @@ def __get_value_fn_port_property_default(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     return entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
@@ -207,7 +207,7 @@ def __get_value_fn_floating_point_as_int(
     # value stored as an integer, but represents a 2 digit precision float
     return (
         entity.ac_infinity.get_controller_property(
-            controller.device_id, entity.entity_description.key, 0
+            controller.device_id, entity.data_key, 0
         )
         / 100
     )
@@ -448,7 +448,13 @@ class ACInfinitySensorSensorEntity(ACInfinitySensorEntity, SensorEntity):
         description: ACInfinitySensorSensorEntityDescription,
         sensor: ACInfinitySensor,
     ) -> None:
-        super().__init__(coordinator, sensor, description.suitable_fn, Platform.SENSOR)
+        super().__init__(
+            coordinator,
+            sensor,
+            description.suitable_fn,
+            description.key,
+            Platform.SENSOR,
+        )
         self.entity_description = description
 
     @property

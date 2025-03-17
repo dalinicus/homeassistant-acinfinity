@@ -65,7 +65,7 @@ class ACInfinityPortTimeEntityDescription(
 
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -74,7 +74,7 @@ def __get_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort):
         entity.ac_infinity.get_port_control(
             port.controller.device_id,
             port.port_index,
-            entity.entity_description.key,
+            entity.data_key,
             None,
         )
     )
@@ -84,7 +84,7 @@ def __set_value_fn_time(entity: ACInfinityEntity, port: ACInfinityPort, value: t
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         __get_total_minutes_from_time(value),
     )
 

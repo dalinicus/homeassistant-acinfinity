@@ -59,13 +59,13 @@ def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property_exists(
-        controller.device_id, entity.entity_description.key
+        controller.device_id, entity.data_key
     )
 
 
 def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_property_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -73,7 +73,7 @@ def __get_value_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property(
-        controller.device_id, entity.entity_description.key, False
+        controller.device_id, entity.data_key, False
     )
 
 
@@ -81,7 +81,7 @@ def __get_value_fn_port_property_default(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     return entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, entity.entity_description.key, False
+        port.controller.device_id, port.port_index, entity.data_key, False
     )
 
 

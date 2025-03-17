@@ -858,13 +858,23 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
 
 class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
     _attr_has_entity_name = True
+    coordinator: ACInfinityDataUpdateCoordinator
+    translation_key: str
 
-    def __init__(self, coordinator: ACInfinityDataUpdateCoordinator, platform: str):
+    def __init__(
+        self, coordinator: ACInfinityDataUpdateCoordinator, platform: str, data_key: str
+    ):
         super().__init__(coordinator)
         self._platform_name = platform
+        self._data_key = data_key
 
     def __repr__(self):
         return f"<ACInfinityEntity unique_id={self.unique_id}>"
+
+    @property
+    def data_key(self) -> str:
+        """Returns the underlying ac_infinity api data key used to track the data"""
+        return self._data_key
 
     @property
     def ac_infinity(self) -> ACInfinityService:
@@ -900,15 +910,14 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         data_key: str,
         platform: str,
     ):
-        super().__init__(coordinator, platform)
+        super().__init__(coordinator, platform, data_key)
         self._controller = controller
-        self._data_key = data_key
         self._suitable_fn = suitable_fn
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{DOMAIN}_{self._controller.mac_addr}_{self._data_key}"
+        return f"{DOMAIN}_{self._controller.mac_addr}_{self.data_key}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -930,16 +939,17 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         coordinator: ACInfinityDataUpdateCoordinator,
         sensor: ACInfinitySensor,
         suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
+        data_key: str,
         platform: str,
     ):
-        super().__init__(coordinator, platform)
+        super().__init__(coordinator, platform, data_key)
         self._sensor = sensor
         self._suitable_fn = suitable_fn
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{DOMAIN}_{self._sensor.controller.mac_addr}_sensor_{self._sensor.sensor_port}_{self.entity_description.key}"
+        return f"{DOMAIN}_{self._sensor.controller.mac_addr}_sensor_{self._sensor.sensor_port}_{self.data_key}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -964,15 +974,14 @@ class ACInfinityPortEntity(ACInfinityEntity):
         data_key: str,
         platform: str,
     ):
-        super().__init__(coordinator, platform)
+        super().__init__(coordinator, platform, data_key)
         self._port = port
         self._suitable_fn = suitable_fn
-        self._data_key = data_key
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{DOMAIN}_{self._port.controller.mac_addr}_port_{self._port.port_index}_{self._data_key}"
+        return f"{DOMAIN}_{self._port.controller.mac_addr}_port_{self._port.port_index}_{self.data_key}"
 
     @property
     def device_info(self) -> DeviceInfo:

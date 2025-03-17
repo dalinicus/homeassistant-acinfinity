@@ -71,7 +71,7 @@ def __suitable_fn_controller_setting_temp_impl(
 
     if temp_unit == desired_temp_unit:
         return entity.ac_infinity.get_controller_setting_exists(
-            controller.device_id, entity.entity_description.key
+            controller.device_id, entity.data_key
         )
     return False
 
@@ -92,19 +92,19 @@ def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_setting_exists(
-        controller.device_id, entity.entity_description.key
+        controller.device_id, entity.data_key
     )
 
 
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -117,7 +117,7 @@ def __suitable_fn_port_setting_temp_impl(
 
     if temp_unit == desired_temp_unit:
         return entity.ac_infinity.get_port_setting_exists(
-            port.controller.device_id, port.port_index, entity.entity_description.key
+            port.controller.device_id, port.port_index, entity.data_key
         )
     return False
 
@@ -134,19 +134,19 @@ def __get_value_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_setting(
-        controller.device_id, entity.entity_description.key, 0
+        controller.device_id, entity.data_key, 0
     )
 
 
 def __get_value_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
 def __get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
@@ -186,7 +186,7 @@ def __get_value_fn_timer_duration(entity: ACInfinityEntity, port: ACInfinityPort
     # value configured as minutes but stored as seconds
     return (
         entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, entity.entity_description.key, 0
+            port.controller.device_id, port.port_index, entity.data_key, 0
         )
         / 60
     )
@@ -196,7 +196,7 @@ def __get_value_fn_vpd_control(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return (
         entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, entity.entity_description.key, 0
+            port.controller.device_id, port.port_index, entity.data_key, 0
         )
         / 10
     )
@@ -206,7 +206,7 @@ def __get_value_fn_vpd_setting(entity: ACInfinityEntity, port: ACInfinityPort):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
     return (
         entity.ac_infinity.get_port_setting(
-            port.controller.device_id, port.port_index, entity.entity_description.key, 0
+            port.controller.device_id, port.port_index, entity.data_key, 0
         )
         / 10
     )
@@ -254,7 +254,7 @@ def __set_value_fn_port_setting_default(
     return entity.ac_infinity.update_port_setting(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         int(value or 0),
     )
 
@@ -265,7 +265,7 @@ def __set_value_fn_port_control_default(
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         int(value or 0),
     )
 
@@ -274,7 +274,7 @@ def __set_value_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController, value: float
 ):
     return entity.ac_infinity.update_controller_setting(
-        controller.device_id, entity.entity_description.key, int(value or 0)
+        controller.device_id, entity.data_key, int(value or 0)
     )
 
 
@@ -340,7 +340,7 @@ def __set_value_fn_timer_duration(
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         int((value or 0) * 60),
     )
 
@@ -352,7 +352,7 @@ def __set_value_fn_vpd_control(
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         int((value or 0) * 10),
     )
 
@@ -364,7 +364,7 @@ def __set_value_fn_vpd_setting(
     return entity.ac_infinity.update_port_setting(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         int((value or 0) * 10),
     )
 

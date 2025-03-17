@@ -83,19 +83,19 @@ def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_setting_exists(
-        controller.device_id, entity.entity_description.key
+        controller.device_id, entity.data_key
     )
 
 
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -104,7 +104,7 @@ def __get_value_fn_outside_climate(
 ):
     return OUTSIDE_CLIMATE_OPTIONS[
         entity.ac_infinity.get_controller_setting(
-            controller.device_id, entity.entity_description.key, 0
+            controller.device_id, entity.data_key, 0
         )
     ]
 
@@ -112,7 +112,7 @@ def __get_value_fn_outside_climate(
 def __get_value_fn_setting_mode(entity: ACInfinityEntity, port: ACInfinityPort):
     return SETTINGS_MODE_OPTIONS[
         entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, entity.entity_description.key, 0
+            port.controller.device_id, port.port_index, entity.data_key, 0
         )
     ]
 
@@ -156,7 +156,7 @@ def __set_value_fn_outside_climate(
 ):
     return entity.ac_infinity.update_controller_setting(
         controller.device_id,
-        entity.entity_description.key,
+        entity.data_key,
         OUTSIDE_CLIMATE_OPTIONS.index(value),
     )
 
@@ -167,7 +167,7 @@ def __set_value_fn_setting_mode(
     return entity.ac_infinity.update_port_control(
         port.controller.device_id,
         port.port_index,
-        entity.entity_description.key,
+        entity.data_key,
         SETTINGS_MODE_OPTIONS.index(value),
     )
 

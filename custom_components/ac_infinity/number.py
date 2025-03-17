@@ -255,7 +255,7 @@ def __set_value_fn_port_setting_default(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
-        int(value),
+        int(value or 0),
     )
 
 
@@ -266,7 +266,7 @@ def __set_value_fn_port_control_default(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
-        int(value),
+        int(value or 0),
     )
 
 
@@ -274,7 +274,7 @@ def __set_value_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController, value: float
 ):
     return entity.ac_infinity.update_controller_setting(
-        controller.device_id, entity.entity_description.key, int(value)
+        controller.device_id, entity.entity_description.key, int(value or 0)
     )
 
 
@@ -296,13 +296,13 @@ def __set_value_fn_cal_temp(
         controller.device_id,
         (
             [
-                (AdvancedSettingsKey.CALIBRATE_TEMP, int(value)),
+                (AdvancedSettingsKey.CALIBRATE_TEMP, int(value or 0)),
                 (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
             ]
             if temp_unit > 0
             else [
                 (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
-                (AdvancedSettingsKey.CALIBRATE_TEMP_F, int(value)),
+                (AdvancedSettingsKey.CALIBRATE_TEMP_F, int(value or 0)),
             ]
         ),
     )
@@ -329,7 +329,7 @@ def __set_value_fn_vpd_leaf_temp_offset(
             if temp_unit > 0
             else AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET_F
         ),
-        int(value),
+        int(value or 0),
     )
 
 
@@ -341,7 +341,7 @@ def __set_value_fn_timer_duration(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
-        int(value) * 60,
+        int((value or 0) * 60),
     )
 
 
@@ -353,7 +353,7 @@ def __set_value_fn_vpd_control(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
-        int(value) * 10,
+        int((value or 0) * 10),
     )
 
 
@@ -365,7 +365,7 @@ def __set_value_fn_vpd_setting(
         port.controller.device_id,
         port.port_index,
         entity.entity_description.key,
-        int(value) * 10,
+        int((value or 0) * 10),
     )
 
 
@@ -377,7 +377,7 @@ def __set_value_fn_temp_auto_low(
         port.port_index,
         [
             # value is received from HA as C
-            (PortControlKey.AUTO_TEMP_LOW_TRIGGER, int(value)),
+            (PortControlKey.AUTO_TEMP_LOW_TRIGGER, int(value or 0)),
             # degrees F must be calculated and set in addition to C
             (PortControlKey.AUTO_TEMP_LOW_TRIGGER_F, int(round((value * 1.8) + 32, 0))),
         ],
@@ -392,7 +392,7 @@ def __set_value_fn_temp_auto_high(
         port.port_index,
         [
             # value is received from HA as C
-            (PortControlKey.AUTO_TEMP_HIGH_TRIGGER, int(value)),
+            (PortControlKey.AUTO_TEMP_HIGH_TRIGGER, int(value or 0)),
             # degrees F must be calculated and set in addition to C
             (
                 PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
@@ -410,7 +410,7 @@ def __set_value_fn_target_temp(
         port.port_index,
         [
             # value is received from HA as C
-            (PortControlKey.AUTO_TARGET_TEMP, int(value)),
+            (PortControlKey.AUTO_TARGET_TEMP, int(value or 0)),
             # degrees F must be calculated and set in addition to C
             (PortControlKey.AUTO_TARGET_TEMP_F, int(round((value * 1.8) + 32, 0))),
         ],
@@ -434,16 +434,16 @@ def __set_value_fn_dynamic_transition_temp(
         port.port_index,
         (
             [
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, int(value)),
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value) * 2),
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, int(value or 0)),
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value or 0) * 2),
             ]
             if temp_unit > 0
             else [
                 (
                     AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
-                    math.floor(int(value) / 2),
+                    math.floor(int(value or 0) / 2),
                 ),
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value)),
+                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value or 0)),
             ]
         ),
     )
@@ -466,13 +466,16 @@ def __set_value_fn_dynamic_buffer_temp(
         port.port_index,
         (
             [
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, int(value)),
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value) * 2),
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, int(value or 0)),
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value or 0) * 2),
             ]
             if temp_unit > 0
             else [
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, math.floor(int(value) / 2)),
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value)),
+                (
+                    AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
+                    math.floor(int(value or 0) / 2),
+                ),
+                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value or 0)),
             ]
         ),
     )

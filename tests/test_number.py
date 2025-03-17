@@ -898,7 +898,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, value
+            str(DEVICE_ID), port, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()

@@ -13,7 +13,7 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity.config_flow import OptionsFlow
+from custom_components.ac_infinity.config_flow import ConfigFlow, OptionsFlow
 from custom_components.ac_infinity.const import DOMAIN
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
@@ -202,15 +202,18 @@ def setup_entity_mocks(mocker: MockFixture):
 
     async_call = mocker.patch.object(ServiceRegistry, "async_call")
 
+    hass.config_entries = MagicMock()
+    hass.config_entries.async_update_entry = update_entry
+    hass.services = MagicMock()
+    hass.services.async_call = async_call
+
+    config_flow = ConfigFlow()
+    config_flow.hass = hass
+
     options_flow = OptionsFlow()
     mocker.patch.object(OptionsFlow, "config_entry")
-
     options_flow.hass = hass
     options_flow.config_entry = config_entry
-    options_flow.hass.config_entries = MagicMock()
-    options_flow.hass.config_entries.async_update_entry = update_entry
-    options_flow.hass.services = MagicMock()
-    options_flow.hass.services.async_call = async_call
 
     return ACTestObjects(
         hass,
@@ -226,6 +229,7 @@ def setup_entity_mocks(mocker: MockFixture):
         write_ha_mock,
         coordinator,
         refresh_mock,
+        config_flow,
         options_flow,
     )
 
@@ -246,6 +250,7 @@ class ACTestObjects:
         write_ha_mock,
         coordinator,
         refresh_mock,
+        config_flow,
         options_flow,
     ) -> None:
         self.hass: HomeAssistant = hass
@@ -261,4 +266,5 @@ class ACTestObjects:
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
         self.refresh_mock: MockType = refresh_mock
+        self.config_flow: ConfigFlow = config_flow
         self.options_flow: OptionsFlow = options_flow

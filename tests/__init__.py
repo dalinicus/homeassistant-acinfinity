@@ -2,6 +2,7 @@
 
 import asyncio
 from asyncio import Future
+from types import MappingProxyType
 from typing import Union
 from unittest.mock import AsyncMock, MagicMock, NonCallableMagicMock
 
@@ -9,9 +10,10 @@ from homeassistant.config_entries import ConfigEntries, ConfigEntry
 from homeassistant.const import CONF_EMAIL
 from homeassistant.core import HomeAssistant, ServiceRegistry
 from homeassistant.helpers.entity import Entity
+from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
-from custom_components.ac_infinity.config_flow import OptionsFlow
+from custom_components.ac_infinity.config_flow import ConfigFlow, OptionsFlow
 from custom_components.ac_infinity.const import DOMAIN
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
@@ -154,7 +156,21 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._port_properties = PORT_PROPERTIES_DATA
     ac_infinity._port_controls = PORT_CONTROLS_DATA
 
-    coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
+    config_entry = ConfigEntry(
+        entry_id=ENTRY_ID,
+        data={CONF_EMAIL: ENTRY_ID},
+        domain=DOMAIN,
+        minor_version=0,
+        source="",
+        title="",
+        version=0,
+        unique_id=None,
+        options=None,
+        discovery_keys=MappingProxyType({}),
+        subentries_data=None,
+    )
+
+    coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
 
     port_control_set_mock = mocker.patch.object(
         ac_infinity, "update_port_control", return_value=future
@@ -178,19 +194,7 @@ def setup_entity_mocks(mocker: MockFixture):
         coordinator, "async_request_refresh", return_value=future
     )
 
-    hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
-
-    config_entry = ConfigEntry(
-        entry_id=ENTRY_ID,
-        data={CONF_EMAIL: ENTRY_ID},
-        domain=DOMAIN,
-        minor_version=0,
-        source="",
-        title="",
-        version=0,
-        unique_id=None,
-        options=None,
-    )
+    hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})
 
     entities = EntitiesTracker()
 
@@ -198,13 +202,18 @@ def setup_entity_mocks(mocker: MockFixture):
 
     async_call = mocker.patch.object(ServiceRegistry, "async_call")
 
-    options_flow = OptionsFlow(config_entry)
-    options_flow.config_entry = config_entry
+    hass.config_entries = MagicMock()
+    hass.config_entries.async_update_entry = update_entry
+    hass.services = MagicMock()
+    hass.services.async_call = async_call
+
+    config_flow = ConfigFlow()
+    config_flow.hass = hass
+
+    options_flow = OptionsFlow()
+    mocker.patch.object(OptionsFlow, "config_entry")
     options_flow.hass = hass
-    options_flow.hass.config_entries = MagicMock()
-    options_flow.hass.config_entries.async_update_entry = update_entry
-    options_flow.hass.services = MagicMock()
-    options_flow.hass.services.async_call = async_call
+    options_flow.config_entry = config_entry
 
     return ACTestObjects(
         hass,
@@ -220,6 +229,7 @@ def setup_entity_mocks(mocker: MockFixture):
         write_ha_mock,
         coordinator,
         refresh_mock,
+        config_flow,
         options_flow,
     )
 
@@ -240,6 +250,7 @@ class ACTestObjects:
         write_ha_mock,
         coordinator,
         refresh_mock,
+        config_flow,
         options_flow,
     ) -> None:
         self.hass: HomeAssistant = hass
@@ -255,4 +266,5 @@ class ACTestObjects:
         self.write_ha_mock: MockType = write_ha_mock
         self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
         self.refresh_mock: MockType = refresh_mock
+        self.config_flow: ConfigFlow = config_flow
         self.options_flow: OptionsFlow = options_flow

@@ -603,7 +603,11 @@ DEVICE_INFO_LIST_ALL_PAYLOAD = {
     "code": 200,
     "data": DEVICE_INFO_LIST_ALL,
 }
-GET_DEV_MODE_SETTING_LIST_PAYLOAD = {"msg": "操作成功", "code": 200, "data": PORT_CONTROLS}
+GET_DEV_MODE_SETTING_LIST_PAYLOAD = {
+    "msg": "操作成功",
+    "code": 200,
+    "data": PORT_CONTROLS,
+}
 GET_DEV_SETTINGS_PAYLOAD = {"msg": "操作成功", "code": 200, "data": DEVICE_SETTINGS}
 UPDATE_SUCCESS_PAYLOAD = {"msg": "操作成功", "code": 200}
 

@@ -1,4 +1,5 @@
 """Constants for the AC Infinity integration."""
+
 from homeassistant.const import Platform
 
 MANUFACTURER = "AC Infinity"

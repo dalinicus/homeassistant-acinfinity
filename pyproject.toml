@@ -1,5 +1,5 @@
 [tool.ruff]
-select = [
+lint.select = [
     "B002", # Python does not support the unary prefix increment
     "B007", # Loop control variable {name} not used within loop body
     "B014", # Exception handler with duplicate exception
@@ -16,7 +16,7 @@ select = [
     "N804", # First argument of a class method should be named cls
     "N805", # First argument of a method should be named self
     "N815", # Variable {name} in class scope should not be mixedCase
-    "PGH001", # No builtin eval() allowed
+    "S307", # No builtin eval() allowed
     "PGH004",  # Use specific rule codes when using noqa
     "PLC0414", # Useless import alias. Import alias does not rename original package.
     "PLC", # pylint
@@ -37,7 +37,6 @@ select = [
     "S317",  # suspicious-xml-sax-usage
     "S318",  # suspicious-xml-mini-dom-usage
     "S319",  # suspicious-xml-pull-dom-usage
-    "S320",  # suspicious-xmle-tree-usage
     "S601",  # paramiko-call
     "S602",  # subprocess-popen-with-shell-equals-true
     "S604",  # call-with-shell-equals-true
@@ -55,13 +54,13 @@ select = [
     "T20",  # flake8-print
     "TID251", # Banned imports
     "TRY004", # Prefer TypeError exception for invalid type
-    "TRY200", # Use raise from to specify exception cause
-    "TRY302", # Remove exception handler; error is immediately re-raised
+    "B904", # Use raise from to specify exception cause
+    "TRY203", # Remove exception handler; error is immediately re-raised
     "UP",  # pyupgrade
     "W",  # pycodestyle
 ]
 
-ignore = [
+lint.ignore = [
     "D202",  # No blank lines allowed after function docstring
     "D203",  # 1 blank line required before class docstring
     "D213",  # Multi-line docstring summary should start at the second line
@@ -96,3 +95,10 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.codespell]
 skip = "custom_components/ac_infinity/translations/*"
+
+[tool.mypy]
+python_version = "3.13"
+explicit_package_bases = true
+ignore_missing_imports = true
+check_untyped_defs = true
+files = "custom_components,tests"

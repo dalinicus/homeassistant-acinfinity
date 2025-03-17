@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.switch import (
     SwitchDeviceClass,
@@ -31,7 +32,7 @@ from custom_components.ac_infinity.core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySwitchOnOffValuesMixin:
     """Adds on_value and off_value to track what values the AC Infinity API considers
     onn and off for the field the entity is responsible for
@@ -41,7 +42,7 @@ class ACInfinitySwitchOnOffValuesMixin:
     off_value: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
     """Describes ACInfinity Switch Entities."""
 
@@ -51,7 +52,7 @@ class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
     translation_key: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortSwitchEntityDescription(
     ACInfinitySwitchEntityDescription,
     ACInfinityPortReadWriteMixin,
@@ -62,25 +63,25 @@ class ACInfinityPortSwitchEntityDescription(
 
 def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
 def __get_value_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_control(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
 def __get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, entity.entity_description.key, 0
+        port.controller.device_id, port.port_index, entity.data_key, 0
     )
 
 
@@ -89,7 +90,7 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPo
         entity.ac_infinity.get_port_control(
             port.controller.device_id,
             port.port_index,
-            entity.entity_description.key,
+            entity.data_key,
             SCHEDULE_DISABLED_VALUE,
         )
         < SCHEDULE_EOD_VALUE + 1
@@ -100,7 +101,7 @@ def __set_value_fn_port_control_default(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     return entity.ac_infinity.update_port_control(
-        port.controller.device_id, port.port_index, entity.entity_description.key, value
+        port.controller.device_id, port.port_index, entity.data_key, value
     )
 
 
@@ -108,7 +109,7 @@ def __set_value_fn_port_setting_default(
     entity: ACInfinityEntity, port: ACInfinityPort, value: int
 ):
     return entity.ac_infinity.update_port_setting(
-        port.controller.device_id, port.port_index, entity.entity_description.key, value
+        port.controller.device_id, port.port_index, entity.data_key, value
     )
 
 
@@ -266,7 +267,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
     def is_on(self) -> bool | None:
         return self.entity_description.get_value_fn(self, self.port)
 
-    async def async_turn_on(self) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "On"', self.unique_id
         )
@@ -275,7 +276,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
         )
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "Off"', self.unique_id
         )

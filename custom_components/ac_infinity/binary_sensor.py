@@ -31,26 +31,26 @@ from .core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes ACInfinity Binary Sensor Entities."""
 
     key: str
-    device_class: str | None
+    device_class: BinarySensorDeviceClass | None
     icon: str | None
     translation_key: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityControllerBinarySensorEntityDescription(
-    ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin
+    ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin[bool]
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortBinarySensorEntityDescription(
-    ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
+    ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin[bool]
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
 
@@ -59,13 +59,13 @@ def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property_exists(
-        controller.device_id, entity.entity_description.key
+        controller.device_id, entity.data_key
     )
 
 
 def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
     return entity.ac_infinity.get_port_property_exists(
-        port.controller.device_id, port.port_index, entity.entity_description.key
+        port.controller.device_id, port.port_index, entity.data_key
     )
 
 
@@ -73,7 +73,7 @@ def __get_value_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property(
-        controller.device_id, entity.entity_description.key, False
+        controller.device_id, entity.data_key, False
     )
 
 
@@ -81,7 +81,7 @@ def __get_value_fn_port_property_default(
     entity: ACInfinityEntity, port: ACInfinityPort
 ):
     return entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, entity.entity_description.key, False
+        port.controller.device_id, port.port_index, entity.data_key, False
     )
 
 
@@ -184,17 +184,17 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
-        for description in CONTROLLER_DESCRIPTIONS:
-            entity = ACInfinityControllerBinarySensorEntity(
-                coordinator, description, controller
+        for controller_description in CONTROLLER_DESCRIPTIONS:
+            controller_entity = ACInfinityControllerBinarySensorEntity(
+                coordinator, controller_description, controller
             )
-            entities.append_if_suitable(entity)
+            entities.append_if_suitable(controller_entity)
 
         for port in controller.ports:
-            for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortBinarySensorEntity(
-                    coordinator, description, port
+            for port_description in PORT_DESCRIPTIONS:
+                port_entity = ACInfinityPortBinarySensorEntity(
+                    coordinator, port_description, port
                 )
-                entities.append_if_suitable(entity)
+                entities.append_if_suitable(port_entity)
 
     add_entities_callback(entities)

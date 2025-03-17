@@ -1,3 +1,6 @@
+import asyncio
+import sys
+
 import pytest
 from aioresponses import aioresponses
 
@@ -30,6 +33,9 @@ from tests.data_models import (
     UPDATE_SUCCESS_PAYLOAD,
     USER_ID,
 )
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 # noinspection SpellCheckingInspection

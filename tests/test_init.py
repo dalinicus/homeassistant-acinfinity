@@ -1,12 +1,14 @@
 import asyncio
 from asyncio import Future
+from types import MappingProxyType
 from unittest.mock import AsyncMock
 
 import pytest
-from homeassistant.config_entries import ConfigEntries, ConfigEntry
+from homeassistant.config_entries import ConfigEntries, ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity import (
@@ -52,11 +54,14 @@ def setup(mocker: MockFixture):
         version=0,
         options=None,
         unique_id=None,
+        discovery_keys=MappingProxyType({}),
+        state=ConfigEntryState.SETUP_IN_PROGRESS,
+        subentries_data=None,
     )
 
     hass = HomeAssistant("/path")
     hass.config_entries = ConfigEntries(hass, {})
-    hass.data = {}
+    hass.data = HassDict({})
 
     return hass, config_entry
 
@@ -66,7 +71,6 @@ class TestInit:
     async def test_async_setup_entry_ac_infinity_init(self, setup):
         """when setting up, ac_infinity should be initialized and assigned to the hass object"""
         (hass, config_entry) = setup
-
         await async_setup_entry(hass, config_entry)
 
         assert hass.data[DOMAIN][ENTRY_ID] is not None
@@ -89,7 +93,7 @@ class TestInit:
         """When unloading, all platforms should be unloaded"""
         hass: HomeAssistant
         (hass, config_entry) = setup
-        hass.data = {DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}}
+        hass.data = HassDict({DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}})
         result = await async_unload_entry(hass, config_entry)
 
         assert result
@@ -100,10 +104,12 @@ class TestInit:
         )
 
     async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
-        (hass, _) = setup
+        (hass, config_entry) = setup
 
         ac_infinity = ACInfinityService(EMAIL, PASSWORD)
         mocker.patch.object(ac_infinity, "refresh", side_effect=Exception("unit test"))
-        coordinator = ACInfinityDataUpdateCoordinator(hass, ac_infinity, 10)
+        coordinator = ACInfinityDataUpdateCoordinator(
+            hass, config_entry, ac_infinity, 10
+        )
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()

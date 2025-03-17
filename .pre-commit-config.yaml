@@ -1,7 +1,7 @@
 exclude: ^.devcontainer/devcontainer.json$
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
       - id: check-json
@@ -10,34 +10,43 @@ repos:
       - id: detect-private-key
       - id: fix-byte-order-marker
 
+  - repo: local
+    hooks:
+      - id: update-requirements
+        name: update python packages
+        entry: pip install --upgrade -r requirements.txt
+        language: system
+        pass_filenames: false
+        types: [python]
+
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 25.1.0
     hooks:
       - id: black
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.285
+    rev: v0.11.0
     hooks:
       - id: ruff
         args:
+        - --config=pyproject.toml
         - --fix
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.4.1
     hooks:
       - id: codespell
         args:
           - --ignore-words-list=hass
           - --write-changes
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.5.1"
+  - repo: local
     hooks:
-    - id: mypy
-      args:
-      - --explicit-package-bases
-      - --ignore-missing-imports
-      - --check-untyped-defs
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: python
+        types: [python]
 
   - repo: local
     hooks:

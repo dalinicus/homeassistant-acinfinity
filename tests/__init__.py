@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntries, ConfigEntry
 from homeassistant.const import CONF_EMAIL
 from homeassistant.core import HomeAssistant, ServiceRegistry
 from homeassistant.helpers.entity import Entity
+from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.config_flow import OptionsFlow
@@ -193,7 +194,7 @@ def setup_entity_mocks(mocker: MockFixture):
         coordinator, "async_request_refresh", return_value=future
     )
 
-    hass.data = {DOMAIN: {ENTRY_ID: coordinator}}
+    hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})
 
     entities = EntitiesTracker()
 

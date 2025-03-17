@@ -33,7 +33,7 @@ from custom_components.ac_infinity.core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityNumberEntityDescription(NumberEntityDescription):
     """Describes ACInfinity Number Entities"""
 
@@ -48,16 +48,16 @@ class ACInfinityNumberEntityDescription(NumberEntityDescription):
     native_unit_of_measurement: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityControllerNumberEntityDescription(
-    ACInfinityNumberEntityDescription, ACInfinityControllerReadWriteMixin
+    ACInfinityNumberEntityDescription, ACInfinityControllerReadWriteMixin[float]
 ):
     """Describes ACInfinity Number Controller Entities."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortNumberEntityDescription(
-    ACInfinityNumberEntityDescription, ACInfinityPortReadWriteMixin
+    ACInfinityNumberEntityDescription, ACInfinityPortReadWriteMixin[float]
 ):
     """Describes ACInfinity Number Port Entities."""
 

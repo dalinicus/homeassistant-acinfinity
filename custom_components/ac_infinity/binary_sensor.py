@@ -31,26 +31,26 @@ from .core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes ACInfinity Binary Sensor Entities."""
 
     key: str
-    device_class: str | None
+    device_class: BinarySensorDeviceClass | None
     icon: str | None
     translation_key: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityControllerBinarySensorEntityDescription(
-    ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin
+    ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin[bool]
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortBinarySensorEntityDescription(
-    ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin
+    ACInfinityBinarySensorEntityDescription, ACInfinityPortReadOnlyMixin[bool]
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
 
@@ -184,17 +184,17 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
-        for description in CONTROLLER_DESCRIPTIONS:
-            entity = ACInfinityControllerBinarySensorEntity(
-                coordinator, description, controller
+        for controller_description in CONTROLLER_DESCRIPTIONS:
+            controller_entity = ACInfinityControllerBinarySensorEntity(
+                coordinator, controller_description, controller
             )
-            entities.append_if_suitable(entity)
+            entities.append_if_suitable(controller_entity)
 
         for port in controller.ports:
-            for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortBinarySensorEntity(
-                    coordinator, description, port
+            for port_description in PORT_DESCRIPTIONS:
+                port_entity = ACInfinityPortBinarySensorEntity(
+                    coordinator, port_description, port
                 )
-                entities.append_if_suitable(entity)
+                entities.append_if_suitable(port_entity)
 
     add_entities_callback(entities)

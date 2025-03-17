@@ -989,52 +989,52 @@ class ACInfinityPortEntity(ACInfinityEntity):
         return self._suitable_fn(self, self.port)
 
 
-@dataclass
-class ACInfinityControllerReadOnlyMixin:
+@dataclass(frozen=True)
+class ACInfinityControllerReadOnlyMixin[T]:
     """Mixin for retrieving values for controller level sensors"""
 
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool]
     """Input data object and a device id; output if suitable"""
-    get_value_fn: Callable[[ACInfinityEntity, ACInfinityController], StateType]
+    get_value_fn: Callable[[ACInfinityEntity, ACInfinityController], T]
     """Input data object and a device id; output the value."""
 
 
-@dataclass
-class ACInfinityControllerReadWriteMixin(ACInfinityControllerReadOnlyMixin):
+@dataclass(frozen=True)
+class ACInfinityControllerReadWriteMixin[T](ACInfinityControllerReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for controller level settings"""
 
     set_value_fn: Callable[
-        [ACInfinityEntity, ACInfinityController, StateType], Awaitable[None]
+        [ACInfinityEntity, ACInfinityController, T], Awaitable[None]
     ]
     """Input data object, device id, port number, and desired value."""
 
 
 @dataclass
-class ACInfinitySensorReadOnlyMixin:
+class ACInfinitySensorReadOnlyMixin[T]:
     """Mixin for retrieving values for controller level sensors"""
 
     suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool]
     """Input data object and a device id; output if suitable"""
-    get_value_fn: Callable[[ACInfinityEntity, ACInfinitySensor], StateType]
+    get_value_fn: Callable[[ACInfinityEntity, ACInfinitySensor], T]
     """Input data object and a device id; output the value."""
 
 
-@dataclass
-class ACInfinityPortReadOnlyMixin:
+@dataclass(frozen=True)
+class ACInfinityPortReadOnlyMixin[T]:
     """Mixin for retrieving values for port device level sensors"""
 
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool]
     """Input data object, device id, and port number; output if suitable."""
-    get_value_fn: Callable[[ACInfinityEntity, ACInfinityPort], StateType]
+    get_value_fn: Callable[[ACInfinityEntity, ACInfinityPort], T]
     """Input data object, device id, and port number; output the value."""
 
 
-@dataclass
-class ACInfinityPortReadWriteMixin(ACInfinityPortReadOnlyMixin):
+@dataclass(frozen=True)
+class ACInfinityPortReadWriteMixin[T](ACInfinityPortReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for port device level settings"""
 
     set_value_fn: Callable[
-        [ACInfinityEntity, ACInfinityPort, StateType], Awaitable[None]
+        [ACInfinityEntity, ACInfinityPort, T], Awaitable[None]
     ]
     """Input data object, device id, port number, and desired value."""
 

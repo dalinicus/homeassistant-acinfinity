@@ -25,7 +25,7 @@ repos:
       - id: black
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.10.0
+    rev: v0.11.0
     hooks:
       - id: ruff
         args:
@@ -40,14 +40,13 @@ repos:
           - --ignore-words-list=hass
           - --write-changes
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.15.0"
+  - repo: local
     hooks:
-    - id: mypy
-      args:
-      - --explicit-package-bases
-      - --ignore-missing-imports
-      - --check-untyped-defs
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: python
+        types: [python]
 
   - repo: local
     hooks:

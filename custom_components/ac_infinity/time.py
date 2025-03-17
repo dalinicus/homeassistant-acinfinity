@@ -47,7 +47,7 @@ def __get_total_minutes_from_time(source_time: time):
     )
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityTimeEntityDescription(TimeEntityDescription):
     """Describes ACInfinity Time Entities."""
 
@@ -56,7 +56,7 @@ class ACInfinityTimeEntityDescription(TimeEntityDescription):
     translation_key: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortTimeEntityDescription(
     ACInfinityTimeEntityDescription, ACInfinityPortReadWriteMixin
 ):

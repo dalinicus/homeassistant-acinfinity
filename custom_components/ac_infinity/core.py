@@ -9,7 +9,6 @@ from typing import Any, Callable
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -1003,13 +1002,11 @@ class ACInfinityControllerReadOnlyMixin[T]:
 class ACInfinityControllerReadWriteMixin[T](ACInfinityControllerReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for controller level settings"""
 
-    set_value_fn: Callable[
-        [ACInfinityEntity, ACInfinityController, T], Awaitable[None]
-    ]
+    set_value_fn: Callable[[ACInfinityEntity, ACInfinityController, T], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySensorReadOnlyMixin[T]:
     """Mixin for retrieving values for controller level sensors"""
 
@@ -1033,9 +1030,7 @@ class ACInfinityPortReadOnlyMixin[T]:
 class ACInfinityPortReadWriteMixin[T](ACInfinityPortReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for port device level settings"""
 
-    set_value_fn: Callable[
-        [ACInfinityEntity, ACInfinityPort, T], Awaitable[None]
-    ]
+    set_value_fn: Callable[[ACInfinityEntity, ACInfinityPort, T], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
 
 

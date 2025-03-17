@@ -435,7 +435,7 @@ class TestACInfinity:
 
         device = result[0]
         device_info = device._device_info
-        assert (DOMAIN, str(DEVICE_ID)) in device_info.get("identifiers")
+        assert (DOMAIN, str(DEVICE_ID)) in (device_info.get("identifiers") or {})
         assert device_info.get("hw_version") == "1.1"
         assert device_info.get("sw_version") == "3.2.25"
         assert device_info.get("name") == DEVICE_NAME

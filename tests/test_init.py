@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntries, ConfigEntry, ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity import (
@@ -60,7 +61,7 @@ def setup(mocker: MockFixture):
 
     hass = HomeAssistant("/path")
     hass.config_entries = ConfigEntries(hass, {})
-    hass.data = {}
+    hass.data = HassDict({})
 
     return hass, config_entry
 
@@ -92,7 +93,7 @@ class TestInit:
         """When unloading, all platforms should be unloaded"""
         hass: HomeAssistant
         (hass, config_entry) = setup
-        hass.data = {DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}}
+        hass.data = HassDict({DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}})
         result = await async_unload_entry(hass, config_entry)
 
         assert result

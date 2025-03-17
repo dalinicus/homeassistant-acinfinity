@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.switch import (
     SwitchDeviceClass,
@@ -31,7 +32,7 @@ from custom_components.ac_infinity.core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySwitchOnOffValuesMixin:
     """Adds on_value and off_value to track what values the AC Infinity API considers
     onn and off for the field the entity is responsible for
@@ -41,7 +42,7 @@ class ACInfinitySwitchOnOffValuesMixin:
     off_value: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
     """Describes ACInfinity Switch Entities."""
 
@@ -51,7 +52,7 @@ class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
     translation_key: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortSwitchEntityDescription(
     ACInfinitySwitchEntityDescription,
     ACInfinityPortReadWriteMixin,
@@ -266,7 +267,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
     def is_on(self) -> bool | None:
         return self.entity_description.get_value_fn(self, self.port)
 
-    async def async_turn_on(self) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "On"', self.unique_id
         )
@@ -275,7 +276,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
         )
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "Off"', self.unique_id
         )

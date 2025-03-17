@@ -11,8 +11,6 @@ from custom_components.ac_infinity.const import (
     PortControlKey,
 )
 from custom_components.ac_infinity.number import (
-    CONTROLLER_DESCRIPTIONS,
-    PORT_DESCRIPTIONS,
     ACInfinityControllerNumberEntity,
     ACInfinityPortNumberEntity,
     async_setup_entry,
@@ -525,12 +523,6 @@ class TestNumbers:
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
-        # reset statistics
-        for description in CONTROLLER_DESCRIPTIONS:
-            if description.key != AdvancedSettingsKey.CALIBRATE_HUMIDITY:
-                description.native_min_value = -20
-                description.native_max_value = 20
-
         entity = await execute_and_get_controller_entity(
             setup, async_setup_entry, setting
         )
@@ -730,11 +722,6 @@ class TestNumbers:
         test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
-
-        # reset statistics
-        for description in PORT_DESCRIPTIONS:
-            if description.key == setting:
-                description.native_max_value = 20
 
         entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting

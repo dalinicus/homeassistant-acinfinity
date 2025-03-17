@@ -52,7 +52,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySensorEntityDescription(SensorEntityDescription):
     """Describes ACInfinity Number Sensor Entities."""
 
@@ -65,21 +65,21 @@ class ACInfinitySensorEntityDescription(SensorEntityDescription):
     suggested_unit_of_measurement: str | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityControllerSensorEntityDescription(
     ACInfinitySensorEntityDescription, ACInfinityControllerReadOnlyMixin
 ):
     """Describes ACInfinity Controller Sensor Entities."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySensorSensorEntityDescription(
     ACInfinitySensorEntityDescription, ACInfinitySensorReadOnlyMixin
 ):
     """Describes ACInfinity Sensor Sensor Entities"""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortSensorEntityDescription(
     ACInfinitySensorEntityDescription, ACInfinityPortReadOnlyMixin
 ):
@@ -486,23 +486,25 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities()
     for controller in controllers:
-        for description in CONTROLLER_DESCRIPTIONS:
+        for controller_description in CONTROLLER_DESCRIPTIONS:
             if controller.device_type == ControllerType.UIS_89_AI_PLUS:
                 # The AI controller has two temperature measurements; controller temperature and probe temperature.
                 # These values are available in the sensor array.  The external values are duplicated on the old fields used by
                 # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here.
                 continue
 
-            entity = ACInfinityControllerSensorEntity(
-                coordinator, description, controller
+            controller_entity = ACInfinityControllerSensorEntity(
+                coordinator, controller_description, controller
             )
-            entities.append_if_suitable(entity)
+            entities.append_if_suitable(controller_entity)
 
         for sensor in controller.sensors:
             if sensor.sensor_type in SENSOR_DESCRIPTIONS:
-                description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
-                entity = ACInfinitySensorSensorEntity(coordinator, description, sensor)
-                entities.append_if_suitable(entity)
+                sensor_description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
+                sensor_entity = ACInfinitySensorSensorEntity(
+                    coordinator, sensor_description, sensor
+                )
+                entities.append_if_suitable(sensor_entity)
             else:
                 logging.warning(
                     'Unknown sensor type "%s". Please fill out an issue at %s with this error message.',
@@ -511,8 +513,10 @@ async def async_setup_entry(
                 )
 
         for port in controller.ports:
-            for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortSensorEntity(coordinator, description, port)
-                entities.append_if_suitable(entity)
+            for port_description in PORT_DESCRIPTIONS:
+                port_entity = ACInfinityPortSensorEntity(
+                    coordinator, port_description, port
+                )
+                entities.append_if_suitable(port_entity)
 
     add_entities_callback(entities)

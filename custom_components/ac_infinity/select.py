@@ -27,7 +27,7 @@ from custom_components.ac_infinity.core import (
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinitySelectEntityDescription(SelectEntityDescription):
     """Describes ACInfinity Select Entities."""
 
@@ -36,14 +36,14 @@ class ACInfinitySelectEntityDescription(SelectEntityDescription):
     options: list[str] | None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityControllerSelectEntityDescription(
     ACInfinitySelectEntityDescription, ACInfinityControllerReadWriteMixin
 ):
     """Describes ACInfinity Select Controller Entities."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class ACInfinityPortSelectEntityDescription(
     ACInfinitySelectEntityDescription, ACInfinityPortReadWriteMixin
 ):
@@ -348,15 +348,17 @@ async def async_setup_entry(
             # controls and settings not yet supported for the AI controller
             continue
 
-        for description in CONTROLLER_DESCRIPTIONS:
-            entity = ACInfinityControllerSelectEntity(
-                coordinator, description, controller
+        for controller_description in CONTROLLER_DESCRIPTIONS:
+            controller_entity = ACInfinityControllerSelectEntity(
+                coordinator, controller_description, controller
             )
-            entities.append_if_suitable(entity)
+            entities.append_if_suitable(controller_entity)
 
         for port in controller.ports:
-            for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortSelectEntity(coordinator, description, port)
-                entities.append_if_suitable(entity)
+            for port_description in PORT_DESCRIPTIONS:
+                port_entity = ACInfinityPortSelectEntity(
+                    coordinator, port_description, port
+                )
+                entities.append_if_suitable(port_entity)
 
     add_entities_callback(entities)

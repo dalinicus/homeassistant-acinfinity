@@ -35,6 +35,7 @@ def setup(mocker: MockFixture):
 
     mocker.patch.object(ACInfinityService, "refresh", return_value=future)
     mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
+    mocker.patch.object(ACInfinityClient, "close", return_value=future)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     mocker.patch.object(ConfigEntries, "__init__", return_value=None)
     mocker.patch.object(

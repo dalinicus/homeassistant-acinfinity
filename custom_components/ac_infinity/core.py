@@ -818,6 +818,11 @@ class ACInfinityService:
                     )
                     raise
 
+    async def close(self) -> None:
+        """Close the client session when done"""
+        if self._client:
+            await self._client.close()
+
 
 class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
     """Handles updating data for the integration"""

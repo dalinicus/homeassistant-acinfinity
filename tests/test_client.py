@@ -41,6 +41,13 @@ if sys.platform == "win32":
 # noinspection SpellCheckingInspection
 @pytest.mark.asyncio
 class TestACInfinityClient:
+    async def test_close_session_nulled(self):
+        """when a client has not been logged in, is_logged_in should return false"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        await client.close()
+
+        assert client._session is None
+
     async def test_is_logged_in_returns_false_if_not_logged_in(self):
         """when a client has not been logged in, is_logged_in should return false"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)

@@ -29,8 +29,8 @@ class ACInfinityClient:
         self._host = host
         self._email = email
         self._password = password
-
         self._user_id: str | None = None
+        self._session: aiohttp.ClientSession | None = None
 
     async def login(self):
         """Call the log in endpoint with the configured email and password, and obtain the user id to use for subsequent calls"""
@@ -217,11 +217,24 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_UPDATE_ADV_SETTING, settings, headers)
 
+    async def close(self) -> None:
+        """Close the session when done"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+        self._session = None
+
+    async def __get_session(self) -> aiohttp.ClientSession:
+        """Get or create the HTTP session"""
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(raise_for_status=False)
+        return self._session
+
     async def __post(self, path, post_data, headers):
         """generically make a post request to the AC Infinity API"""
-        async with async_timeout.timeout(10), aiohttp.ClientSession(
-            raise_for_status=False, headers=headers
-        ) as session, session.post(f"{self._host}{path}", data=post_data) as response:
+        session = await self.__get_session()
+        async with async_timeout.timeout(10), session.post(
+            f"{self._host}{path}", data=post_data, headers=headers
+        ) as response:
             if response.status != 200:
                 raise ACInfinityClientCannotConnect
 

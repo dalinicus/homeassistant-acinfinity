@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from unittest.mock import MagicMock
 
 import pytest
 from aioresponses import aioresponses
@@ -43,7 +44,15 @@ if sys.platform == "win32":
 class TestACInfinityClient:
     async def test_close_session_nulled(self):
         """when a client has not been logged in, is_logged_in should return false"""
+
+        mock_session = MagicMock()
+        mock_session.closed = False
+        mock_session.close = MagicMock(return_value=asyncio.Future())
+        mock_session.close.return_value.set_result(None)
+
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._session = mock_session
+
         await client.close()
 
         assert client._session is None

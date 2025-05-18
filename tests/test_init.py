@@ -1,7 +1,7 @@
 import asyncio
 from asyncio import Future
 from types import MappingProxyType
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from homeassistant.config_entries import ConfigEntries, ConfigEntry, ConfigEntryState
@@ -92,9 +92,12 @@ class TestInit:
 
     async def test_async_unload_entry(self, setup):
         """When unloading, all platforms should be unloaded"""
+        coordinator = MagicMock()
+        coordinator.ac_infinity.close = AsyncMock()
+
         hass: HomeAssistant
         (hass, config_entry) = setup
-        hass.data = HassDict({DOMAIN: {ENTRY_ID: ACInfinityService(EMAIL, PASSWORD)}})
+        hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})
         result = await async_unload_entry(hass, config_entry)
 
         assert result

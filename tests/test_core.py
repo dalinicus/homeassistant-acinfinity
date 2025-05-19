@@ -56,6 +56,16 @@ def setup(mocker: MockFixture):
 
 @pytest.mark.asyncio
 class TestACInfinity:
+    async def test_close_client_closed(self, mocker: MockFixture):
+        """when a client has not been logged in, is_logged_in should return false"""
+
+        mock_close: MockType = mocker.patch.object(ACInfinityClient, "close")
+
+        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        await ac_infinity.close()
+
+        assert mock_close.called
+
     async def test_update_logged_in_should_be_called_if_not_logged_in(
         self, mocker: MockFixture
     ):

@@ -52,10 +52,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
         errors: dict[str, str] = {}
         if user_input is not None:
             # noinspection PyBroadException
+            client = ACInfinityClient(
+                HOST, user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
+            )
             try:
-                client = ACInfinityClient(
-                    HOST, user_input[CONF_EMAIL], user_input[CONF_PASSWORD]
-                )
                 await client.login()
                 _ = await client.get_devices_list_all()
 
@@ -73,6 +73,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
                 return self.async_create_entry(
                     title=f"AC Infinity ({user_input[CONF_EMAIL]})", data=user_input
                 )
+            finally:
+                await client.close()
 
         return self.async_show_form(
             step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
@@ -96,12 +98,14 @@ class OptionsFlow(config_entries.OptionsFlow):
             if password:
                 email = self.config_entry.data[CONF_EMAIL]
                 # noinspection PyBroadException
+
+                client = ACInfinityClient(
+                    HOST,
+                    email,
+                    password,
+                )
+
                 try:
-                    client = ACInfinityClient(
-                        HOST,
-                        email,
-                        password,
-                    )
                     await client.login()
                     _ = await client.get_devices_list_all()
                 except ACInfinityClientCannotConnect:
@@ -111,6 +115,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception("Unexpected exception")
                     errors[CONF_UPDATE_PASSWORD] = "unknown"
+                finally:
+                    await client.close()
 
             if not errors:
                 new_data = self.config_entry.data.copy()

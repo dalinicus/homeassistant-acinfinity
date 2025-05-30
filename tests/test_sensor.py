@@ -46,6 +46,7 @@ from tests.data_models import (
     SENSOR_PROPERTY_CONTROLLER_TEMP_F,
     SENSOR_PROPERTY_PROBE_TEMP_C,
     SENSOR_PROPERTY_PROBE_TEMP_F,
+    SOIL_SENSOR_PORT,
 )
 
 
@@ -67,7 +68,7 @@ class TestSensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 27
+        assert len(test_objects.entities._added_entities) == 28
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for non-ai controllers"""
@@ -728,6 +729,49 @@ class TestSensors:
 
         test_objects.ac_infinity._sensor_properties[
             (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.LIGHT)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_soil_sensor_created(self, setup):
+        """Sensor for device reported humidity is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            SOIL_SENSOR_PORT,
+            SensorReferenceKey.SOIL,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{SOIL_SENSOR_PORT}_{SensorReferenceKey.SOIL}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.MOISTURE
+        assert entity.entity_description.suggested_unit_of_measurement is None
+        assert entity.entity_description.native_unit_of_measurement == PERCENTAGE
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (560, 56), (None, 0)])
+    async def test_async_update_ai_soil_sensor_value_correct(
+        self, setup, value, expected
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            SOIL_SENSOR_PORT,
+            SensorReferenceKey.SOIL,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), SOIL_SENSOR_PORT, SensorType.SOIL)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
         entity._handle_coordinator_update()

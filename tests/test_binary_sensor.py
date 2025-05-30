@@ -2,17 +2,22 @@ import pytest
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
 )
+from homeassistant.components.sensor import SensorDeviceClass
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.binary_sensor import (
     ACInfinityControllerBinarySensorEntity,
     ACInfinityPortBinarySensorEntity,
+    ACInfinitySensorBinarySensorEntity,
     async_setup_entry,
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
     PortPropertyKey,
+    SensorPropertyKey,
+    SensorReferenceKey,
+    SensorType,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
@@ -22,9 +27,16 @@ from tests import (
     ACTestObjects,
     execute_and_get_controller_entity,
     execute_and_get_device_entity,
+    execute_and_get_sensor_entity,
     setup_entity_mocks,
 )
-from tests.data_models import AI_DEVICE_ID, AI_MAC_ADDR, DEVICE_ID, MAC_ADDR
+from tests.data_models import (
+    AI_DEVICE_ID,
+    AI_MAC_ADDR,
+    DEVICE_ID,
+    MAC_ADDR,
+    WATER_SENSOR_PORT,
+)
 
 
 @pytest.fixture
@@ -44,7 +56,7 @@ class TestBinarySensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 10
+        assert len(test_objects.entities._added_entities) == 11
 
     async def test_async_setup_entry_entity_created_for_controller(self, setup):
         """Sensor for device port connected is created on setup"""
@@ -143,3 +155,44 @@ class TestBinarySensors:
         assert sensor.is_on == expected
 
         test_objects.write_ha_mock.assert_called()
+
+    async def test_async_setup_entry_ai_water_sensor_created(self, setup):
+        """Sensor for device reported water detected is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            WATER_SENSOR_PORT,
+            SensorReferenceKey.WATER,
+        )
+
+        assert isinstance(entity, ACInfinitySensorBinarySensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{WATER_SENSOR_PORT}_{SensorReferenceKey.WATER}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.MOISTURE
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, False), (1, True), (None, False)])
+    async def test_async_update_ai_soil_sensor_value_correct(
+        self, setup, value, expected
+    ):
+        """Reported sensor value matches the value in the json payload"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            WATER_SENSOR_PORT,
+            SensorReferenceKey.WATER,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), WATER_SENSOR_PORT, SensorType.WATER)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorBinarySensorEntity)
+        assert entity.is_on == expected

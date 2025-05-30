@@ -121,6 +121,8 @@ PORT_PROPERTY_FOUR = {
 
 PROBE_ACCESS_PORT = 1
 CO2_LIGHT_ACCESS_PORT = 2
+SOIL_SENSOR_PORT = 3
+WATER_SENSOR_PORT = 4
 CONTROLLER_ACCESS_PORT = 7
 UNKNOWN_ACCESS_PORT = 22
 
@@ -212,6 +214,24 @@ SENSOR_PROPERTY_LIGHT = {
     "sensorTrend": 1,
     "accessPort": CO2_LIGHT_ACCESS_PORT,
     "sensorData": 79,
+}
+
+SENSOR_PROPERTY_SOIL = {
+    "sensorType": SensorType.SOIL,
+    "sensorUnit": 0,
+    "sensorPrecision": 2,
+    "sensorTrend": 1,
+    "accessPort": SOIL_SENSOR_PORT,
+    "sensorData": 25,
+}
+
+SENSOR_PROPERTY_WATER = {
+    "sensorType": SensorType.WATER,
+    "sensorUnit": 0,
+    "sensorPrecision": 1,
+    "sensorTrend": 1,
+    "accessPort": WATER_SENSOR_PORT,
+    "sensorData": 1,
 }
 
 SENSOR_PROPERTY_UNKNOWN = {
@@ -346,6 +366,8 @@ AI_CONTROLLER_PROPERTIES = {
             SENSOR_PROPERTY_PROBE_VPD,
             SENSOR_PROPERTY_CO2,
             SENSOR_PROPERTY_LIGHT,
+            SENSOR_PROPERTY_SOIL,
+            SENSOR_PROPERTY_WATER,
             SENSOR_PROPERTY_UNKNOWN,
         ],
         "sensorCalibrationState": [
@@ -657,6 +679,8 @@ SENSOR_PROPERTIES_DATA = {
     ): SENSOR_PROPERTY_PROBE_VPD,
     (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.CO2): SENSOR_PROPERTY_CO2,
     (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT,
+    (str(AI_DEVICE_ID), SOIL_SENSOR_PORT, SensorType.SOIL): SENSOR_PROPERTY_SOIL,
+    (str(AI_DEVICE_ID), WATER_SENSOR_PORT, SensorType.WATER): SENSOR_PROPERTY_WATER,
     (str(AI_DEVICE_ID), UNKNOWN_ACCESS_PORT, 999): SENSOR_PROPERTY_UNKNOWN,
 }
 

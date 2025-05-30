@@ -377,6 +377,17 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
+    SensorType.SOIL: ACInfinitySensorSensorEntityDescription(
+        key=SensorReferenceKey.SOIL,
+        device_class=SensorDeviceClass.MOISTURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        suggested_unit_of_measurement=None,
+        icon="mdi:watering-can-outline",
+        translation_key="soil_sensor",
+        suitable_fn=__suitable_fn_sensor_default,
+        get_value_fn=__get_value_fn_sensor_value_default,
+    ),
 }
 
 PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
@@ -511,7 +522,7 @@ async def async_setup_entry(
                     coordinator, sensor_description, sensor
                 )
                 entities.append_if_suitable(sensor_entity)
-            else:
+            elif sensor.sensor_type not in SensorType.__dict__.values():
                 logging.warning(
                     'Unknown sensor type "%s". Please fill out an issue at %s with this error message.',
                     sensor.sensor_type,

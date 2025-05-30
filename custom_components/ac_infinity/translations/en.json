@@ -56,6 +56,9 @@
       },
       "port_state": {
         "name": "State"
+      },
+      "water_sensor": {
+        "name": "Water Sensor"
       }
     },
     "number": {
@@ -191,6 +194,9 @@
       },
       "light_sensor": {
         "name": "Light Level"
+      },
+      "soil_sensor": {
+        "name": "Soil Moisture"
       },
       "current_power": {
         "name": "Current Power"

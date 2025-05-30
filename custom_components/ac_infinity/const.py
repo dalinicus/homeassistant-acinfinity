@@ -67,8 +67,10 @@ class SensorType:
     CONTROLLER_TEMPERATURE_C = 5
     CONTROLLER_HUMIDITY = 6
     CONTROLLER_VPD = 7
+    SOIL = 10
     CO2 = 11
     LIGHT = 12
+    WATER = 20
 
 
 class SensorReferenceKey:
@@ -82,6 +84,8 @@ class SensorReferenceKey:
     CONTROLLER_VPD = "controllerVaporPressureDeficit"
     CO2_SENSOR = "co2Sensor"
     LIGHT_SENSOR = "lightSensor"
+    WATER = "waterSensor"
+    SOIL = "soilSensor"
 
 
 # noinspection SpellCheckingInspection

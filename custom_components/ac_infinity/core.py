@@ -193,6 +193,26 @@ class ACInfinitySensor:
                     via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
+            case SensorType.WATER:
+                return DeviceInfo(
+                    identifiers={
+                        (DOMAIN, f"{controller.device_id}_{sensor_port}_wds3")
+                    },
+                    name=f"{controller.device_name} Water Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model="UIS Water Sensor (AC-WDS3)",
+                )
+            case SensorType.SOIL:
+                return DeviceInfo(
+                    identifiers={
+                        (DOMAIN, f"{controller.device_id}_{sensor_port}_sls3")
+                    },
+                    name=f"{controller.device_name} Soil Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model="UIS Soil Sensor (AC-SLS3)",
+                )
             case (
                 SensorType.CONTROLLER_TEMPERATURE_F
                 | SensorType.CONTROLLER_TEMPERATURE_C

@@ -14,6 +14,9 @@ from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
     PortPropertyKey,
+    SensorPropertyKey,
+    SensorReferenceKey,
+    SensorType,
 )
 
 from .core import (
@@ -26,6 +29,9 @@ from .core import (
     ACInfinityPort,
     ACInfinityPortEntity,
     ACInfinityPortReadOnlyMixin,
+    ACInfinitySensor,
+    ACInfinitySensorEntity,
+    ACInfinitySensorReadOnlyMixin,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +52,13 @@ class ACInfinityControllerBinarySensorEntityDescription(
     ACInfinityBinarySensorEntityDescription, ACInfinityControllerReadOnlyMixin[bool]
 ):
     """Describes ACInfinity Binary Sensor Port Entities."""
+
+
+@dataclass(frozen=True)
+class ACInfinitySensorBinarySensorEntityDescription(
+    ACInfinityBinarySensorEntityDescription, ACInfinitySensorReadOnlyMixin[bool]
+):
+    """Describes ACInfinity Sensor Sensor Entities"""
 
 
 @dataclass(frozen=True)
@@ -85,6 +98,34 @@ def __get_value_fn_port_property_default(
     )
 
 
+def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
+    return entity.ac_infinity.get_sensor_property_exists(
+        sensor.controller.device_id,
+        sensor.sensor_port,
+        sensor.sensor_type,
+        SensorPropertyKey.SENSOR_PRECISION,
+    ) and entity.ac_infinity.get_sensor_property_exists(
+        sensor.controller.device_id,
+        sensor.sensor_port,
+        sensor.sensor_type,
+        SensorPropertyKey.SENSOR_DATA,
+    )
+
+
+def __get_value_fn_sensor_value_default(
+    entity: ACInfinityEntity, sensor: ACInfinitySensor
+):
+    data = entity.ac_infinity.get_sensor_property(
+        sensor.controller.device_id,
+        sensor.sensor_port,
+        sensor.sensor_type,
+        SensorPropertyKey.SENSOR_DATA,
+        0,
+    )
+
+    return bool(data)
+
+
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription] = [
     ACInfinityControllerBinarySensorEntityDescription(
         key=ControllerPropertyKey.ONLINE,
@@ -95,6 +136,17 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription]
         get_value_fn=__get_value_fn_controller_property_default,
     )
 ]
+
+SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorBinarySensorEntityDescription] = {
+    SensorType.WATER: ACInfinitySensorBinarySensorEntityDescription(
+        key=SensorReferenceKey.WATER,
+        device_class=BinarySensorDeviceClass.MOISTURE,
+        icon="mdi:waves",
+        translation_key="water_sensor",
+        suitable_fn=__suitable_fn_sensor_default,
+        get_value_fn=__get_value_fn_sensor_value_default,
+    ),
+}
 
 PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
     ACInfinityPortBinarySensorEntityDescription(
@@ -140,6 +192,30 @@ class ACInfinityControllerBinarySensorEntity(
     def is_on(self) -> bool | None:
         """returns true if on, false or none if off"""
         return self.entity_description.get_value_fn(self, self.controller)
+
+
+class ACInfinitySensorBinarySensorEntity(ACInfinitySensorEntity, BinarySensorEntity):
+    entity_description: ACInfinitySensorBinarySensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: ACInfinityDataUpdateCoordinator,
+        description: ACInfinitySensorBinarySensorEntityDescription,
+        sensor: ACInfinitySensor,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            sensor,
+            description.suitable_fn,
+            description.key,
+            Platform.BINARY_SENSOR,
+        )
+        self.entity_description = description
+
+    @property
+    def is_on(self) -> bool | None:
+        """returns true if on, false or none if off"""
+        return self.entity_description.get_value_fn(self, self.sensor)
 
 
 class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity):
@@ -189,6 +265,14 @@ async def async_setup_entry(
                 coordinator, controller_description, controller
             )
             entities.append_if_suitable(controller_entity)
+
+        for sensor in controller.sensors:
+            if sensor.sensor_type in SENSOR_DESCRIPTIONS:
+                sensor_description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
+                sensor_entity = ACInfinitySensorBinarySensorEntity(
+                    coordinator, sensor_description, sensor
+                )
+                entities.append_if_suitable(sensor_entity)
 
         for port in controller.ports:
             for port_description in PORT_DESCRIPTIONS:

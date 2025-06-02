@@ -333,6 +333,12 @@ class ACInfinityService:
         """
         self._client = ACInfinityClient(HOST, email, password)
 
+    def get_device_keys(self):
+        """
+        returns a list of devices associated with the account
+        """
+        return self._controller_properties.keys()
+
     def get_controller_property_exists(
         self, controller_id: str | int, property_key: str
     ) -> bool:

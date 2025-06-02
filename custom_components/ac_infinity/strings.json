@@ -21,12 +21,21 @@
     "step": {
       "init": {
         "title": "AC Infinity Configuration",
+        "menu_options": {
+          "integration_config": "Integration Configuration",
+          "entity_settings": "Entity Settings"
+        }
+      },
+      "integration_config": {
+        "title": "Integration Configuration",
         "data": {
           "polling_interval": "Polling Interval (Seconds)",
-          "update_password": "Update Password"
+          "update_password": "Update Password",
+          "number_display_type": "Number Display Type"
         },
         "data_description": {
-          "update_password": "Updating password requires a restart of Home Assistant."
+          "update_password": "Requires a restart of Home Assistant.",
+          "number_display_type": "How to display Number based entities. Requires a restart of Home Assistant"
         }
       },
       "notify_restart": {

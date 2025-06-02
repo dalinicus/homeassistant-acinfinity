@@ -15,7 +15,9 @@ PLATFORMS = [
 HOST = "http://www.acinfinityserver.com"
 CONF_POLLING_INTERVAL = "polling_interval"
 CONF_UPDATE_PASSWORD = "update_password"
+CONF_NUMBER_DISPLAY_TYPE = "number_display_type"
 DEFAULT_POLLING_INTERVAL = 10
+DEFAULT_NUMBER_DISPLAY_TYPE = "auto"
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
 
@@ -41,6 +43,7 @@ class ControllerPropertyKey:
     ONLINE = "online"
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
+    PORT_COUNT = "devPortCount"
 
 
 class ControllerType:

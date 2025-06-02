@@ -333,7 +333,7 @@ class ACInfinityService:
         """
         self._client = ACInfinityClient(HOST, email, password)
 
-    def get_device_keys(self):
+    def get_device_ids(self):
         """
         returns a list of devices associated with the account
         """

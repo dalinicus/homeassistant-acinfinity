@@ -21,11 +21,10 @@ from custom_components.ac_infinity.client import (
 )
 
 from .const import (
-    CONF_POLLING_INTERVAL,
-    CONF_UPDATE_PASSWORD,
+    ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
-    HOST, CONF_NUMBER_DISPLAY_TYPE, DEFAULT_NUMBER_DISPLAY_TYPE, ControllerPropertyKey, PortPropertyKey,
+    HOST, DEFAULT_NUMBER_DISPLAY_TYPE, ControllerPropertyKey, PortPropertyKey,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,23 +83,26 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
 
 
 class OptionsFlow(config_entries.OptionsFlow):
+
+    def __init__(self):
+        self.__current_device_id = None
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         return self.async_show_menu(
-            step_id="init", menu_options=["integration_config", "entity_settings"]
+            step_id="init", menu_options=["integration_config", "controller_select"]
         )
 
     async def async_step_integration_config(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
             polling_interval = user_input.get(
-                CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
+                ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
             )
-            password = user_input.get(CONF_UPDATE_PASSWORD, None)
-            number_display_type = user_input.get(CONF_NUMBER_DISPLAY_TYPE, "auto")
+            password = user_input.get(ConfigurationKey.UPDATE_PASSWORD, None)
 
             if polling_interval < 5:
-                errors[CONF_POLLING_INTERVAL] = "invalid_polling_interval"
+                errors[ConfigurationKey.POLLING_INTERVAL] = "invalid_polling_interval"
 
             if password:
                 email = self.config_entry.data[CONF_EMAIL]
@@ -116,21 +118,19 @@ class OptionsFlow(config_entries.OptionsFlow):
                     await client.login()
                     _ = await client.get_devices_list_all()
                 except ACInfinityClientCannotConnect:
-                    errors[CONF_UPDATE_PASSWORD] = "cannot_connect"
+                    errors[ConfigurationKey.UPDATE_PASSWORD] = "cannot_connect"
                 except ACInfinityClientInvalidAuth:
-                    errors[CONF_UPDATE_PASSWORD] = "invalid_auth"
+                    errors[ConfigurationKey.UPDATE_PASSWORD] = "invalid_auth"
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception("Unexpected exception")
-                    errors[CONF_UPDATE_PASSWORD] = "unknown"
+                    errors[ConfigurationKey.UPDATE_PASSWORD] = "unknown"
                 finally:
                     await client.close()
 
             if not errors:
-                prev_num_dis = self.__get_saved_conf_value(CONF_NUMBER_DISPLAY_TYPE, DEFAULT_NUMBER_DISPLAY_TYPE)
 
                 new_data = self.config_entry.data.copy()
-                new_data[CONF_POLLING_INTERVAL] = polling_interval
-                new_data[CONF_NUMBER_DISPLAY_TYPE] = number_display_type
+                new_data[ConfigurationKey.POLLING_INTERVAL] = polling_interval
                 if password:
                     new_data[CONF_PASSWORD] = password
 
@@ -145,9 +145,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                 coordinator.update_interval = timedelta(seconds=polling_interval)
 
                 _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
-                _LOGGER.info("Number display type changed to %s", number_display_type)
 
-                if password or prev_num_dis != number_display_type:
+                if password:
                     return await self.async_step_notify_restart()
                 return self.async_create_entry(title="", data={})
 
@@ -155,24 +154,52 @@ class OptionsFlow(config_entries.OptionsFlow):
             step_id="integration_config",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_POLLING_INTERVAL, default=self.__get_saved_conf_value(CONF_POLLING_INTERVAL, CONF_POLLING_INTERVAL)): int,
-                    vol.Required(CONF_NUMBER_DISPLAY_TYPE, default=self.__get_saved_conf_value(CONF_NUMBER_DISPLAY_TYPE, DEFAULT_NUMBER_DISPLAY_TYPE)): selector({
-                        "select": {
-                            "options": ["auto", "slider", "box"],
-                            "mode": "dropdown"
-                        }
-                    }),
-                    vol.Optional(CONF_UPDATE_PASSWORD): str
+                    vol.Required(ConfigurationKey.POLLING_INTERVAL, default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL)): int,
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str
                 }
             ),
             errors=errors
         )
+    async def async_step_controller_select(self, user_input: dict[str, Any] | None = None):
+        if user_input is not None:
+            self.__current_device_id = user_input["device_id"]
+            return await self.async_step_entity_settings()
+
+        coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
+
+        device_ids = coordinator.ac_infinity.get_device_ids()
+        if not device_ids:
+            return self.async_abort(reason="no_devices")
+
+        options = []
+        for device_id in device_ids:
+            device_code = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
+            device_name = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+
+            options.append({"value": device_id, "label": f"{device_name} ({device_code})"})
+
+        return self.async_show_form(
+            step_id="controller_select",
+            data_schema=vol.Schema({
+                vol.Required("device_id"): selector({
+                    "select": {
+                        "options": options
+                    }
+                })
+            }),
+        )
 
     async def async_step_entity_settings(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
+        device_id = self.__current_device_id
+
         if user_input is not None:
             new_data = self.config_entry.data.copy()
-            new_data["entity_settings"] = user_input
+            if not ConfigurationKey.ENTITIES in new_data:
+                new_data[ConfigurationKey.ENTITIES] = {}
+            new_data[ConfigurationKey.ENTITIES][self.__current_device_id] = user_input
 
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
@@ -185,38 +212,34 @@ class OptionsFlow(config_entries.OptionsFlow):
             self.config_entry.entry_id
         ]
 
-        devices = {}
-        device_keys = coordinator.ac_infinity.get_device_keys()
-        for device_key in device_keys:
-            port_count = coordinator.ac_infinity.get_controller_property(device_key, ControllerPropertyKey.PORT_COUNT)
-            device_id = coordinator.ac_infinity.get_controller_property(device_key, ControllerPropertyKey.DEVICE_ID)
-            device_name = coordinator.ac_infinity.get_controller_property(device_key, ControllerPropertyKey.DEVICE_NAME)
+        device_name = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+        port_count = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
-            ports = {}
-            for i in range(1, port_count + 1):
-                port_name = coordinator.ac_infinity.get_port_property(device_key, i, PortPropertyKey.NAME)
-                ports[vol.Required(
-                    f"port_{i}",
-                    description=f"{device_name} {port_name} ({device_id}-{i})",
-                    default=None)
-                ] = selector({
-                    "select": {
-                        "options": [
-                            { "value" : "all", "label": "All Entities" },
-                            { "value": "sensors_and_controls", "label": "Sensors and Controls" },
-                            { "value": "sensors_only", "label": "Sensors Only" },
-                            { "value": "disable", "label": "Disable" }
-                        ],
-                        "mode": "dropdown",
-                    }
-                })
+        ports = {}
+        description_placeholders = {
+            "controller": device_name
+        }
 
-            devices[vol.Required(device_key, description=f"{device_name} ({device_id})")] = section(vol.Schema(ports))
+        for i in range(1, port_count + 1):
+            ports[vol.Required(str(i), default=self.__get_saved_entity_conf_value(device_id, i))] = selector({
+                "select": {
+                    "options": [
+                        {"value": "all", "label": "All Entities"},
+                        {"value": "sensors_and_controls", "label": "Sensors and Controls"},
+                        {"value": "sensors_only", "label": "Sensors Only"},
+                        {"value": "disable", "label": "Disable"}
+                    ],
+                    "mode": "dropdown"
+                }
+            })
+
+            description_placeholders[f"port_{i}"] = coordinator.ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
 
         return self.async_show_form(
             step_id="entity_settings",
-            data_schema=vol.Schema(devices),
-            errors=errors
+            data_schema=vol.Schema(ports),
+            errors=errors,
+            description_placeholders=description_placeholders
         )
 
 
@@ -240,3 +263,12 @@ class OptionsFlow(config_entries.OptionsFlow):
             else default
         )
 
+    def __get_saved_entity_conf_value(self, device_id:str, port_id:int):
+        return (
+            self.config_entry.data[ConfigurationKey.ENTITIES][device_id][str(port_id)]
+            if ConfigurationKey.ENTITIES in self.config_entry.data
+                and self.config_entry.data[ConfigurationKey.ENTITIES] is not None
+                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id] is not None
+                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][str(port_id)] is not None
+            else "all"
+        )

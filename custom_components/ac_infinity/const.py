@@ -13,13 +13,15 @@ PLATFORMS = [
     Platform.SWITCH,
 ]
 HOST = "http://www.acinfinityserver.com"
-CONF_POLLING_INTERVAL = "polling_interval"
-CONF_UPDATE_PASSWORD = "update_password"
-CONF_NUMBER_DISPLAY_TYPE = "number_display_type"
+
 DEFAULT_POLLING_INTERVAL = 10
 DEFAULT_NUMBER_DISPLAY_TYPE = "auto"
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
+class ConfigurationKey:
+    POLLING_INTERVAL = "polling_interval"
+    UPDATE_PASSWORD = "update_password"
+    ENTITIES = "entities"
 
 class CustomPortPropertyKey:
     # Derived sensors
@@ -31,6 +33,7 @@ class ControllerPropertyKey:
     # /api/dev/devInfoListAll
     DEVICE_ID = "devId"
     DEVICE_NAME = "devName"
+    DEVICE_CODE = "devCode"
     MAC_ADDR = "devMacAddr"
     DEVICE_INFO = "deviceInfo"
     PORTS = "ports"

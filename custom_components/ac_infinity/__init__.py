@@ -8,7 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS
+from .const import ConfigurationKey, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS
 from .core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityService,
@@ -22,8 +22,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     polling_interval = (
-        int(entry.data[CONF_POLLING_INTERVAL])
-        if CONF_POLLING_INTERVAL in entry.data
+        int(entry.data[ConfigurationKey.POLLING_INTERVAL])
+        if ConfigurationKey.POLLING_INTERVAL in entry.data
         else DEFAULT_POLLING_INTERVAL
     )
 

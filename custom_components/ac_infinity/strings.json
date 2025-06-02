@@ -23,7 +23,7 @@
         "title": "AC Infinity Configuration",
         "menu_options": {
           "integration_config": "Integration Configuration",
-          "entity_settings": "Entity Settings"
+          "controller_select": "Entity Settings"
         }
       },
       "integration_config": {
@@ -38,9 +38,30 @@
           "number_display_type": "How to display Number based entities. Requires a restart of Home Assistant"
         }
       },
+      "controller_select": {
+        "title": "Entity Settings",
+        "device_id": "Select Controller",
+        "data": {
+          "device_id": "Select Controller"
+        }
+      },
+      "entity_settings": {
+        "title": "{controller} Entity Settings",
+        "description": "Enable/Disable entity types for each port.",
+        "data": {
+          "1": "{port_1} (Port 1)",
+          "2": "{port_2} (Port 2)",
+          "3": "{port_3} (Port 3)",
+          "4": "{port_4} (Port 4)",
+          "5": "{port_5} (Port 5)",
+          "6": "{port_6} (Port 6)",
+          "7": "{port_7} (Port 7)",
+          "8": "{port_8} (Port 8)"
+        }
+      },
       "notify_restart": {
         "title": "Restart required",
-        "description": "Restart of Home Assistant is required for password change to take effect.",
+        "description": "Restart of Home Assistant is required for this change to take effect.",
         "menu_options": {
             "restart_yes": "Restart Now",
             "restart_no": "Restart Later"

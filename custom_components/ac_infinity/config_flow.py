@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section, SectionConfig
-from homeassistant.helpers.selector import selector
+from homeassistant.helpers.selector import selector, Selector
 
 from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
 from custom_components.ac_infinity.client import (
@@ -24,7 +24,7 @@ from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
-    HOST, DEFAULT_NUMBER_DISPLAY_TYPE, ControllerPropertyKey, PortPropertyKey,
+    HOST, DEFAULT_NUMBER_DISPLAY_TYPE, ControllerPropertyKey, PortPropertyKey, EntityConfigValue,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ class OptionsFlow(config_entries.OptionsFlow):
             polling_interval = user_input.get(
                 ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
             )
-            password = user_input.get(ConfigurationKey.UPDATE_PASSWORD, None)
+            password: str | None = user_input.get(ConfigurationKey.UPDATE_PASSWORD, None)
 
             if polling_interval < 5:
                 errors[ConfigurationKey.POLLING_INTERVAL] = "invalid_polling_interval"
@@ -215,33 +215,53 @@ class OptionsFlow(config_entries.OptionsFlow):
         device_name = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
         port_count = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
-        ports = {}
+        entities = {}
         description_placeholders = {
             "controller": device_name
         }
 
+        entities[vol.Required("controller", default=self.__get_saved_entity_conf_value(device_id, "controller"))] = selector({
+            "select": {
+                "options": [
+                    {"value": EntityConfigValue.All, "label": "All Entities"},
+                    {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
+                    {"value": EntityConfigValue.Disable, "label": "Disable"}
+                ],
+                "mode": "dropdown"
+            }
+        })
+
+        entities[vol.Required("sensors", default=self.__get_saved_entity_conf_value(device_id, "sensors"))] = selector({
+            "select": {
+                "options": [
+                    {"value": EntityConfigValue.All, "label": "All Entities"},
+                    {"value": EntityConfigValue.Disable, "label": "Disable"}
+                ],
+                "mode": "dropdown"
+            }
+        })
+
         for i in range(1, port_count + 1):
-            ports[vol.Required(str(i), default=self.__get_saved_entity_conf_value(device_id, i))] = selector({
+            entity_config_key = f"port_{i}"
+            description_placeholders[entity_config_key] = coordinator.ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
+            entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(device_id, entity_config_key))] = selector({
                 "select": {
                     "options": [
-                        {"value": "all", "label": "All Entities"},
-                        {"value": "sensors_and_controls", "label": "Sensors and Controls"},
-                        {"value": "sensors_only", "label": "Sensors Only"},
-                        {"value": "disable", "label": "Disable"}
+                        {"value": EntityConfigValue.All, "label": "All Entities"},
+                        {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"},
+                        {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
+                        {"value": EntityConfigValue.Disable, "label": "Disable"}
                     ],
                     "mode": "dropdown"
                 }
             })
 
-            description_placeholders[f"port_{i}"] = coordinator.ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
-
         return self.async_show_form(
             step_id="entity_settings",
-            data_schema=vol.Schema(ports),
+            data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
         )
-
 
     async def async_step_notify_restart(self):
         return self.async_show_menu(
@@ -263,12 +283,12 @@ class OptionsFlow(config_entries.OptionsFlow):
             else default
         )
 
-    def __get_saved_entity_conf_value(self, device_id:str, port_id:int):
+    def __get_saved_entity_conf_value(self, device_id:str, entity_config_key:str):
         return (
-            self.config_entry.data[ConfigurationKey.ENTITIES][device_id][str(port_id)]
+            self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
             if ConfigurationKey.ENTITIES in self.config_entry.data
                 and self.config_entry.data[ConfigurationKey.ENTITIES] is not None
                 and self.config_entry.data[ConfigurationKey.ENTITIES][device_id] is not None
-                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][str(port_id)] is not None
-            else "all"
+                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
+            else EntityConfigValue.All
         )

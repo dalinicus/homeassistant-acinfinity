@@ -21,7 +21,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin,
+    ACInfinityPortReadWriteMixin, enabled_fn_sensor, enabled_fn_setting, enabled_fn_control,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -216,6 +216,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
         translation_key="outside_climate_temperature",
         options=OUTSIDE_CLIMATE_OPTIONS,
         suitable_fn=__suitable_fn_controller_setting_default,
+        enabled_fn=enabled_fn_setting,
         get_value_fn=__get_value_fn_outside_climate,
         set_value_fn=__set_value_fn_outside_climate,
     ),
@@ -223,6 +224,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
         key=AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
         translation_key="outside_climate_humidity",
         options=OUTSIDE_CLIMATE_OPTIONS,
+        enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_controller_setting_default,
         get_value_fn=__get_value_fn_outside_climate,
         set_value_fn=__set_value_fn_outside_climate,
@@ -234,6 +236,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=PortControlKey.AT_TYPE,
         translation_key="active_mode",
         options=MODE_OPTIONS,
+        enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
@@ -242,6 +245,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=PortControlKey.AUTO_SETTINGS_MODE,
         translation_key="auto_settings_mode",
         options=SETTINGS_MODE_OPTIONS,
+        enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
@@ -250,6 +254,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=PortControlKey.VPD_SETTINGS_MODE,
         translation_key="vpd_settings_mode",
         options=SETTINGS_MODE_OPTIONS,
+        enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
@@ -258,6 +263,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         translation_key="device_load_type",
         options=list(DEVICE_LOAD_TYPE_OPTIONS.values()),
+        enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_device_load_type,
         set_value_fn=__set_value_fn_device_load_type,
@@ -266,6 +272,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
         options=DYNAMIC_RESPONSE_OPTIONS,
+        enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_port_setting_default,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
@@ -314,9 +321,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         description: ACInfinityPortSelectEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(
-            coordinator, port, description.suitable_fn, description.key, Platform.SELECT
-        )
+        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property
@@ -342,7 +347,7 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = ACInfinityEntities()
+    entities = ACInfinityEntities(config)
     for controller in controllers:
         if controller.device_type == ControllerType.UIS_89_AI_PLUS:
             # controls and settings not yet supported for the AI controller

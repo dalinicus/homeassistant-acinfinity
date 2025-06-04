@@ -34,7 +34,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityPortReadOnlyMixin,
     ACInfinitySensor,
     ACInfinitySensorEntity,
-    ACInfinitySensorReadOnlyMixin,
+    ACInfinitySensorReadOnlyMixin, enabled_fn_sensor,
 )
 
 from .const import (
@@ -239,6 +239,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="temperature",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
@@ -250,6 +251,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="humidity",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
@@ -261,6 +263,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon="mdi:water-thermometer",
         translation_key="vapor_pressure_deficit",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
@@ -275,6 +278,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="probe_temperature",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
@@ -286,6 +290,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="probe_temperature",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
@@ -297,6 +302,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="probe_humidity",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -308,6 +314,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon="mdi:water-thermometer",
         translation_key="probe_vapor_pressure_deficit",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -319,6 +326,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="controller_temperature",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
@@ -330,6 +338,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="controller_temperature",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_temperature,
         get_value_fn=__get_value_fn_sensor_value_temperature,
     ),
@@ -341,6 +350,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="controller_humidity",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -352,6 +362,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon="mdi:water-thermometer",
         translation_key="controller_vapor_pressure_deficit",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -363,6 +374,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="co2_sensor",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -374,6 +386,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon="mdi:lightbulb-on-outline",
         translation_key="light_sensor",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -385,6 +398,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         suggested_unit_of_measurement=None,
         icon="mdi:watering-can-outline",
         translation_key="soil_sensor",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -399,6 +413,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="current_power",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_port_property_default,
         get_value_fn=__get_value_fn_port_property_default,
     ),
@@ -410,6 +425,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="remaining_time",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_port_property_default,
         get_value_fn=__get_value_fn_port_property_default,
     ),
@@ -421,6 +437,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="next_state_change",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=lambda x, y: True,
         get_value_fn=__get_next_mode_change_timestamp,
     ),
@@ -501,7 +518,7 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = ACInfinityEntities()
+    entities = ACInfinityEntities(config)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             if controller.device_type == ControllerType.UIS_89_AI_PLUS:

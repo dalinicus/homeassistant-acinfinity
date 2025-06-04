@@ -23,6 +23,12 @@ class ConfigurationKey:
     UPDATE_PASSWORD = "update_password"
     ENTITIES = "entities"
 
+class EntityConfigValue:
+    All = "all"
+    SensorsAndControls = "sensors_and_controls"
+    SensorsOnly = "sensors_only"
+    Disable = "disable"
+
 class CustomPortPropertyKey:
     # Derived sensors
     NEXT_STATE_CHANGE = "nextStateChange"

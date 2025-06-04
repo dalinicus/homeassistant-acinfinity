@@ -20,7 +20,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin,
+    ACInfinityPortReadWriteMixin, enabled_fn_control,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,6 +95,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         icon=None,  # default
         translation_key="schedule_mode_on_time",
         suitable_fn=__suitable_fn_port_control_default,
+        enabled_fn=enabled_fn_control,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
     ),
@@ -102,6 +103,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortTimeEntityDescription] = [
         key=PortControlKey.SCHEDULED_END_TIME,
         icon=None,  # default
         translation_key="schedule_mode_off_time",
+        enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_port_control_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
@@ -144,7 +146,7 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = ACInfinityEntities()
+    entities = ACInfinityEntities(config)
     for controller in controllers:
         if controller.device_type == ControllerType.UIS_89_AI_PLUS:
             # controls and settings not yet supported for the AI controller

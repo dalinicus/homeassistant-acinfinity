@@ -7,6 +7,7 @@ from datetime import timedelta
 from typing import Any, Callable
 
 import async_timeout
+from homeassistant.components.device_tracker import config_entry
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
@@ -26,7 +27,7 @@ from .const import (
     PortControlKey,
     PortPropertyKey,
     SensorPropertyKey,
-    SensorType,
+    SensorType, ConfigurationKey, EntityConfigValue,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -922,6 +923,10 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the controller entity"""
 
+    @abstractmethod
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        """Returns true if the entity is enabled via options flowd"""
+
     @property
     @abstractmethod
     def is_suitable(self) -> bool:
@@ -937,12 +942,14 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         controller: ACInfinityController,
+        enabled_fn: Callable[[ConfigEntry, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._controller = controller
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -959,6 +966,9 @@ class ACInfinityControllerEntity(ACInfinityEntity):
     def controller(self) -> ACInfinityController:
         return self._controller
 
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, "controller")
+
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.controller)
@@ -969,12 +979,14 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         sensor: ACInfinitySensor,
+        enabled_fn: Callable[[ConfigEntry, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._sensor = sensor
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -992,6 +1004,10 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         return self._sensor
 
     @property
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, "sensors")
+
+    @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.sensor)
 
@@ -1001,12 +1017,14 @@ class ACInfinityPortEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         port: ACInfinityPort,
+        enabled_fn: Callable[[ConfigEntry, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._port = port
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -1024,12 +1042,20 @@ class ACInfinityPortEntity(ACInfinityEntity):
         return self._port
 
     @property
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, f"port_{self._port.port_index}")
+
+    @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.port)
 
+@dataclass(frozen=True)
+class ACInfinityBaseMixin:
+    enabled_fn: Callable[[ConfigEntry, str], bool]
+    """ output if the entity is enabled via option flow"""
 
 @dataclass(frozen=True)
-class ACInfinityControllerReadOnlyMixin[T]:
+class ACInfinityControllerReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for controller level sensors"""
 
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool]
@@ -1047,9 +1073,8 @@ class ACInfinityControllerReadWriteMixin[T](ACInfinityControllerReadOnlyMixin[T]
 
 
 @dataclass(frozen=True)
-class ACInfinitySensorReadOnlyMixin[T]:
+class ACInfinitySensorReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for controller level sensors"""
-
     suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool]
     """Input data object and a device id; output if suitable"""
     get_value_fn: Callable[[ACInfinityEntity, ACInfinitySensor], T]
@@ -1057,9 +1082,8 @@ class ACInfinitySensorReadOnlyMixin[T]:
 
 
 @dataclass(frozen=True)
-class ACInfinityPortReadOnlyMixin[T]:
+class ACInfinityPortReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for port device level sensors"""
-
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool]
     """Input data object, device id, and port number; output if suitable."""
     get_value_fn: Callable[[ACInfinityEntity, ACInfinityPort], T]
@@ -1075,19 +1099,42 @@ class ACInfinityPortReadWriteMixin[T](ACInfinityPortReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
+    def __init__(self, config: ConfigEntry):
+        super().__init__()
+        self._config_entry = config
+
     def append_if_suitable(self, entity: ACInfinityEntity):
-        if entity.is_suitable:
-            self.append(entity)
-            _LOGGER.info(
-                'Initializing entity "%s" (%s) for platform "%s".',
-                entity.unique_id,
-                entity.translation_key,
-                entity.platform_name,
+
+        if entity.is_enabled(self._config_entry):
+            if entity.is_suitable:
+                self.append(entity)
+                _LOGGER.info(
+                    'Initializing entity "%s" (%s) for platform "%s".',
+                    entity.unique_id,
+                    entity.translation_key,
+                    entity.platform_name,
+                )
+            else:
+                _LOGGER.warning(
+                    'Ignoring unsuitable entity "%s" (%s) for platform "%s".',
+                    entity.unique_id,
+                    entity.translation_key,
+                    entity.platform_name,
             )
         else:
             _LOGGER.warning(
-                'Ignoring unsuitable entity "%s" (%s) for platform "%s".',
+                'Ignoring disabled entity "%s" (%s) for platform "%s".',
                 entity.unique_id,
                 entity.translation_key,
                 entity.platform_name,
             )
+
+def enabled_fn_sensor(entry: ConfigEntry, entity_config_key:str) -> bool:
+    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] != EntityConfigValue.Disable
+
+def enabled_fn_control(entry: ConfigEntry, entity_config_key:str) -> bool:
+    setting = entry.data[ConfigurationKey.ENTITIES][entity_config_key]
+    return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly
+
+def enabled_fn_setting(entry: ConfigEntry, entity_config_key:str) -> bool:
+    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] == EntityConfigValue.All

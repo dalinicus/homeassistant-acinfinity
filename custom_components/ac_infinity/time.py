@@ -121,7 +121,7 @@ class ACInfinityPortTimeEntity(ACInfinityPortEntity, TimeEntity):
         port: ACInfinityPort,
     ) -> None:
         super().__init__(
-            coordinator, port, description.suitable_fn, description.key, Platform.TIME
+            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.TIME
         )
         self.entity_description = description
 

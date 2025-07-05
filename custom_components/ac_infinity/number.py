@@ -943,6 +943,7 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
         super().__init__(
             coordinator,
             controller,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.NUMBER,
@@ -971,7 +972,7 @@ class ACInfinityPortNumberEntity(ACInfinityPortEntity, NumberEntity):
         port: ACInfinityPort,
     ) -> None:
         super().__init__(
-            coordinator, port, description.suitable_fn, description.key, Platform.NUMBER
+            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.NUMBER
         )
         self.entity_description = description
 

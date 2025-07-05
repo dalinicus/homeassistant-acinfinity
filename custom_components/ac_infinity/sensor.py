@@ -456,6 +456,7 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
         super().__init__(
             coordinator,
             controller,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
@@ -479,6 +480,7 @@ class ACInfinitySensorSensorEntity(ACInfinitySensorEntity, SensorEntity):
         super().__init__(
             coordinator,
             sensor,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
@@ -500,7 +502,7 @@ class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
         port: ACInfinityPort,
     ) -> None:
         super().__init__(
-            coordinator, port, description.suitable_fn, description.key, Platform.SENSOR
+            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SENSOR
         )
         self.entity_description = description
 

@@ -1003,7 +1003,6 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     def sensor(self) -> ACInfinitySensor:
         return self._sensor
 
-    @property
     def is_enabled(self, entry: ConfigEntry) -> bool:
         return self._enabled_fn(entry, "sensors")
 
@@ -1041,7 +1040,6 @@ class ACInfinityPortEntity(ACInfinityEntity):
     def port(self) -> ACInfinityPort:
         return self._port
 
-    @property
     def is_enabled(self, entry: ConfigEntry) -> bool:
         return self._enabled_fn(entry, f"port_{self._port.port_index}")
 
@@ -1130,11 +1128,17 @@ class ACInfinityEntities(list[ACInfinityEntity]):
             )
 
 def enabled_fn_sensor(entry: ConfigEntry, entity_config_key:str) -> bool:
-    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] != EntityConfigValue.Disable
+    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] != EntityConfigValue.Disable \
+        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+        else True
 
 def enabled_fn_control(entry: ConfigEntry, entity_config_key:str) -> bool:
     setting = entry.data[ConfigurationKey.ENTITIES][entity_config_key]
-    return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly
+    return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly \
+        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+        else True
 
 def enabled_fn_setting(entry: ConfigEntry, entity_config_key:str) -> bool:
-    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] == EntityConfigValue.All
+    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] == EntityConfigValue.All \
+        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+        else True

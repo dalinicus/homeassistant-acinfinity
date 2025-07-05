@@ -271,7 +271,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
         port: ACInfinityPort,
     ) -> None:
         super().__init__(
-            coordinator, port, description.suitable_fn, description.key, Platform.SWITCH
+            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SWITCH
         )
         self.entity_description = description
 
@@ -306,7 +306,7 @@ async def async_setup_entry(
 
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = ACInfinityEntities()
+    entities = ACInfinityEntities(config)
     for controller in controllers:
         if controller.device_type == ControllerType.UIS_89_AI_PLUS:
             # controls and settings not yet supported for the AI controller

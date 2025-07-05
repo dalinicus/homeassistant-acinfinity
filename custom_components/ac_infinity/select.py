@@ -292,6 +292,7 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
         super().__init__(
             coordinator,
             controller,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SELECT,
@@ -321,7 +322,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
         description: ACInfinityPortSelectEntityDescription,
         port: ACInfinityPort,
     ) -> None:
-        super().__init__(coordinator, port, description.suitable_fn, description.key, Platform.SELECT)
+        super().__init__(coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property

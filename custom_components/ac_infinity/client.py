@@ -93,12 +93,27 @@ class ACInfinityClient:
         """
         settings = await self.get_device_mode_settings_list(device_id, port_id)
 
-        # Remove fields that are not part of update payload, as well as the devSettings structure so we're not messing
-        # with the controller settings.
+        # Remove fields that are not part of update payload or cause issues with newer controllers
         for key in [
             PortControlKey.DEVICE_MAC_ADDR,
             PortControlKey.IPC_SETTING,
             PortControlKey.DEV_SETTING,
+            # Additional fields that may cause issues with Type 11 controllers
+            "loadType",
+            "loadState", 
+            "abnormalState",
+            "timestamp",
+            "reportSeq",
+            "fieldSet",
+            "devTimeZone",
+            "humidity",
+            "temperature", 
+            "temperatureF",
+            "tTrend",
+            "hTrend",
+            "speak",
+            "trend",
+            "isOpenAutomation",
         ]:
             if key in settings:
                 del settings[key]
@@ -123,6 +138,12 @@ class ACInfinityClient:
         for key in settings:
             if settings[key] is None:
                 settings[key] = 0
+            # Convert boolean values to integers for API compatibility
+            elif isinstance(settings[key], bool):
+                settings[key] = 1 if settings[key] else 0
+            # Ensure all values are valid integers or strings
+            elif isinstance(settings[key], float):
+                settings[key] = int(settings[key])
 
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(API_URL_ADD_DEV_MODE, settings, headers)

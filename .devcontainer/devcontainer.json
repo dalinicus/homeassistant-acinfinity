@@ -1,22 +1,54 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "Python 3",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/python:3"
+  "name": "Home Assistant AC Infinity Dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-python.pytest",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "files.associations": {
+          "*.yaml": "yaml",
+          "*.yml": "yaml"
+        }
+      }
+    }
+  },
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  "mounts": [
+    "source=${localWorkspaceFolder}/custom_components,target=/config/custom_components,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer/config,target=/config,type=bind,consistency=cached"
+  ],
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install --user -r requirements.txt",
+  "forwardPorts": [8123],
+  "portsAttributes": {
+    "8123": {
+      "label": "Home Assistant",
+      "onAutoForward": "notify"
+    }
+  },
 
-	// Configure tool-specific properties.
-	// "customizations": {},
+  "postCreateCommand": "pip install -r /workspaces/homeassistant-acinfinity/requirements.txt",
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  "containerEnv": {
+    "PYTHONPATH": "/config/custom_components"
+  },
+
+  "remoteUser": "root",
+  "runArgs": ["--privileged"]
 }

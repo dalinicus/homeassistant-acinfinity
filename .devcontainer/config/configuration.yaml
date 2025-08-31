@@ -1,0 +1,50 @@
+# Home Assistant development configuration for AC Infinity integration
+
+homeassistant:
+  name: AC Infinity Dev
+  latitude: 40.7128
+  longitude: -74.0060
+  elevation: 10
+  unit_system: metric
+  time_zone: America/New_York
+  country: US
+
+# Enable the frontend
+frontend:
+
+# Enable configuration UI
+config:
+
+# Enable the API
+api:
+
+# Enable mobile app support
+mobile_app:
+
+# Enable system health
+system_health:
+
+# Enable my integration
+my:
+
+# Enable history
+history:
+
+# Enable logbook
+logbook:
+
+# Enable sun integration
+sun:
+
+# Logger configuration for debugging your integration
+logger:
+  default: info
+  logs:
+    custom_components.ac_infinity: debug
+
+# HTTP configuration
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1

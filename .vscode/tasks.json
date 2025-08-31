@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Home Assistant",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "homeassistant", "--config", "/config"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": [],
+      "detail": "Start Home Assistant with AC Infinity integration loaded"
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "pytest",
+      "args": ["tests/", "-v"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Run all tests for the AC Infinity integration"
+    },
+    {
+      "label": "Lint Code",
+      "type": "shell",
+      "command": "ruff",
+      "args": ["check", "custom_components/", "tests/"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Run linting on the codebase"
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "black",
+      "args": ["custom_components/", "tests/"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Format code using Black"
+    }
+  ]
+}

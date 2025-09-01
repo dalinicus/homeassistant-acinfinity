@@ -377,7 +377,7 @@ class TestConfigFlow:
             subentries_data=None,
         )
 
-        mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
+        flow.config_entry = entry
 
         # Change only the polling interval, don't provide password
         await flow.async_step_init({CONF_POLLING_INTERVAL: 15})

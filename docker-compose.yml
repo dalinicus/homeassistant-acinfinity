@@ -1,0 +1,15 @@
+services:
+  homeassistant:
+    container_name: homeassistant-dev
+    image: homeassistant/home-assistant:stable
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
+    volumes:
+      - ha-config:/config
+      - ./custom_components:/config/custom_components
+    ports:
+      - "8123:8123"
+
+volumes:
+  ha-config:

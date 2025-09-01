@@ -121,7 +121,8 @@ class OptionsFlow(config_entries.OptionsFlow):
             if not errors:
                 new_data = self.config_entry.data.copy()
                 new_data[CONF_POLLING_INTERVAL] = polling_interval
-                new_data[CONF_PASSWORD] = password
+                if password:
+                    new_data[CONF_PASSWORD] = password
 
                 self.hass.config_entries.async_update_entry(
                     self.config_entry,

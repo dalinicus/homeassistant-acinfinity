@@ -22,12 +22,12 @@
       "init": {
         "title": "AC Infinity Configuration",
         "menu_options": {
-          "integration_config": "Integration Configuration",
+          "general_config": "General Configuration",
           "controller_select": "Entity Settings"
         }
       },
-      "integration_config": {
-        "title": "Integration Configuration",
+      "general_config": {
+        "title": "General Configuration",
         "data": {
           "polling_interval": "Polling Interval (Seconds)",
           "update_password": "Update Password",

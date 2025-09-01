@@ -15,7 +15,6 @@ PLATFORMS = [
 HOST = "http://www.acinfinityserver.com"
 
 DEFAULT_POLLING_INTERVAL = 10
-DEFAULT_NUMBER_DISPLAY_TYPE = "auto"
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
 class ConfigurationKey:

@@ -85,15 +85,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
 class OptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self):
-        self.__current_device_id = None
+        self.__current_device_id: str | int = 0
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         return self.async_show_menu(
-            step_id="init", menu_options=["integration_config", "controller_select"]
+            step_id="init", menu_options=["general_config", "controller_select"]
         )
 
-    async def async_step_integration_config(self, user_input: dict[str, Any] | None = None):
+    async def async_step_general_config(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
             polling_interval = user_input.get(
@@ -151,7 +151,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
-            step_id="integration_config",
+            step_id="general_config",
             data_schema=vol.Schema(
                 {
                     vol.Required(ConfigurationKey.POLLING_INTERVAL, default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL)): int,
@@ -160,6 +160,7 @@ class OptionsFlow(config_entries.OptionsFlow):
             ),
             errors=errors
         )
+
     async def async_step_controller_select(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             self.__current_device_id = user_input["device_id"]
@@ -193,7 +194,7 @@ class OptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_entity_settings(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
-        device_id = self.__current_device_id
+        device_id: str | int = self.__current_device_id
 
         if user_input is not None:
             new_data = self.config_entry.data.copy()

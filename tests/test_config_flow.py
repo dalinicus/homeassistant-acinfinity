@@ -7,7 +7,7 @@ from unittest.mock import ANY
 import pytest
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from pytest_mock import MockFixture
 
@@ -351,6 +351,46 @@ class TestConfigFlow:
 
         await flow.async_step_init({CONF_POLLING_INTERVAL: 10})
 
+        flow.async_show_menu.assert_not_called()
+        flow.async_create_entry.assert_called()
+
+    async def test_options_flow_handler_preserves_existing_password_when_only_polling_interval_changed(
+        self, mocker: MockFixture, setup_options_flow
+    ):
+        """When only polling interval is changed, existing password should be preserved"""
+        _, test_objects = setup_options_flow
+        flow = test_objects.options_flow
+
+        # Create a config entry with both email and password
+        entry = ConfigEntry(
+            entry_id=ENTRY_ID,
+            data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD, CONF_POLLING_INTERVAL: 10},
+            domain=DOMAIN,
+            minor_version=0,
+            source="",
+            title="",
+            version=0,
+            options=None,
+            unique_id=None,
+            discovery_keys=MappingProxyType({}),
+            state=ConfigEntryState.SETUP_IN_PROGRESS,
+            subentries_data=None,
+        )
+
+        mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
+
+        # Change only the polling interval, don't provide password
+        await flow.async_step_init({CONF_POLLING_INTERVAL: 15})
+
+        # Verify the password is preserved in the updated config
+        flow.hass.config_entries.async_update_entry.assert_called_with(
+            ANY,
+            data={
+                CONF_EMAIL: EMAIL,
+                CONF_PASSWORD: PASSWORD,  # Original password should be preserved
+                CONF_POLLING_INTERVAL: 15,
+            },
+        )
         flow.async_show_menu.assert_not_called()
         flow.async_create_entry.assert_called()
 

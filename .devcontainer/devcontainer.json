@@ -13,7 +13,8 @@
         "charliermarsh.ruff",
         "ms-python.pytest",
         "redhat.vscode-yaml",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "augment.vscode-augment"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",

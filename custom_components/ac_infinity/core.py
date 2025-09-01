@@ -30,6 +30,8 @@ from .const import (
     SensorType, ConfigurationKey, EntityConfigValue,
 )
 
+ACINFINITY_API_ERROR = "Retry limit exceeded contacting the AC Infinity API.  This is unlikely an issue with the integration, but rather a result of API instability.  Please try your request again later."
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -663,16 +665,16 @@ class ACInfinityService:
 
                 return  # update successful.  eject from the infinite while loop.
             except BaseException as ex:
-                if try_count < 2:
+                if try_count < 4:
                     try_count += 1
                     _LOGGER.warning(
-                        "Unable to refresh from data update coordinator. Retry attempt %s/2",
+                        "Unable to refresh from data update coordinator. Retry attempt %s/4",
                         str(try_count),
                     )
                     await asyncio.sleep(1)
                 else:
                     _LOGGER.error(
-                        "Unable to refresh from data update coordinator. Retry attempt limit exceeded",
+                        ACINFINITY_API_ERROR,
                         exc_info=ex,
                     )
                     raise
@@ -778,16 +780,16 @@ class ACInfinityService:
                 )
                 return
             except BaseException as ex:
-                if try_count < 2:
+                if try_count < 4:
                     try_count += 1
                     _LOGGER.warning(
-                        "Unable to update controller settings. Retry attempt %s/2",
+                        "Unable to update controller settings. Retry attempt %s/4",
                         str(try_count),
                     )
                     await asyncio.sleep(1)
                 else:
                     _LOGGER.error(
-                        "Unable to update controller settings. Retry attempt limit exceeded",
+                        ACINFINITY_API_ERROR,
                         exc_info=ex,
                     )
                     raise
@@ -832,15 +834,15 @@ class ACInfinityService:
                 )
                 return
             except BaseException as ex:
-                if try_count < 2:
+                if try_count < 4:
                     try_count += 1
                     _LOGGER.warning(
-                        "Unable to update settings. Retry attempt %s/2", str(try_count)
+                        "Unable to update settings. Retry attempt %s/4", str(try_count)
                     )
                     await asyncio.sleep(1)
                 else:
                     _LOGGER.error(
-                        "Unable to update settings. Retry attempt limit exceeded",
+                        ACINFINITY_API_ERROR,
                         exc_info=ex,
                     )
                     raise
@@ -1113,8 +1115,8 @@ class ACInfinityEntities(list[ACInfinityEntity]):
                     entity.platform_name,
                 )
             else:
-                _LOGGER.warning(
-                    'Ignoring unsuitable entity "%s" (%s) for platform "%s".',
+                _LOGGER.info(
+                    'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
                     entity.unique_id,
                     entity.translation_key,
                     entity.platform_name,

@@ -154,7 +154,7 @@ class TestACInfinity:
         )
 
     async def test_update_retried_on_failure(self, mocker: MockFixture):
-        """update should be tried 3 times before raising an exception"""
+        """update should be tried 5 times before raising an exception"""
         future: Future = asyncio.Future()
         future.set_result(None)
 
@@ -183,7 +183,7 @@ class TestACInfinity:
         with pytest.raises(Exception):
             await ac_infinity.refresh()
 
-        assert mock_get_all.call_count == 3
+        assert mock_get_all.call_count == 5
 
     @pytest.mark.parametrize(
         "property_key, value",
@@ -638,7 +638,7 @@ class TestACInfinity:
         mocked_sets.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
 
     async def test_update_port_controls_retried_on_failure(self, mocker: MockFixture):
-        """updating settings should be tried 3 times before failing"""
+        """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
@@ -659,7 +659,7 @@ class TestACInfinity:
                 DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)]
             )
 
-        assert mocked_sets.call_count == 3
+        assert mocked_sets.call_count == 5
 
     async def test_update_controller_setting(self, mocker: MockFixture):
         future: Future = asyncio.Future()
@@ -705,7 +705,7 @@ class TestACInfinity:
     async def test_update_controller_settings_retried_on_failure(
         self, mocker: MockFixture
     ):
-        """updating settings should be tried 3 times before failing"""
+        """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
@@ -726,7 +726,7 @@ class TestACInfinity:
                 DEVICE_ID, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
             )
 
-        assert mocked_sets.call_count == 3
+        assert mocked_sets.call_count == 5
 
     async def test_update_port_setting(self, mocker: MockFixture):
         future: Future = asyncio.Future()
@@ -783,7 +783,7 @@ class TestACInfinity:
         )
 
     async def test_update_port_settings_retried_on_failure(self, mocker: MockFixture):
-        """updating settings should be tried 3 times before failing"""
+        """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
@@ -804,7 +804,7 @@ class TestACInfinity:
                 DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
             )
 
-        assert mocked_sets.call_count == 3
+        assert mocked_sets.call_count == 5
 
     @pytest.mark.parametrize("is_suitable", [True, False])
     async def test_append_if_suitable_only_added_if_suitable(self, setup, is_suitable):

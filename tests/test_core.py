@@ -818,6 +818,7 @@ class TestACInfinity:
             icon=None,  # default
             translation_key="temperature",
             suggested_unit_of_measurement=None,
+            enabled_fn=lambda entry, device_id, entity_config_key: True,
             suitable_fn=lambda e, c: is_suitable,
             get_value_fn=lambda e, c: None,
         )
@@ -828,7 +829,7 @@ class TestACInfinity:
             ACInfinityController(CONTROLLER_PROPERTIES),
         )
 
-        entities = ACInfinityEntities()
+        entities = ACInfinityEntities(test_objects.config_entry)
         entities.append_if_suitable(entity)
 
         assert len(entities) == (1 if is_suitable else 0)

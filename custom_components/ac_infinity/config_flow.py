@@ -24,7 +24,7 @@ from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
-    HOST, DEFAULT_NUMBER_DISPLAY_TYPE, ControllerPropertyKey, PortPropertyKey, EntityConfigValue,
+    HOST, ControllerPropertyKey, PortPropertyKey, EntityConfigValue,
 )
 
 _LOGGER = logging.getLogger(__name__)

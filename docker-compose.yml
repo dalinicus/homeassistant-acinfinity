@@ -6,10 +6,8 @@ services:
     environment:
       - TZ=America/Chicago
     volumes:
-      - ha-config:/config
+      - ./ha-dev:/config
       - ./custom_components:/config/custom_components
     ports:
       - "8123:8123"
 
-volumes:
-  ha-config:

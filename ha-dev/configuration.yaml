@@ -1,0 +1,18 @@
+# Basic Home Assistant configuration
+homeassistant:
+  name: Home Assistant Dev
+  time_zone: America/Chicago
+
+# Enable the frontend
+frontend:
+
+# Enable configuration UI
+config:
+
+# Enable logging to stdout
+logger:
+  default: info
+  logs:
+    custom_components.ac_infinity: info
+    homeassistant.core: info
+    homeassistant.components: warning

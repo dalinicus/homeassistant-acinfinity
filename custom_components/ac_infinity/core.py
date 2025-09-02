@@ -944,7 +944,7 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         controller: ACInfinityController,
-        enabled_fn: Callable[[ConfigEntry, str], bool],
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
         data_key: str,
         platform: str,
@@ -969,7 +969,7 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         return self._controller
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, "controller")
+        return self._enabled_fn(entry, str(self._controller.device_id), "controller")
 
     @property
     def is_suitable(self) -> bool:
@@ -981,7 +981,7 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         sensor: ACInfinitySensor,
-        enabled_fn: Callable[[ConfigEntry, str], bool],
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
         data_key: str,
         platform: str,
@@ -1006,7 +1006,7 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         return self._sensor
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, "sensors")
+        return self._enabled_fn(entry, str(self._sensor.controller.device_id), "sensors")
 
     @property
     def is_suitable(self) -> bool:
@@ -1018,7 +1018,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         port: ACInfinityPort,
-        enabled_fn: Callable[[ConfigEntry, str], bool],
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
         data_key: str,
         platform: str,
@@ -1043,7 +1043,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
         return self._port
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, f"port_{self._port.port_index}")
+        return self._enabled_fn(entry, str(self._port.controller.device_id), f"port_{self._port.port_index}")
 
     @property
     def is_suitable(self) -> bool:
@@ -1051,7 +1051,7 @@ class ACInfinityPortEntity(ACInfinityEntity):
 
 @dataclass(frozen=True)
 class ACInfinityBaseMixin:
-    enabled_fn: Callable[[ConfigEntry, str], bool]
+    enabled_fn: Callable[[ConfigEntry, str, str], bool]
     """ output if the entity is enabled via option flow"""
 
 @dataclass(frozen=True)
@@ -1122,25 +1122,34 @@ class ACInfinityEntities(list[ACInfinityEntity]):
                     entity.platform_name,
             )
         else:
-            _LOGGER.warning(
+            _LOGGER.info(
                 'Ignoring disabled entity "%s" (%s) for platform "%s".',
                 entity.unique_id,
                 entity.translation_key,
                 entity.platform_name,
             )
 
-def enabled_fn_sensor(entry: ConfigEntry, entity_config_key:str) -> bool:
-    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] != EntityConfigValue.Disable \
-        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+def enabled_fn_sensor(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] != EntityConfigValue.Disable \
+        if ConfigurationKey.ENTITIES in entry.data \
+        and device_id in entry.data[ConfigurationKey.ENTITIES] \
+        and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id] \
         else True
 
-def enabled_fn_control(entry: ConfigEntry, entity_config_key:str) -> bool:
-    setting = entry.data[ConfigurationKey.ENTITIES][entity_config_key]
+def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
     return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly \
-        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+        if ConfigurationKey.ENTITIES in entry.data \
+        and device_id in entry.data[ConfigurationKey.ENTITIES] \
+        and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id] \
         else True
 
-def enabled_fn_setting(entry: ConfigEntry, entity_config_key:str) -> bool:
-    return entry.data[ConfigurationKey.ENTITIES][entity_config_key] == EntityConfigValue.All \
-        if ConfigurationKey.ENTITIES in entry.data and entity_config_key in entry.data[ConfigurationKey.ENTITIES] \
+def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] == EntityConfigValue.All \
+        if ConfigurationKey.ENTITIES in entry.data \
+        and device_id in entry.data[ConfigurationKey.ENTITIES] \
+        and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id] \
         else True
+
+# Direct functions for use in entity descriptions - these will be called by the entity classes
+# with the appropriate device_id and entity_config_key parameters

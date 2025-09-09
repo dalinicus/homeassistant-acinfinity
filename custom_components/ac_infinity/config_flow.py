@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import voluptuous as vol
@@ -134,10 +135,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 if password:
                     new_data[CONF_PASSWORD] = password
 
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    data=new_data,
-                )
+                self.__update_config_entry_data(new_data)
 
                 coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
                     self.config_entry.entry_id
@@ -154,7 +152,9 @@ class OptionsFlow(config_entries.OptionsFlow):
             step_id="general_config",
             data_schema=vol.Schema(
                 {
-                    vol.Required(ConfigurationKey.POLLING_INTERVAL, default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL)): int,
+                    vol.Required(ConfigurationKey.POLLING_INTERVAL,
+                                 default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL,
+                                                                     DEFAULT_POLLING_INTERVAL)): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str
                 }
             ),
@@ -198,14 +198,11 @@ class OptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None:
             new_data = self.config_entry.data.copy()
-            if not ConfigurationKey.ENTITIES in new_data:
+            if ConfigurationKey.ENTITIES not in new_data:
                 new_data[ConfigurationKey.ENTITIES] = {}
-            new_data[ConfigurationKey.ENTITIES][self.__current_device_id] = user_input
 
-            self.hass.config_entries.async_update_entry(
-                self.config_entry,
-                data=new_data,
-            )
+            new_data[ConfigurationKey.ENTITIES][str(self.__current_device_id)] = user_input
+            self.__update_config_entry_data(new_data)
 
             return await self.async_step_notify_restart()
 
@@ -221,18 +218,22 @@ class OptionsFlow(config_entries.OptionsFlow):
             "controller": device_name
         }
 
-        entities[vol.Required("controller", default=self.__get_saved_entity_conf_value(device_id, "controller"))] = selector({
-            "select": {
-                "options": [
-                    {"value": EntityConfigValue.All, "label": "All Entities"},
-                    {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
-                    {"value": EntityConfigValue.Disable, "label": "Disable"}
-                ],
-                "mode": "dropdown"
-            }
-        })
+        entities[
+            vol.Required("controller",
+                         default=self.__get_saved_entity_conf_value(str(device_id), "controller"))] = selector(
+            {
+                "select": {
+                    "options": [
+                        {"value": EntityConfigValue.All, "label": "All Entities"},
+                        {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
+                        {"value": EntityConfigValue.Disable, "label": "Disable"}
+                    ],
+                    "mode": "dropdown"
+                }
+            })
 
-        entities[vol.Required("sensors", default=self.__get_saved_entity_conf_value(device_id, "sensors"))] = selector({
+        entities[
+            vol.Required("sensors", default=self.__get_saved_entity_conf_value(str(device_id), "sensors"))] = selector({
             "select": {
                 "options": [
                     {"value": EntityConfigValue.All, "label": "All Entities"},
@@ -244,18 +245,22 @@ class OptionsFlow(config_entries.OptionsFlow):
 
         for i in range(1, port_count + 1):
             entity_config_key = f"port_{i}"
-            description_placeholders[entity_config_key] = coordinator.ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
-            entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(device_id, entity_config_key))] = selector({
-                "select": {
-                    "options": [
-                        {"value": EntityConfigValue.All, "label": "All Entities"},
-                        {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"},
-                        {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
-                        {"value": EntityConfigValue.Disable, "label": "Disable"}
-                    ],
-                    "mode": "dropdown"
-                }
-            })
+            description_placeholders[entity_config_key] = coordinator.ac_infinity.get_port_property(device_id, i,
+                                                                                                    PortPropertyKey.NAME)
+            entities[vol.Required(entity_config_key,
+                                  default=self.__get_saved_entity_conf_value(str(device_id),
+                                                                             entity_config_key))] = selector(
+                {
+                    "select": {
+                        "options": [
+                            {"value": EntityConfigValue.All, "label": "All Entities"},
+                            {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"},
+                            {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"},
+                            {"value": EntityConfigValue.Disable, "label": "Disable"}
+                        ],
+                        "mode": "dropdown"
+                    }
+                })
 
         return self.async_show_form(
             step_id="entity_settings",
@@ -276,20 +281,30 @@ class OptionsFlow(config_entries.OptionsFlow):
     async def async_step_restart_no(self, _):
         return self.async_create_entry(title="", data={})
 
-    def __get_saved_conf_value(self, conf_key:str, default):
+    def __update_config_entry_data(self, new_data: dict[str, Any]) -> None:
+        """Update config entry data with modified timestamp."""
+        new_data[ConfigurationKey.MODIFIED_AT] = datetime.now().isoformat()
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data=new_data,
+        )
+
+    def __get_saved_conf_value(self, conf_key: str, default):
         return (
             self.config_entry.data[conf_key]
             if conf_key in self.config_entry.data
-               and self.config_entry.data[conf_key] is not None
+            and self.config_entry.data[conf_key] is not None
             else default
         )
 
-    def __get_saved_entity_conf_value(self, device_id:str, entity_config_key:str):
+    def __get_saved_entity_conf_value(self, device_id: str, entity_config_key: str):
         return (
             self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
             if ConfigurationKey.ENTITIES in self.config_entry.data
-                and self.config_entry.data[ConfigurationKey.ENTITIES] is not None
-                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id] is not None
-                and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
+            and self.config_entry.data[ConfigurationKey.ENTITIES] is not None
+            and device_id in self.config_entry.data[ConfigurationKey.ENTITIES]
+            and self.config_entry.data[ConfigurationKey.ENTITIES][device_id] is not None
+            and entity_config_key in self.config_entry.data[ConfigurationKey.ENTITIES][device_id]
+            and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
             else EntityConfigValue.All
         )

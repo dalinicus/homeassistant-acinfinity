@@ -21,6 +21,7 @@ class ConfigurationKey:
     POLLING_INTERVAL = "polling_interval"
     UPDATE_PASSWORD = "update_password"
     ENTITIES = "entities"
+    MODIFIED_AT = "modified_at"
 
 class EntityConfigValue:
     All = "all"

@@ -23,8 +23,7 @@ from custom_components.ac_infinity.config_flow import (
     OptionsFlow,
 )
 from custom_components.ac_infinity.const import (
-    CONF_POLLING_INTERVAL,
-    CONF_UPDATE_PASSWORD,
+    ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
 )
@@ -33,7 +32,7 @@ from tests import ACTestObjects, setup_entity_mocks
 from .data_models import EMAIL, ENTRY_ID, PASSWORD, POLLING_INTERVAL
 
 CONFIG_FLOW_USER_INPUT = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
-OPTION_FLOW_USER_INPUT = {CONF_POLLING_INTERVAL: POLLING_INTERVAL}
+OPTION_FLOW_USER_INPUT = {ConfigurationKey.POLLING_INTERVAL: POLLING_INTERVAL}
 
 
 @pytest.fixture
@@ -181,7 +180,7 @@ class TestConfigFlow:
 
         entry = ConfigEntry(
             entry_id=ENTRY_ID,
-            data={CONF_POLLING_INTERVAL: existing_value},
+            data={ConfigurationKey.POLLING_INTERVAL: existing_value},
             domain=DOMAIN,
             minor_version=0,
             source="",
@@ -195,14 +194,14 @@ class TestConfigFlow:
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
 
-        await flow.async_step_init()
+        await flow.async_step_general_config()
 
         flow.async_show_form.assert_called_with(
-            step_id="init",
+            step_id="general_config",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(CONF_POLLING_INTERVAL, default=expected_value): int,
-                    vol.Optional(CONF_UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.POLLING_INTERVAL, default=expected_value): int,
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
                 }
             ),
             errors={},
@@ -232,16 +231,16 @@ class TestConfigFlow:
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
 
-        await flow.async_step_init()
+        await flow.async_step_general_config()
 
         flow.async_show_form.assert_called_with(
-            step_id="init",
+            step_id="general_config",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
-                        CONF_POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
+                    vol.Required(
+                        ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
-                    vol.Optional(CONF_UPDATE_PASSWORD): str,
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
                 }
             ),
             errors={},
@@ -272,19 +271,19 @@ class TestConfigFlow:
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
 
-        await flow.async_step_init({CONF_POLLING_INTERVAL: user_input})
+        await flow.async_step_general_config({ConfigurationKey.POLLING_INTERVAL: user_input})
 
         flow.async_show_form.assert_called_with(
-            step_id="init",
+            step_id="general_config",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
-                        CONF_POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
+                    vol.Required(
+                        ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
-                    vol.Optional(CONF_UPDATE_PASSWORD): str,
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
                 }
             ),
-            errors={CONF_POLLING_INTERVAL: "invalid_polling_interval"},
+            errors={ConfigurationKey.POLLING_INTERVAL: "invalid_polling_interval"},
         )
         flow.async_create_entry.assert_not_called()
 
@@ -296,21 +295,54 @@ class TestConfigFlow:
         _, test_objects = setup_options_flow
         flow = test_objects.options_flow
 
-        await flow.async_step_init(
-            {CONF_POLLING_INTERVAL: user_input, CONF_UPDATE_PASSWORD: "hunter2"}
+        await flow.async_step_general_config(
+            {ConfigurationKey.POLLING_INTERVAL: user_input, ConfigurationKey.UPDATE_PASSWORD: "hunter2"}
         )
 
         flow.async_show_form.assert_not_called()
-        flow.hass.config_entries.async_update_entry.assert_called_with(
-            ANY,
-            data={
-                CONF_EMAIL: "ac_infinity-myemail@unittest.com",
-                CONF_POLLING_INTERVAL: user_input,
-                CONF_PASSWORD: "hunter2",
-            },
-        )
+        # Verify that async_update_entry was called with the expected data including modified_at
+        call_args = flow.hass.config_entries.async_update_entry.call_args
+        assert call_args is not None
+        assert call_args[1]['data'][CONF_EMAIL] == "ac_infinity-myemail@unittest.com"
+        assert call_args[1]['data'][ConfigurationKey.POLLING_INTERVAL] == user_input
+        assert call_args[1]['data'][CONF_PASSWORD] == "hunter2"
+        assert ConfigurationKey.MODIFIED_AT in call_args[1]['data']
+        # Verify modified_at is a valid ISO timestamp
+        from datetime import datetime
+        datetime.fromisoformat(call_args[1]['data'][ConfigurationKey.MODIFIED_AT])
 
         assert test_objects.coordinator.update_interval == timedelta(seconds=user_input)
+
+    async def test_update_config_entry_data_adds_modified_at_timestamp(self, setup_options_flow):
+        """Test that the private __update_config_entry_data method adds a modified_at timestamp"""
+        _, test_objects = setup_options_flow
+        flow = test_objects.options_flow
+
+        # Create test data
+        test_data = {
+            CONF_EMAIL: "test@example.com",
+            ConfigurationKey.POLLING_INTERVAL: 30
+        }
+
+        # Call the private method
+        flow._OptionsFlow__update_config_entry_data(test_data)
+
+        # Verify the method was called with the expected data including modified_at
+        call_args = flow.hass.config_entries.async_update_entry.call_args
+        assert call_args is not None
+        updated_data = call_args[1]['data']
+
+        # Verify original data is preserved
+        assert updated_data[CONF_EMAIL] == "test@example.com"
+        assert updated_data[ConfigurationKey.POLLING_INTERVAL] == 30
+
+        # Verify modified_at was added
+        assert ConfigurationKey.MODIFIED_AT in updated_data
+
+        # Verify modified_at is a valid ISO timestamp
+        from datetime import datetime
+        timestamp = datetime.fromisoformat(updated_data[ConfigurationKey.MODIFIED_AT])
+        assert timestamp is not None
 
     async def test_restart_yes_sends_restart_signal(self, setup_options_flow):
         """The signal for restarting home assistant is called when user selects Restart Now"""
@@ -335,7 +367,7 @@ class TestConfigFlow:
         _, test_objects = setup_options_flow
         flow = test_objects.options_flow
 
-        await flow.async_step_init({CONF_UPDATE_PASSWORD: "hunter2"})
+        await flow.async_step_general_config({ConfigurationKey.UPDATE_PASSWORD: "hunter2"})
 
         flow.async_show_menu.assert_called_with(
             step_id="notify_restart", menu_options=["restart_yes", "restart_no"]
@@ -349,7 +381,7 @@ class TestConfigFlow:
         _, test_objects = setup_options_flow
         flow = test_objects.options_flow
 
-        await flow.async_step_init({CONF_POLLING_INTERVAL: 10})
+        await flow.async_step_general_config({ConfigurationKey.POLLING_INTERVAL: 10})
 
         flow.async_show_menu.assert_not_called()
         flow.async_create_entry.assert_called()
@@ -364,7 +396,7 @@ class TestConfigFlow:
         # Create a config entry with both email and password
         entry = ConfigEntry(
             entry_id=ENTRY_ID,
-            data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD, CONF_POLLING_INTERVAL: 10},
+            data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD, ConfigurationKey.POLLING_INTERVAL: 10},
             domain=DOMAIN,
             minor_version=0,
             source="",
@@ -380,17 +412,16 @@ class TestConfigFlow:
         flow.config_entry = entry
 
         # Change only the polling interval, don't provide password
-        await flow.async_step_init({CONF_POLLING_INTERVAL: 15})
+        await flow.async_step_general_config({ConfigurationKey.POLLING_INTERVAL: 15})
 
-        # Verify the password is preserved in the updated config
-        flow.hass.config_entries.async_update_entry.assert_called_with(
-            ANY,
-            data={
-                CONF_EMAIL: EMAIL,
-                CONF_PASSWORD: PASSWORD,  # Original password should be preserved
-                CONF_POLLING_INTERVAL: 15,
-            },
-        )
+        # Verify the password is preserved in the updated config including modified_at
+        call_args = flow.hass.config_entries.async_update_entry.call_args
+        assert call_args is not None
+        updated_data = call_args[1]['data']
+        assert updated_data[CONF_EMAIL] == EMAIL
+        assert updated_data[CONF_PASSWORD] == PASSWORD  # Original password should be preserved
+        assert updated_data[ConfigurationKey.POLLING_INTERVAL] == 15
+        assert ConfigurationKey.MODIFIED_AT in updated_data
         flow.async_show_menu.assert_not_called()
         flow.async_create_entry.assert_called()
 
@@ -411,19 +442,19 @@ class TestConfigFlow:
 
         mocker.patch.object(ACInfinityClient, "login", side_effect=error)
 
-        await flow.async_step_init({CONF_UPDATE_PASSWORD: "hunter2"})
+        await flow.async_step_general_config({ConfigurationKey.UPDATE_PASSWORD: "hunter2"})
 
         flow.async_show_form.assert_called_with(
-            step_id="init",
+            step_id="general_config",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
-                        CONF_POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
+                    vol.Required(
+                        ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
-                    vol.Optional(CONF_UPDATE_PASSWORD): str,
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
                 }
             ),
-            errors={CONF_UPDATE_PASSWORD: expected},
+            errors={ConfigurationKey.UPDATE_PASSWORD: expected},
         )
         flow.hass.config_entries.async_update_entry.assert_not_called()
         flow.async_create_entry.assert_not_called()

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from datetime import timedelta
@@ -890,7 +890,7 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
         return self._ac_infinity
 
 
-class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
+class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     _attr_has_entity_name = True
     coordinator: ACInfinityDataUpdateCoordinator
     translation_key: str
@@ -1108,21 +1108,21 @@ class ACInfinityEntities(list[ACInfinityEntity]):
         if entity.is_enabled(self._config_entry):
             if entity.is_suitable:
                 self.append(entity)
-                _LOGGER.info(
+                _LOGGER.debug(
                     'Initializing entity "%s" (%s) for platform "%s".',
                     entity.unique_id,
                     entity.translation_key,
                     entity.platform_name,
                 )
             else:
-                _LOGGER.info(
+                _LOGGER.debug(
                     'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
                     entity.unique_id,
                     entity.translation_key,
                     entity.platform_name,
             )
         else:
-            _LOGGER.info(
+            _LOGGER.debug(
                 'Ignoring disabled entity "%s" (%s) for platform "%s".',
                 entity.unique_id,
                 entity.translation_key,

@@ -22,12 +22,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     
-    # Initialize ENTITIES configuration if it doesn't exist
-    if ConfigurationKey.ENTITIES not in entry.data:
-        new_data = dict(entry.data)
-        new_data[ConfigurationKey.ENTITIES] = {}
-        hass.config_entries.async_update_entry(entry, data=new_data)
-    
     polling_interval = (
         int(entry.data[ConfigurationKey.POLLING_INTERVAL])
         if ConfigurationKey.POLLING_INTERVAL in entry.data

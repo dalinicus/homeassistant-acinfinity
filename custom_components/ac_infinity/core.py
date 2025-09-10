@@ -328,13 +328,12 @@ class ACInfinityService:
     # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
     _device_settings: dict[tuple[str, int], Any] = {}
 
-    def __init__(self, email: str, password: str) -> None:
+    def __init__(self, client: ACInfinityClient) -> None:
         """
         Args:
-            email: email address to use to log into the AC Infinity API.  Set by user via config_flow during integration setup
-            password: password to use to log into the AC Infinity API.  Set by the user via config_flow during integration setup
+            client: The http client to use to make requests to the AC Infinity API
         """
-        self._client = ACInfinityClient(HOST, email, password)
+        self._client = client
 
     def get_device_ids(self):
         """

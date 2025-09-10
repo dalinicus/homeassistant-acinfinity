@@ -46,8 +46,8 @@
         }
       },
       "entity_settings": {
-        "title": "{controller} Entity Settings",
-        "description": "Enable/Disable entity types for each port.",
+        "title": "{controller} ({device_code})",
+        "description": "Enable/Disable entity types for each device.",
         "data": {
           "0": "{controller} (Controller)",
           "1": "{port_1} (Port 1)",

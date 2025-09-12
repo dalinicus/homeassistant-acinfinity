@@ -1,21 +1,39 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Device is already configured",
+      "not_initialized": "Service not initialized. Please try again.",
+      "no_devices": "No devices found. Add devices via the AC Infinity mobile app and try again."
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
     "step": {
       "user": {
         "data": {
-          "email": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "email": "Email",
+          "password": "Password",
+          "polling_interval": "Polling Interval (Seconds)"
+        }
+      },
+      "enable_entities": {
+        "title": "{controller} ({device_code})",
+        "description": "Enable/Disable entity types for each device.",
+        "data": {
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
         }
       }
-    },
-    "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-      "unknown": "[%key:common::config_flow::error::unknown%]"
-    },
-    "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "not_initialized": "Service not initialized. Please try again."
     }
   },
   "options": {
@@ -47,18 +65,19 @@
         }
       },
       "entity_settings": {
-        "title": "{controller} ({device_code})",
+        "title": "{device_name} ({device_code})",
         "description": "Enable/Disable entity types for each device.",
         "data": {
-          "0": "{controller} (Controller)",
-          "1": "{port_1} (Port 1)",
-          "2": "{port_2} (Port 2)",
-          "3": "{port_3} (Port 3)",
-          "4": "{port_4} (Port 4)",
-          "5": "{port_5} (Port 5)",
-          "6": "{port_6} (Port 6)",
-          "7": "{port_7} (Port 7)",
-          "8": "{port_8} (Port 8)"
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
         }
       },
       "notify_restart": {

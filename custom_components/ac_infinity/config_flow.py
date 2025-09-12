@@ -6,13 +6,13 @@ import json
 import logging
 from datetime import datetime, timedelta
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Mapping
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import section, SectionConfig
+from homeassistant.data_entry_flow import section, SectionConfig, _FlowResultT
 from homeassistant.helpers.selector import selector, Selector
 from voluptuous import Required
 
@@ -34,7 +34,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # Individual entity configuration option constants
-OPTION_ALL_ENTITIES = {"value": EntityConfigValue.All, "label": "All Entities"}
+OPTION_ALL_ENTITIES = {"value": EntityConfigValue.All, "label": "Sensors, Controls, and Settings"}
 OPTION_SENSORS_AND_CONTROLS = {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"}
 OPTION_SENSORS_ONLY = {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"}
 OPTION_DISABLE = {"value": EntityConfigValue.Disable, "label": "Disable"}
@@ -47,7 +47,7 @@ ENTITY_CONFIG_OPTIONS_CONTROLLER = [
 ]
 
 ENTITY_CONFIG_OPTIONS_SENSORS = [
-    OPTION_ALL_ENTITIES,
+    OPTION_SENSORS_ONLY,
     OPTION_DISABLE
 ]
 
@@ -99,11 +99,13 @@ class ACInfinityFlowBase:
             Tuple of (entities schema dict, description_placeholders dict)
         """
         device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+        device_code = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
         port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         entities = {}
         description_placeholders = {
-            "controller": device_name
+            "controller": device_name,
+            "device_code": device_code
         }
 
         entities[
@@ -147,8 +149,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         self.__username: str | None = None
         self.__password: str | None = None
         self.__ac_infinity: ACInfinityService | None = None
-
-        self.__device_ids: list[str] = []
+        self.__device_ids: list[str] | None = None
         self.__device_index: int = 0
 
         self.__entities: dict[str, Any] = {}
@@ -173,70 +174,80 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
             try:
                 await client.login()
-                _ = await client.get_devices_list_all()
+
                 self.__username = user_input[CONF_EMAIL]
                 self.__password = user_input[CONF_PASSWORD]
                 self.__ac_infinity = ACInfinityService(client)
+                await self.__ac_infinity.refresh()
 
                 self.__device_ids = self.__ac_infinity.get_device_ids()
                 self.__device_index = 0
 
-                return await self.async_step_entities()
+                if self.__device_ids is None or len(self.__device_ids) == 0:
+                    return self.async_abort(reason="no_devices")
+
+                return await self.async_step_enable_entities()
 
             except ACInfinityClientCannotConnect:
+                await client.close()
                 errors["base"] = "cannot_connect"
             except ACInfinityClientInvalidAuth:
+                await client.close()
                 errors["base"] = "invalid_auth"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
+                await client.close()
                 errors["base"] = "unknown"
-            # else:
-                # await self.async_set_unique_id(f"ac_infinity-{user_input[CONF_EMAIL]}")
-                # self._abort_if_unique_id_configured()
-
-                # return self.async_create_entry(
-                #    title=f"AC Infinity ({user_input[CONF_EMAIL]})", data=user_input
-                #)
 
         return self.async_show_form(
             step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )
 
-    async def async_step_entities(self, user_input: dict[str, Any] | None = None):
-        if self.__ac_infinity is None:
+    async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
+        if self.__ac_infinity is None or self.__device_ids is None:
             _LOGGER.error("AC Infinity service is not initialized")
             return self.async_abort(reason="not_initialized")
 
+        device_id: str = str(self.__device_ids[self.__device_index])
         errors: dict[str, str] = {}
+
         if user_input is not None:
-            self.__entities[self.__device_ids[self.__device_index]] = user_input
+            self.__entities[str(device_id)] = user_input
+
             if self.__device_index < len(self.__device_ids) - 1:
                 self.__device_index += 1
-                return await self.async_step_entities()
+                return await self.async_step_enable_entities()
 
             else:
-                await self.async_set_unique_id(f"ac_infinity-{user_input[CONF_EMAIL]}")
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title=f"AC Infinity ({user_input[CONF_EMAIL]})", data={
-                        CONF_EMAIL: self.__username,
-                        CONF_PASSWORD: self.__password,
-                        ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
-                        ConfigurationKey.ENTITIES: self.__entities
-                    }
-                )
+                await self.async_create_config_entry()
 
         entities, description_placeholders = self._build_entity_config_schema(
             self.__ac_infinity,
-            self.__device_ids[self.__device_index]
+            device_id
         )
 
         return self.async_show_form(
-            step_id="entity_settings",
+            step_id="enable_entities",
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
+        )
+
+    async def async_create_config_entry(self):
+        if self.__ac_infinity:
+            await self.__ac_infinity.close()
+
+        await self.async_set_unique_id(f"ac_infinity-{self.__username}")
+        self._abort_if_unique_id_configured()
+
+        return self.async_create_entry(
+            title=f"AC Infinity ({self.__username})", data={
+                CONF_EMAIL: self.__username,
+                CONF_PASSWORD: self.__password,
+                ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
+                ConfigurationKey.ENTITIES: self.__entities,
+                ConfigurationKey.MODIFIED_AT: datetime.now().isoformat()
+            }
         )
 
 
@@ -321,7 +332,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
     async def async_step_controller_select(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             self.__current_device_id = user_input["device_id"]
-            return await self.async_step_entity_settings()
+            return await self.async_step_enable_entities()
 
         coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
             self.config_entry.entry_id
@@ -349,7 +360,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             }),
         )
 
-    async def async_step_entity_settings(self, user_input: dict[str, Any] | None = None):
+    async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         device_id: str | int = self.__current_device_id
 
@@ -374,7 +385,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
         )
 
         return self.async_show_form(
-            step_id="entity_settings",
+            step_id="enable_entities",
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders

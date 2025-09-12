@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "already_configured": "Device is already configured",
-      "not_initialized": "Service not initialized. Please try again."
+      "not_initialized": "Service not initialized. Please try again.",
+      "no_devices": "No devices found. Add devices via the AC Infinity mobile app and try again."
     },
     "error": {
       "cannot_connect": "Failed to connect",
@@ -15,6 +16,22 @@
           "email": "Email",
           "password": "Password",
           "polling_interval": "Polling Interval (Seconds)"
+        }
+      },
+      "enable_entities": {
+        "title": "{controller} ({device_code})",
+        "description": "Enable/Disable entity types for each device.",
+        "data": {
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
         }
       }
     }
@@ -46,19 +63,20 @@
           "device_id": "Select Controller"
         }
       },
-      "entity_settings": {
+      "enable_entities": {
         "title": "{controller} ({device_code})",
         "description": "Enable/Disable entity types for each device.",
         "data": {
-          "1": "{port_1} (Port 1)",
-          "2": "{port_2} (Port 2)",
-          "3": "{port_3} (Port 3)",
-          "4": "{port_4} (Port 4)",
-          "5": "{port_5} (Port 5)",
-          "6": "{port_6} (Port 6)",
-          "7": "{port_7} (Port 7)",
-          "8": "{port_8} (Port 8)"
-
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
         }
       },
       "notify_restart": {

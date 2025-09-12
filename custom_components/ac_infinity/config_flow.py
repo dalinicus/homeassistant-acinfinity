@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timedelta
+from types import MappingProxyType
 from typing import Any
 
 import voluptuous as vol
@@ -13,6 +14,7 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section, SectionConfig
 from homeassistant.helpers.selector import selector, Selector
+from voluptuous import Required
 
 from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
 from custom_components.ac_infinity.client import (
@@ -61,13 +63,95 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
+class ACInfinityFlowBase:
+    """Base class for AC Infinity config and options flows."""
+
+    @staticmethod
+    def __get_saved_entity_conf_value(data: dict[str, Any] | None, device_id: str, entity_config_key: str):
+        """Get saved entity configuration value from config entry data."""
+        if data is None:
+            return EntityConfigValue.SensorsOnly
+
+        return (
+            data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+            if ConfigurationKey.ENTITIES in data
+            and data[ConfigurationKey.ENTITIES] is not None
+            and device_id in data[ConfigurationKey.ENTITIES]
+            and data[ConfigurationKey.ENTITIES][device_id] is not None
+            and entity_config_key in data[ConfigurationKey.ENTITIES][device_id]
+            and data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
+            else EntityConfigValue.All
+        )
+
+    def _build_entity_config_schema(
+        self,
+        ac_infinity: ACInfinityService,
+        device_id: str | int,
+        data: dict[str, Any] | None = None,
+    ) -> tuple[dict[Required, Any], dict[str, str]]:
+        """Build the entity configuration schema and description placeholders.
+
+        Args:
+            ac_infinity: The AC Infinity service instance
+            device_id: The device ID to build config for
+
+        Returns:
+            Tuple of (entities schema dict, description_placeholders dict)
+        """
+        device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+        port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
+
+        entities = {}
+        description_placeholders = {
+            "controller": device_name
+        }
+
+        entities[
+            vol.Required("controller",
+                         default=self.__get_saved_entity_conf_value(data, str(device_id), "controller"))] = selector(
+            {
+                "select": {
+                    "options": ENTITY_CONFIG_OPTIONS_CONTROLLER,
+                    "mode": "dropdown"
+                }
+            })
+
+        entities[
+            vol.Required("sensors", default=self.__get_saved_entity_conf_value(data, str(device_id), "sensors"))] = selector({
+            "select": {
+                "options": ENTITY_CONFIG_OPTIONS_SENSORS,
+                "mode": "dropdown"
+            }
+        })
+
+        for i in range(1, port_count + 1):
+            entity_config_key = f"port_{i}"
+            description_placeholders[entity_config_key] = ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
+            entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(data, str(device_id), entity_config_key))] = selector(
+                {
+                    "select": {
+                        "options": ENTITY_CONFIG_OPTIONS_PORTS,
+                        "mode": "dropdown"
+                    }
+                })
+
+        return entities, description_placeholders
+
+
+class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
     """Handle a config flow for AC Infinity."""
 
     VERSION = 1
 
     def __init__(self):
+        self.__username: str | None = None
+        self.__password: str | None = None
         self.__ac_infinity: ACInfinityService | None = None
+
+        self.__device_ids: list[str] = []
+        self.__device_index: int = 0
+
+        self.__entities: dict[str, Any] = {}
 
     @staticmethod
     @callback
@@ -90,7 +174,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
             try:
                 await client.login()
                 _ = await client.get_devices_list_all()
+                self.__username = user_input[CONF_EMAIL]
+                self.__password = user_input[CONF_PASSWORD]
                 self.__ac_infinity = ACInfinityService(client)
+
+                self.__device_ids = self.__ac_infinity.get_device_ids()
+                self.__device_index = 0
+
+                return await self.async_step_entities()
 
             except ACInfinityClientCannotConnect:
                 errors["base"] = "cannot_connect"
@@ -99,27 +190,57 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
-            else:
+            # else:
                 # await self.async_set_unique_id(f"ac_infinity-{user_input[CONF_EMAIL]}")
                 # self._abort_if_unique_id_configured()
 
                 # return self.async_create_entry(
                 #    title=f"AC Infinity ({user_input[CONF_EMAIL]})", data=user_input
                 #)
-                return await self.async_step_entities()
 
         return self.async_show_form(
             step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )
 
     async def async_step_entities(self, user_input: dict[str, Any] | None = None):
+        if self.__ac_infinity is None:
+            _LOGGER.error("AC Infinity service is not initialized")
+            return self.async_abort(reason="not_initialized")
 
         errors: dict[str, str] = {}
         if user_input is not None:
-            raise NotImplementedError()
+            self.__entities[self.__device_ids[self.__device_index]] = user_input
+            if self.__device_index < len(self.__device_ids) - 1:
+                self.__device_index += 1
+                return await self.async_step_entities()
+
+            else:
+                await self.async_set_unique_id(f"ac_infinity-{user_input[CONF_EMAIL]}")
+                self._abort_if_unique_id_configured()
+
+                return self.async_create_entry(
+                    title=f"AC Infinity ({user_input[CONF_EMAIL]})", data={
+                        CONF_EMAIL: self.__username,
+                        CONF_PASSWORD: self.__password,
+                        ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
+                        ConfigurationKey.ENTITIES: self.__entities
+                    }
+                )
+
+        entities, description_placeholders = self._build_entity_config_schema(
+            self.__ac_infinity,
+            self.__device_ids[self.__device_index]
+        )
+
+        return self.async_show_form(
+            step_id="entity_settings",
+            data_schema=vol.Schema(entities),
+            errors=errors,
+            description_placeholders=description_placeholders
+        )
 
 
-class OptionsFlow(config_entries.OptionsFlow):
+class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
     def __init__(self):
         self.__current_device_id: str | int = 0
@@ -246,45 +367,11 @@ class OptionsFlow(config_entries.OptionsFlow):
             self.config_entry.entry_id
         ].ac_infinity
 
-        device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
-        port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
-
-        entities = {}
-        description_placeholders = {
-            "controller": device_name
-        }
-
-        entities[
-            vol.Required("controller",
-                         default=self.__get_saved_entity_conf_value(str(device_id), "controller"))] = selector(
-            {
-                "select": {
-                    "options": ENTITY_CONFIG_OPTIONS_CONTROLLER,
-                    "mode": "dropdown"
-                }
-            })
-
-        entities[
-            vol.Required("sensors", default=self.__get_saved_entity_conf_value(str(device_id), "sensors"))] = selector({
-            "select": {
-                "options": ENTITY_CONFIG_OPTIONS_SENSORS,
-                "mode": "dropdown"
-            }
-        })
-
-        for i in range(1, port_count + 1):
-            entity_config_key = f"port_{i}"
-            description_placeholders[entity_config_key] = ac_infinity.get_port_property(device_id, i,
-                                                                                                    PortPropertyKey.NAME)
-            entities[vol.Required(entity_config_key,
-                                  default=self.__get_saved_entity_conf_value(str(device_id),
-                                                                             entity_config_key))] = selector(
-                {
-                    "select": {
-                        "options": ENTITY_CONFIG_OPTIONS_PORTS,
-                        "mode": "dropdown"
-                    }
-                })
+        entities, description_placeholders = self._build_entity_config_schema(
+            ac_infinity,
+            device_id,
+            dict(self.config_entry.data)
+        )
 
         return self.async_show_form(
             step_id="entity_settings",
@@ -317,18 +404,8 @@ class OptionsFlow(config_entries.OptionsFlow):
         return (
             self.config_entry.data[conf_key]
             if conf_key in self.config_entry.data
-               and self.config_entry.data[conf_key] is not None
+            and self.config_entry.data[conf_key] is not None
             else default
         )
 
-    def __get_saved_entity_conf_value(self, device_id: str, entity_config_key: str):
-        return (
-            self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
-            if ConfigurationKey.ENTITIES in self.config_entry.data
-               and self.config_entry.data[ConfigurationKey.ENTITIES] is not None
-               and device_id in self.config_entry.data[ConfigurationKey.ENTITIES]
-               and self.config_entry.data[ConfigurationKey.ENTITIES][device_id] is not None
-               and entity_config_key in self.config_entry.data[ConfigurationKey.ENTITIES][device_id]
-               and self.config_entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
-            else EntityConfigValue.All
-        )
+

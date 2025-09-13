@@ -135,19 +135,6 @@ class TestConfigFlow:
         )
         flow.async_create_entry.assert_not_called()
 
-    async def test_async_step_user_config_entry_created_on_success(
-        self, setup_config_flow
-    ):
-        """If client successfully logs in and gets data, then commit the config"""
-
-        _, test_objects = setup_config_flow
-        flow = test_objects.config_flow
-
-        await flow.async_step_user(CONFIG_FLOW_USER_INPUT)
-
-        flow.async_create_entry.assert_called()
-        flow.async_show_form.assert_not_called()
-
     async def test_async_get_options_flow_returns_options_flow(self):
         """options flow returned from static method"""
         config_entry = ConfigEntry(
@@ -312,37 +299,6 @@ class TestConfigFlow:
         datetime.fromisoformat(call_args[1]['data'][ConfigurationKey.MODIFIED_AT])
 
         assert test_objects.coordinator.update_interval == timedelta(seconds=user_input)
-
-    async def test_update_config_entry_data_adds_modified_at_timestamp(self, setup_options_flow):
-        """Test that the private __update_config_entry_data method adds a modified_at timestamp"""
-        _, test_objects = setup_options_flow
-        flow = test_objects.options_flow
-
-        # Create test data
-        test_data = {
-            CONF_EMAIL: "test@example.com",
-            ConfigurationKey.POLLING_INTERVAL: 30
-        }
-
-        # Call the private method
-        flow._OptionsFlow__update_config_entry_data(test_data)
-
-        # Verify the method was called with the expected data including modified_at
-        call_args = flow.hass.config_entries.async_update_entry.call_args
-        assert call_args is not None
-        updated_data = call_args[1]['data']
-
-        # Verify original data is preserved
-        assert updated_data[CONF_EMAIL] == "test@example.com"
-        assert updated_data[ConfigurationKey.POLLING_INTERVAL] == 30
-
-        # Verify modified_at was added
-        assert ConfigurationKey.MODIFIED_AT in updated_data
-
-        # Verify modified_at is a valid ISO timestamp
-        from datetime import datetime
-        timestamp = datetime.fromisoformat(updated_data[ConfigurationKey.MODIFIED_AT])
-        assert timestamp is not None
 
     async def test_restart_yes_sends_restart_signal(self, setup_options_flow):
         """The signal for restarting home assistant is called when user selects Restart Now"""

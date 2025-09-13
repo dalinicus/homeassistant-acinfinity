@@ -19,6 +19,7 @@ from custom_components.ac_infinity import (
 from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.const import DOMAIN, PLATFORMS
 from custom_components.ac_infinity.core import ACInfinityService
+from tests import HOST
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -110,7 +111,8 @@ class TestInit:
     async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
         (hass, config_entry) = setup
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(client)
         mocker.patch.object(ac_infinity, "refresh", side_effect=Exception("unit test"))
         coordinator = ACInfinityDataUpdateCoordinator(
             hass, config_entry, ac_infinity, 10

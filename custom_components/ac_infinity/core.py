@@ -170,7 +170,7 @@ class ACInfinitySensor:
     def __get_device_info(
             controller: ACInfinityController, sensor_port: int, sensor_type: int
     ):
-        match sensor_type:
+        match int(sensor_type):
             case (
             SensorType.PROBE_TEMPERATURE_F
             | SensorType.PROBE_TEMPERATURE_C
@@ -1132,31 +1132,13 @@ class ACInfinityEntities(list[ACInfinityEntity]):
 
 
 def enabled_fn_sensor(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    if (ConfigurationKey.ENTITIES in entry.data
-            and device_id in entry.data[ConfigurationKey.ENTITIES]
-            and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id]):
-        return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] != EntityConfigValue.Disable
-    else:
-        return True
+    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] != EntityConfigValue.Disable
 
 
 def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    if (ConfigurationKey.ENTITIES in entry.data
-            and device_id in entry.data[ConfigurationKey.ENTITIES]
-            and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id]):
-        setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
-        return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly
-    else:
-        return True
+    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+    return setting != EntityConfigValue.Disable and setting != EntityConfigValue.SensorsOnly
 
 
 def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    if (ConfigurationKey.ENTITIES in entry.data
-            and device_id in entry.data[ConfigurationKey.ENTITIES]
-            and entity_config_key in entry.data[ConfigurationKey.ENTITIES][device_id]):
-        return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] == EntityConfigValue.All
-    else:
-        return True
-
-# Direct functions for use in entity descriptions - these will be called by the entity classes
-# with the appropriate device_id and entity_config_key parameters
+    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] == EntityConfigValue.All

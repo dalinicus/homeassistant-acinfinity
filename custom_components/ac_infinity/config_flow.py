@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timedelta
-from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import section, SectionConfig, _FlowResultT
-from homeassistant.helpers.selector import selector, Selector
+from homeassistant.helpers.selector import selector
 from voluptuous import Required
 
 from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
@@ -23,7 +20,6 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientInvalidAuth,
 )
 from . import ACInfinityService
-
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -70,6 +66,7 @@ class ACInfinityFlowBase:
     def __get_saved_entity_conf_value(data: dict[str, Any] | None, device_id: str, entity_config_key: str):
         """Get saved entity configuration value from config entry data."""
         if data is None:
+            # ConfigFlow - we are setting the integration up for the first time.  Don't add excessive entities.
             return EntityConfigValue.SensorsOnly
 
         return (
@@ -80,6 +77,8 @@ class ACInfinityFlowBase:
             and data[ConfigurationKey.ENTITIES][device_id] is not None
             and entity_config_key in data[ConfigurationKey.ENTITIES][device_id]
             and data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
+            # OptionsFlow - we are configuring an existing controller that was not setup with explicit entity enablement.
+            # Add all entities by default, since they were previously enabled implicitly.
             else EntityConfigValue.All
         )
 
@@ -143,7 +142,7 @@ class ACInfinityFlowBase:
 class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
     """Handle a config flow for AC Infinity."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self):
         self.__username: str | None = None
@@ -219,7 +218,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 return await self.async_step_enable_entities()
 
             else:
-                await self.async_create_config_entry()
+                return await self.async_create_config_entry()
 
         entities, description_placeholders = self._build_entity_config_schema(
             self.__ac_infinity,
@@ -408,7 +407,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
         new_data[ConfigurationKey.MODIFIED_AT] = datetime.now().isoformat()
         self.hass.config_entries.async_update_entry(
             self.config_entry,
-            data=new_data,
+            data=new_data
         )
 
     def __get_saved_conf_value(self, conf_key: str, default):

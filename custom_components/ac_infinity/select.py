@@ -21,7 +21,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityEntity,
     ACInfinityPort,
     ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin, enabled_fn_sensor, enabled_fn_setting, enabled_fn_control,
+    ACInfinityPortReadWriteMixin, enabled_fn_setting, enabled_fn_control,
 )
 
 _LOGGER = logging.getLogger(__name__)

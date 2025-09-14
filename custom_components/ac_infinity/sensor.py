@@ -41,7 +41,6 @@ from .const import (
     DOMAIN,
     ISSUE_URL,
     ControllerPropertyKey,
-    ControllerType,
     CustomPortPropertyKey,
     PortPropertyKey,
     SensorPropertyKey,
@@ -523,12 +522,6 @@ async def async_setup_entry(
     entities = ACInfinityEntities(config)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
-            if controller.device_type == ControllerType.UIS_89_AI_PLUS:
-                # The AI controller has two temperature measurements; controller temperature and probe temperature.
-                # These values are available in the sensor array.  The external values are duplicated on the old fields used by
-                # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here.
-                continue
-
             controller_entity = ACInfinityControllerSensorEntity(
                 coordinator, controller_description, controller
             )

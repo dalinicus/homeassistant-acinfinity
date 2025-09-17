@@ -15,7 +15,7 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.config_flow import ConfigFlow, OptionsFlow
-from custom_components.ac_infinity.const import DOMAIN
+from custom_components.ac_infinity.const import DOMAIN, ConfigurationKey, EntityConfigValue
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
@@ -35,7 +35,7 @@ from tests.data_models import (
     PASSWORD,
     PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
-    SENSOR_PROPERTIES_DATA,
+    SENSOR_PROPERTIES_DATA, DEVICE_ID, AI_DEVICE_ID, CONFIG_ENTRY_DATA,
 )
 
 MockType = Union[
@@ -161,7 +161,7 @@ def setup_entity_mocks(mocker: MockFixture):
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
-        data={CONF_EMAIL: ENTRY_ID},
+        data=CONFIG_ENTRY_DATA,
         domain=DOMAIN,
         minor_version=0,
         source="",

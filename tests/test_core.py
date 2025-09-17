@@ -764,3 +764,31 @@ class TestACInfinity:
         entities.append_if_suitable(entity)
 
         assert len(entities) == (1 if is_suitable else 0)
+
+    @pytest.mark.parametrize("is_enabled", [True, False])
+    async def test_append_if_suitable_only_added_if_enabled(self, setup, is_enabled):
+        test_objects: ACTestObjects = setup
+
+        description = ACInfinityControllerSensorEntityDescription(
+            key=ControllerPropertyKey.TEMPERATURE,
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state_class=SensorStateClass.MEASUREMENT,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+            icon=None,  # default
+            translation_key="temperature",
+            suggested_unit_of_measurement=None,
+            enabled_fn=lambda entry, device_id, entity_config_key: is_enabled,
+            suitable_fn=lambda e, c: True,
+            get_value_fn=lambda e, c: None,
+        )
+
+        entity = ACInfinityControllerSensorEntity(
+            test_objects.coordinator,
+            description,
+            ACInfinityController(CONTROLLER_PROPERTIES),
+        )
+
+        entities = ACInfinityEntities(test_objects.config_entry)
+        entities.append_if_suitable(entity)
+
+        assert len(entities) == (1 if is_enabled else 0)

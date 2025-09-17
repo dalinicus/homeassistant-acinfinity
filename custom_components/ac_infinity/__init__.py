@@ -122,6 +122,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             await ac_infinity.refresh()
             device_ids = ac_infinity.get_device_ids()
 
+            # Initialize entities configuration dictionary for v1 -> v2 migration
+            new_data[ConfigurationKey.ENTITIES] = {}
+
             # For each device that existed in v1, create explicit configuration
             # Set to "All" to preserve v1 behavior where all entities were enabled
             for device_id in device_ids:

@@ -1,6 +1,8 @@
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+
 from custom_components.ac_infinity.const import (
     ControllerType,
-    SensorType,
+    SensorType, ConfigurationKey, EntityConfigValue,
 )
 
 HOST = "https://unittest.abcxyz"
@@ -18,6 +20,30 @@ AI_MAC_ADDR = "3C450E78AB12"
 
 ENTRY_ID = f"ac_infinity-{EMAIL}"
 POLLING_INTERVAL = 15
+
+CONFIG_ENTRY_DATA = {
+    CONF_EMAIL: EMAIL,
+    CONF_PASSWORD: PASSWORD,
+    ConfigurationKey.POLLING_INTERVAL: 10,
+    ConfigurationKey.ENTITIES: {
+        str(DEVICE_ID): {
+            "controller": EntityConfigValue.All,
+            "sensors": EntityConfigValue.All,
+            "port_1": EntityConfigValue.All,
+            "port_2": EntityConfigValue.All,
+            "port_3": EntityConfigValue.All,
+            "port_4": EntityConfigValue.All,
+        },
+        str(AI_DEVICE_ID): {
+            "controller": EntityConfigValue.All,
+            "sensors": EntityConfigValue.All,
+            "port_1": EntityConfigValue.All,
+            "port_2": EntityConfigValue.All,
+            "port_3": EntityConfigValue.All,
+            "port_4": EntityConfigValue.All,
+        },
+    }
+}
 
 # noinspection SpellCheckingInspection
 LOGIN_PAYLOAD = {

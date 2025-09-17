@@ -145,13 +145,16 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
     VERSION = 2
 
     def __init__(self):
-        self.__username: str | None = None
-        self.__password: str | None = None
-        self.__ac_infinity: ACInfinityService | None = None
-        self.__device_ids: list[str] | None = None
-        self.__device_index: int = 0
+        """Initialize the config flow."""
+        # Public fields for temporary state during configuration
+        self.username: str | None = None
+        self.password: str | None = None
+        self.ac_infinity: ACInfinityService | None = None
+        self.device_ids: list[str] | None = None
+        self.device_index: int = 0
+        self.entities: dict[str, Any] = {}
 
-        self.__entities: dict[str, Any] = {}
+
 
     @staticmethod
     @callback
@@ -174,15 +177,15 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
             try:
                 await client.login()
 
-                self.__username = user_input[CONF_EMAIL]
-                self.__password = user_input[CONF_PASSWORD]
-                self.__ac_infinity = ACInfinityService(client)
-                await self.__ac_infinity.refresh()
+                self.username = user_input[CONF_EMAIL]
+                self.password = user_input[CONF_PASSWORD]
+                self.ac_infinity = ACInfinityService(client)
+                await self.ac_infinity.refresh()
 
-                self.__device_ids = self.__ac_infinity.get_device_ids()
-                self.__device_index = 0
+                self.device_ids = self.ac_infinity.get_device_ids()
+                self.device_index = 0
 
-                if self.__device_ids is None or len(self.__device_ids) == 0:
+                if self.device_ids is None or len(self.device_ids) == 0:
                     return self.async_abort(reason="no_devices")
 
                 return await self.async_step_enable_entities()
@@ -203,25 +206,25 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         )
 
     async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
-        if self.__ac_infinity is None or self.__device_ids is None:
+        if self.ac_infinity is None or self.device_ids is None:
             _LOGGER.error("AC Infinity service is not initialized")
             return self.async_abort(reason="not_initialized")
 
-        device_id: str = str(self.__device_ids[self.__device_index])
+        device_id: str = str(self.device_ids[self.device_index])
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            self.__entities[str(device_id)] = user_input
+            self.entities[str(device_id)] = user_input
 
-            if self.__device_index < len(self.__device_ids) - 1:
-                self.__device_index += 1
+            if self.device_index < len(self.device_ids) - 1:
+                self.device_index += 1
                 return await self.async_step_enable_entities()
 
             else:
                 return await self.async_create_config_entry()
 
         entities, description_placeholders = self._build_entity_config_schema(
-            self.__ac_infinity,
+            self.ac_infinity,
             device_id
         )
 
@@ -233,18 +236,18 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         )
 
     async def async_create_config_entry(self):
-        if self.__ac_infinity:
-            await self.__ac_infinity.close()
+        if self.ac_infinity:
+            await self.ac_infinity.close()
 
-        await self.async_set_unique_id(f"ac_infinity-{self.__username}")
+        await self.async_set_unique_id(f"ac_infinity-{self.username}")
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(
-            title=f"AC Infinity ({self.__username})", data={
-                CONF_EMAIL: self.__username,
-                CONF_PASSWORD: self.__password,
+            title=f"AC Infinity ({self.username})", data={
+                CONF_EMAIL: self.username,
+                CONF_PASSWORD: self.password,
                 ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
-                ConfigurationKey.ENTITIES: self.__entities,
+                ConfigurationKey.ENTITIES: self.entities,
                 ConfigurationKey.MODIFIED_AT: datetime.now().isoformat()
             }
         )
@@ -253,7 +256,9 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
     def __init__(self):
-        self.__current_device_id: str | int = 0
+        """Initialize the options flow."""
+        # Public field for temporary state during configuration
+        self.current_device_id: str | int = 0
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
@@ -330,7 +335,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
     async def async_step_controller_select(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
-            self.__current_device_id = user_input["device_id"]
+            self.current_device_id = user_input["device_id"]
             return await self.async_step_enable_entities()
 
         coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
@@ -361,14 +366,14 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
     async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
-        device_id: str | int = self.__current_device_id
+        device_id: str | int = self.current_device_id
 
         if user_input is not None:
             new_data = self.config_entry.data.copy()
             if ConfigurationKey.ENTITIES not in new_data:
                 new_data[ConfigurationKey.ENTITIES] = {}
 
-            new_data[ConfigurationKey.ENTITIES][str(self.__current_device_id)] = user_input
+            new_data[ConfigurationKey.ENTITIES][str(self.current_device_id)] = user_input
             self.__update_config_entry_data(new_data)
 
             return await self.async_step_notify_restart()

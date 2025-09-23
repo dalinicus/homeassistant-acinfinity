@@ -5,8 +5,8 @@ from homeassistant.const import Platform
 MANUFACTURER = "AC Infinity"
 DOMAIN = "ac_infinity"
 PLATFORMS = [
+    Platform.BINARY_SENSOR,     # online in BINARY_SENSOR should be loaded first to create devices for via_device in SENSOR
     Platform.SENSOR,
-    Platform.BINARY_SENSOR,
     Platform.SELECT,
     Platform.NUMBER,
     Platform.TIME,

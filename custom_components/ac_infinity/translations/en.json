@@ -42,7 +42,7 @@
         "title": "AC Infinity Configuration",
         "menu_options": {
           "general_config": "General Configuration",
-          "controller_select": "Entity Settings"
+          "controller_select": "Enable / Disable Entities"
         }
       },
       "general_config": {
@@ -58,7 +58,7 @@
         }
       },
       "controller_select": {
-        "title": "Entity Settings",
+        "title": "Enable / Disable Entities",
         "data": {
           "device_id": "Select Controller"
         }

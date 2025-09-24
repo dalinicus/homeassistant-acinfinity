@@ -59,7 +59,6 @@
       },
       "controller_select": {
         "title": "Enable / Disable Entities",
-        "device_id": "Select Controller",
         "data": {
           "device_id": "Select Controller"
         }

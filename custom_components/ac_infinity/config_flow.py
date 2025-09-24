@@ -31,13 +31,14 @@ _LOGGER = logging.getLogger(__name__)
 
 # Individual entity configuration option constants
 OPTION_ALL_ENTITIES = {"value": EntityConfigValue.All, "label": "Sensors, Controls, and Settings"}
+OPTION_SENSORS_AND_SETTINGS = {"value": EntityConfigValue.SensorsAndSettings, "label": "Sensors and Settings"}
 OPTION_SENSORS_AND_CONTROLS = {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"}
 OPTION_SENSORS_ONLY = {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"}
 OPTION_DISABLE = {"value": EntityConfigValue.Disable, "label": "Disable"}
 
 # Entity configuration option arrays
 ENTITY_CONFIG_OPTIONS_CONTROLLER = [
-    OPTION_ALL_ENTITIES,
+    OPTION_SENSORS_AND_SETTINGS,
     OPTION_SENSORS_ONLY,
     OPTION_DISABLE
 ]
@@ -71,15 +72,6 @@ class ACInfinityFlowBase:
 
         return (
             data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
-            if ConfigurationKey.ENTITIES in data
-            and data[ConfigurationKey.ENTITIES] is not None
-            and device_id in data[ConfigurationKey.ENTITIES]
-            and data[ConfigurationKey.ENTITIES][device_id] is not None
-            and entity_config_key in data[ConfigurationKey.ENTITIES][device_id]
-            and data[ConfigurationKey.ENTITIES][device_id][entity_config_key] is not None
-            # OptionsFlow - we are configuring an existing controller that was not setup with explicit entity enablement.
-            # Add all entities by default, since they were previously enabled implicitly.
-            else EntityConfigValue.All
         )
 
     def _build_entity_config_schema(

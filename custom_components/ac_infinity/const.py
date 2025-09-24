@@ -27,6 +27,7 @@ class ConfigurationKey:
 
 class EntityConfigValue:
     All = "all"
+    SensorsAndSettings = "sensors_and_settings"
     SensorsAndControls = "sensors_and_controls"
     SensorsOnly = "sensors_only"
     Disable = "disable"

@@ -213,7 +213,7 @@ class TestInit:
         # Verify device configuration structure
         for device_id in [DEVICE_ID, AI_DEVICE_ID]:
             device_config = entities_config[str(device_id)]
-            assert device_config["controller"] == EntityConfigValue.All
+            assert device_config["controller"] == EntityConfigValue.SensorsAndSettings
             assert device_config["sensors"] == EntityConfigValue.SensorsOnly
             assert device_config["port_1"] == EntityConfigValue.All
             assert device_config["port_2"] == EntityConfigValue.All

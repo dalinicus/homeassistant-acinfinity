@@ -68,7 +68,7 @@ class TestSensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 31
+        assert len(test_objects.entities._added_entities) == 28
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for non-ai controllers"""

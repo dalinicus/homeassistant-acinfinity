@@ -110,7 +110,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     """Migrate from an old config entry version to the newest version."""
     _LOGGER.info("Migrating AC Infinity config entry from version %s", config_entry.version)
 
-    if config_entry.version == 1:
+    if config_entry.version < 2:
         # Version 1 -> 2: Add entity configuration for existing devices
         new_data = config_entry.data.copy()
 
@@ -126,13 +126,13 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             new_data[ConfigurationKey.ENTITIES] = {}
 
             # For each device that existed in v1, create explicit configuration
-            # Set to "All" to preserve v1 behavior where all entities were enabled
+            # Set to most permissive to preserve v1 behavior where all entities were enabled always
             for device_id in device_ids:
                 port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT, 0)
                 device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
 
                 device_config = {
-                    "controller": EntityConfigValue.All,
+                    "controller": EntityConfigValue.SensorsAndSettings,
                     "sensors": EntityConfigValue.SensorsOnly,
                 }
 
@@ -142,7 +142,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 new_data[ConfigurationKey.ENTITIES][str(device_id)] = device_config
 
                 _LOGGER.info(
-                    "Migrated device '%s' (ID: %s) with 'All' entity defaults to preserve v1 behavior",
+                    "Migrated device '%s' (ID: %s) to v2 with all entities enabled to preserve v1 behavior",
                     device_name, device_id
                 )
 

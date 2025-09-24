@@ -54,89 +54,60 @@ def setup(mocker: MockFixture):
     return setup_entity_mocks(mocker)
 
 
+@pytest.fixture
+def mock_client(mocker: MockFixture):
+    """Create a mock ACInfinityClient for testing"""
+    return mocker.create_autospec(ACInfinityClient, spec_set=True)
+
+
 @pytest.mark.asyncio
 class TestACInfinity:
-    async def test_close_client_closed(self, mocker: MockFixture):
+    async def test_close_client_closed(self, mock_client):
         """when a client has not been logged in, is_logged_in should return false"""
 
-        mock_close: MockType = mocker.patch.object(ACInfinityClient, "close")
-
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         await ac_infinity.close()
 
-        assert mock_close.called
+        assert mock_client.close.called
 
     async def test_update_logged_in_should_be_called_if_not_logged_in(
-        self, mocker: MockFixture
+        self, mock_client
     ):
         """if client is already logged in, then log in should not be called"""
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=False)
-        mocker.patch.object(
-            ACInfinityClient, "get_devices_list_all", return_value=DEVICE_INFO_LIST_ALL
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_mode_settings_list",
-            return_value=GET_DEV_MODE_SETTING_LIST_PAYLOAD,
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_settings",
-            return_value=GET_DEV_SETTINGS_PAYLOAD,
-        )
-        mock_login: MockType = mocker.patch.object(ACInfinityClient, "login")
+        mock_client.is_logged_in.return_value = False
+        mock_client.get_devices_list_all.return_value = DEVICE_INFO_LIST_ALL
+        mock_client.get_device_mode_settings_list.return_value = GET_DEV_MODE_SETTING_LIST_PAYLOAD
+        mock_client.get_device_settings.return_value = GET_DEV_SETTINGS_PAYLOAD
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         await ac_infinity.refresh()
 
-        assert mock_login.called
+        assert mock_client.login.called
 
     async def test_update_logged_in_should_not_be_called_if_not_necessary(
-        self, mocker: MockFixture
+        self, mock_client
     ):
         """if client is not already logged in, then log in should be called"""
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocker.patch.object(
-            ACInfinityClient, "get_devices_list_all", return_value=DEVICE_INFO_LIST_ALL
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_mode_settings_list",
-            return_value=GET_DEV_MODE_SETTING_LIST_PAYLOAD,
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_settings",
-            return_value=GET_DEV_SETTINGS_PAYLOAD,
-        )
-        mock_login: MockType = mocker.patch.object(ACInfinityClient, "login")
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_devices_list_all.return_value = DEVICE_INFO_LIST_ALL
+        mock_client.get_device_mode_settings_list.return_value = GET_DEV_MODE_SETTING_LIST_PAYLOAD
+        mock_client.get_device_settings.return_value = GET_DEV_SETTINGS_PAYLOAD
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         await ac_infinity.refresh()
-        assert not mock_login.called
+        assert not mock_client.login.called
 
-    async def test_update_data_set(self, mocker: MockFixture):
+    async def test_update_data_set(self, mock_client):
         """data should be set once update is called"""
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocker.patch.object(
-            ACInfinityClient, "get_devices_list_all", return_value=DEVICE_INFO_LIST_ALL
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_mode_settings_list",
-            return_value=GET_DEV_MODE_SETTING_LIST_PAYLOAD,
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_settings",
-            return_value=GET_DEV_SETTINGS_PAYLOAD,
-        )
-        mocker.patch.object(ACInfinityClient, "login")
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_devices_list_all.return_value = DEVICE_INFO_LIST_ALL
+        mock_client.get_device_mode_settings_list.return_value = GET_DEV_MODE_SETTING_LIST_PAYLOAD
+        mock_client.get_device_settings.return_value = GET_DEV_SETTINGS_PAYLOAD
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         await ac_infinity.refresh()
 
         assert len(ac_infinity._controller_properties) == 2
@@ -153,37 +124,23 @@ class TestACInfinity:
             == "Grow Tent AI"
         )
 
-    async def test_update_retried_on_failure(self, mocker: MockFixture):
+    async def test_update_retried_on_failure(self, mocker: MockFixture, mock_client):
         """update should be tried 5 times before raising an exception"""
         future: Future = asyncio.Future()
         future.set_result(None)
 
         mocker.patch("asyncio.sleep", return_value=future)
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mock_get_all = mocker.patch.object(
-            ACInfinityClient,
-            "get_devices_list_all",
-            return_value=DEVICE_INFO_LIST_ALL,
-            side_effect=Exception("unit-test"),
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_mode_settings_list",
-            return_value=GET_DEV_MODE_SETTING_LIST_PAYLOAD,
-        )
-        mocker.patch.object(
-            ACInfinityClient,
-            "get_device_settings",
-            return_value=GET_DEV_SETTINGS_PAYLOAD,
-        )
-        mocker.patch.object(ACInfinityClient, "login")
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_devices_list_all.side_effect = Exception("unit-test")
+        mock_client.get_device_mode_settings_list.return_value = GET_DEV_MODE_SETTING_LIST_PAYLOAD
+        mock_client.get_device_settings.return_value = GET_DEV_SETTINGS_PAYLOAD
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
 
         with pytest.raises(Exception):
             await ac_infinity.refresh()
 
-        assert mock_get_all.call_count == 5
+        assert mock_client.get_devices_list_all.call_count == 5
 
     @pytest.mark.parametrize(
         "property_key, value",
@@ -197,10 +154,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
     async def test_get_controller_property_exists_returns_correct_value(
-        self, device_id, property_key: str, value
+        self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property_exists(device_id, property_key)
@@ -217,10 +174,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_controller_property_gets_correct_property(
-        self, device_id, property_key: str, value
+        self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property(device_id, property_key)
@@ -235,10 +192,10 @@ class TestACInfinity:
         ],
     )
     async def test_get_controller_property_returns_null_properly(
-        self, property_key, device_id
+        self, mock_client, property_key, device_id
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property(device_id, property_key)
@@ -254,10 +211,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [AI_DEVICE_ID, str(AI_DEVICE_ID), "12345"])
     async def test_get_sensor_property_exists_returns_correct_value(
-        self, device_id, property_key: str, value
+        self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property_exists(
@@ -277,10 +234,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [AI_DEVICE_ID, str(AI_DEVICE_ID)])
     async def test_get_sensor_property_gets_correct_property(
-        self, device_id, property_key: str, value
+        self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property(
@@ -327,10 +284,10 @@ class TestACInfinity:
         ],
     )
     async def test_get_sensor_property_returns_null_properly(
-        self, property_key, device_id, access_port, sensor_type: int
+        self, mock_client, property_key, device_id, access_port, sensor_type: int
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property(
@@ -348,10 +305,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
     async def test_get_port_property_exists_returns_correct_value(
-        self, device_id, property_key: str, value
+        self, mock_client, device_id, property_key: str, value
     ):
         """getting a port property gets the correct property from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
 
@@ -369,10 +326,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_port_property_gets_correct_property(
-        self, device_id, port_num, property_key: str, value
+        self, mock_client, device_id, port_num, property_key: str, value
     ):
         """getting a port property gets the correct property from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
 
@@ -390,19 +347,19 @@ class TestACInfinity:
         ],
     )
     async def test_get_port_property_returns_null_properly(
-        self, property_key, device_id, port_num
+        self, mock_client, property_key, device_id, port_num
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
 
         result = ac_infinity.get_port_property(device_id, port_num, property_key)
         assert result is None
 
-    async def test_get_device_all_device_meta_data_returns_meta_data(self):
+    async def test_get_device_all_device_meta_data_returns_meta_data(self, mock_client):
         """getting port device ids should return ids"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_all_controller_properties()
@@ -415,9 +372,9 @@ class TestACInfinity:
         assert [port.port_index for port in device.ports] == [1, 2, 3, 4]
 
     @pytest.mark.parametrize("data", [{}, None])
-    async def test_get_device_all_device_meta_data_returns_empty_list(self, data):
+    async def test_get_device_all_device_meta_data_returns_empty_list(self, mock_client, data):
         """getting device metadata returns empty list if no device exists or data isn't initialized"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = data
 
         result = ac_infinity.get_all_controller_properties()
@@ -433,10 +390,10 @@ class TestACInfinity:
         ],
     )
     async def test_ac_infinity_device_has_correct_device_info(
-        self, dev_type: int, expected_model: str
+        self, mock_client, dev_type: int, expected_model: str
     ):
         """getting device returns a model object that contains correct device info for the device registry"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._controller_properties[str(DEVICE_ID)]["devType"] = dev_type
 
@@ -464,10 +421,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
     async def test_get_port_control_exists_returns_correct_value(
-        self, device_id, setting_key, value
+        self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -489,10 +446,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_port_control_gets_correct_setting(
-        self, device_id, setting_key, value
+        self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -502,10 +459,10 @@ class TestACInfinity:
     @pytest.mark.parametrize("default_value", [0, None, 5455])
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_port_control_gets_returns_default_if_value_is_null(
-        self, device_id, default_value
+        self, mock_client, device_id, default_value
     ):
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -526,10 +483,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID), "12345"])
     async def test_get_controller_setting_exists_returns_correct_value(
-        self, device_id, setting_key, value
+        self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._device_settings = DEVICE_SETTINGS_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
@@ -546,10 +503,10 @@ class TestACInfinity:
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_controller_setting_gets_correct_property(
-        self, device_id, setting_key, value
+        self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._device_settings = DEVICE_SETTINGS_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
@@ -560,10 +517,10 @@ class TestACInfinity:
     @pytest.mark.parametrize("default_value", [0, None, 5455])
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
     async def test_get_controller_setting_gets_returns_default_if_value_is_null(
-        self, device_id, default_value
+        self, mock_client, device_id, default_value
     ):
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -590,44 +547,41 @@ class TestACInfinity:
     )
     async def test_get_port_control_returns_null_properly(
         self,
+        mock_client,
         setting_key,
         device_id,
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
         result = ac_infinity.get_port_control(device_id, 1, setting_key)
         assert result is None
 
-    async def test_update_port_control(self, mocker: MockFixture):
+    async def test_update_port_control(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_set = mocker.patch.object(
-            ACInfinityClient, "set_device_mode_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.set_device_mode_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
         await ac_infinity.update_port_control(DEVICE_ID, 1, PortControlKey.AT_TYPE, 2)
 
-        mocked_set.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
+        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
 
-    async def test_update_port_controls(self, mocker: MockFixture):
+    async def test_update_port_controls(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_sets = mocker.patch.object(
-            ACInfinityClient, "set_device_mode_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.set_device_mode_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -635,22 +589,17 @@ class TestACInfinity:
             DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)]
         )
 
-        mocked_sets.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
+        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
 
-    async def test_update_port_controls_retried_on_failure(self, mocker: MockFixture):
+    async def test_update_port_controls_retried_on_failure(self, mocker: MockFixture, mock_client):
         """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_sets = mocker.patch.object(
-            ACInfinityClient,
-            "set_device_mode_settings",
-            return_value=future,
-            side_effect=Exception("unit-test"),
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.set_device_mode_settings.side_effect = Exception("unit-test")
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -659,38 +608,34 @@ class TestACInfinity:
                 DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)]
             )
 
-        assert mocked_sets.call_count == 5
+        assert mock_client.set_device_mode_settings.call_count == 5
 
-    async def test_update_controller_setting(self, mocker: MockFixture):
+    async def test_update_controller_setting(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_set = mocker.patch.object(
-            ACInfinityClient, "update_advanced_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
 
         await ac_infinity.update_controller_setting(
             DEVICE_ID, AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2
         )
 
-        mocked_set.assert_called_with(
+        mock_client.update_advanced_settings.assert_called_with(
             DEVICE_ID, 0, DEVICE_NAME, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
         )
 
-    async def test_update_controller_settings(self, mocker: MockFixture):
+    async def test_update_controller_settings(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_set = mocker.patch.object(
-            ACInfinityClient, "update_advanced_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._device_settings = DEVICE_SETTINGS_DATA
 
@@ -698,26 +643,21 @@ class TestACInfinity:
             DEVICE_ID, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
         )
 
-        mocked_set.assert_called_with(
+        mock_client.update_advanced_settings.assert_called_with(
             DEVICE_ID, 0, DEVICE_NAME, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
         )
 
     async def test_update_controller_settings_retried_on_failure(
-        self, mocker: MockFixture
+        self, mocker: MockFixture, mock_client
     ):
         """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_sets = mocker.patch.object(
-            ACInfinityClient,
-            "update_advanced_settings",
-            return_value=future,
-            side_effect=Exception("unit-test"),
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.side_effect = Exception("unit-test")
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -726,18 +666,16 @@ class TestACInfinity:
                 DEVICE_ID, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 2)]
             )
 
-        assert mocked_sets.call_count == 5
+        assert mock_client.update_advanced_settings.call_count == 5
 
-    async def test_update_port_setting(self, mocker: MockFixture):
+    async def test_update_port_setting(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_set = mocker.patch.object(
-            ACInfinityClient, "update_advanced_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
         ac_infinity._port_properties[(str(DEVICE_ID), 1)][
@@ -748,23 +686,21 @@ class TestACInfinity:
             DEVICE_ID, 1, AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2
         )
 
-        mocked_set.assert_called_with(
+        mock_client.update_advanced_settings.assert_called_with(
             DEVICE_ID,
             1,
             DEVICE_NAME,
             [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)],
         )
 
-    async def test_update_port_settings(self, mocker: MockFixture):
+    async def test_update_port_settings(self, mock_client):
         future: Future = asyncio.Future()
         future.set_result(None)
 
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_set = mocker.patch.object(
-            ACInfinityClient, "update_advanced_settings", return_value=future
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.return_value = future
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_properties = PORT_PROPERTIES_DATA
         ac_infinity._port_properties[(str(DEVICE_ID), 1)][
@@ -775,27 +711,22 @@ class TestACInfinity:
             DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
         )
 
-        mocked_set.assert_called_with(
+        mock_client.update_advanced_settings.assert_called_with(
             DEVICE_ID,
             1,
             DEVICE_NAME,
             [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)],
         )
 
-    async def test_update_port_settings_retried_on_failure(self, mocker: MockFixture):
+    async def test_update_port_settings_retried_on_failure(self, mocker: MockFixture, mock_client):
         """updating settings should be tried 5 times before failing"""
         future: Future = asyncio.Future()
         future.set_result(None)
         mocker.patch("asyncio.sleep", return_value=future)
-        mocker.patch.object(ACInfinityClient, "is_logged_in", return_value=True)
-        mocked_sets = mocker.patch.object(
-            ACInfinityClient,
-            "update_advanced_settings",
-            return_value=future,
-            side_effect=Exception("unit-test"),
-        )
+        mock_client.is_logged_in.return_value = True
+        mock_client.update_advanced_settings.side_effect = Exception("unit-test")
 
-        ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+        ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._port_controls = PORT_CONTROLS_DATA
 
@@ -804,7 +735,7 @@ class TestACInfinity:
                 DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
             )
 
-        assert mocked_sets.call_count == 5
+        assert mock_client.update_advanced_settings.call_count == 5
 
     @pytest.mark.parametrize("is_suitable", [True, False])
     async def test_append_if_suitable_only_added_if_suitable(self, setup, is_suitable):
@@ -818,6 +749,7 @@ class TestACInfinity:
             icon=None,  # default
             translation_key="temperature",
             suggested_unit_of_measurement=None,
+            enabled_fn=lambda entry, device_id, entity_config_key: True,
             suitable_fn=lambda e, c: is_suitable,
             get_value_fn=lambda e, c: None,
         )
@@ -828,7 +760,35 @@ class TestACInfinity:
             ACInfinityController(CONTROLLER_PROPERTIES),
         )
 
-        entities = ACInfinityEntities()
+        entities = ACInfinityEntities(test_objects.config_entry)
         entities.append_if_suitable(entity)
 
         assert len(entities) == (1 if is_suitable else 0)
+
+    @pytest.mark.parametrize("is_enabled", [True, False])
+    async def test_append_if_suitable_only_added_if_enabled(self, setup, is_enabled):
+        test_objects: ACTestObjects = setup
+
+        description = ACInfinityControllerSensorEntityDescription(
+            key=ControllerPropertyKey.TEMPERATURE,
+            device_class=SensorDeviceClass.TEMPERATURE,
+            state_class=SensorStateClass.MEASUREMENT,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+            icon=None,  # default
+            translation_key="temperature",
+            suggested_unit_of_measurement=None,
+            enabled_fn=lambda entry, device_id, entity_config_key: is_enabled,
+            suitable_fn=lambda e, c: True,
+            get_value_fn=lambda e, c: None,
+        )
+
+        entity = ACInfinityControllerSensorEntity(
+            test_objects.coordinator,
+            description,
+            ACInfinityController(CONTROLLER_PROPERTIES),
+        )
+
+        entities = ACInfinityEntities(test_objects.config_entry)
+        entities.append_if_suitable(entity)
+
+        assert len(entities) == (1 if is_enabled else 0)

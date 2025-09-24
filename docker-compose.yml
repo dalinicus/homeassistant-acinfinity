@@ -1,8 +1,18 @@
 services:
+  homeassistant-init:
+    image: busybox
+    volumes:
+      - ha-config:/config
+      - ./config/configuration.yaml:/tmp/configuration.yaml:ro
+    command: sh -c "[ ! -f /config/configuration.yaml ] && cp /tmp/configuration.yaml /config/ || true; chown -R 1000:1000 /config; chmod -R 755 /config"
+
   homeassistant:
     container_name: homeassistant-dev
     image: homeassistant/home-assistant:stable
     restart: unless-stopped
+    user: "1000:1000"
+    depends_on:
+      - homeassistant-init
     environment:
       - TZ=America/Chicago
     volumes:

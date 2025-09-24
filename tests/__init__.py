@@ -13,8 +13,9 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
+from custom_components.ac_infinity.client import ACInfinityClient
 from custom_components.ac_infinity.config_flow import ConfigFlow, OptionsFlow
-from custom_components.ac_infinity.const import DOMAIN
+from custom_components.ac_infinity.const import DOMAIN, ConfigurationKey, EntityConfigValue
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
@@ -29,11 +30,12 @@ from tests.data_models import (
     DEVICE_SETTINGS_DATA,
     EMAIL,
     ENTRY_ID,
+    HOST,
     MAC_ADDR,
     PASSWORD,
     PORT_CONTROLS_DATA,
     PORT_PROPERTIES_DATA,
-    SENSOR_PROPERTIES_DATA,
+    SENSOR_PROPERTIES_DATA, DEVICE_ID, AI_DEVICE_ID, CONFIG_ENTRY_DATA,
 )
 
 MockType = Union[
@@ -148,7 +150,8 @@ def setup_entity_mocks(mocker: MockFixture):
     )
 
     hass = HomeAssistant("/path")
-    ac_infinity = ACInfinityService(EMAIL, PASSWORD)
+    client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+    ac_infinity = ACInfinityService(client)
 
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._device_settings = DEVICE_SETTINGS_DATA
@@ -158,7 +161,7 @@ def setup_entity_mocks(mocker: MockFixture):
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
-        data={CONF_EMAIL: ENTRY_ID},
+        data=CONFIG_ENTRY_DATA,
         domain=DOMAIN,
         minor_version=0,
         source="",

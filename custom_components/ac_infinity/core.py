@@ -1,12 +1,13 @@
 import asyncio
 import logging
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Callable
 
 import async_timeout
+from homeassistant.components.device_tracker import config_entry
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
@@ -26,7 +27,7 @@ from .const import (
     PortControlKey,
     PortPropertyKey,
     SensorPropertyKey,
-    SensorType,
+    SensorType, ConfigurationKey, EntityConfigValue,
 )
 
 ACINFINITY_API_ERROR = "Retry limit exceeded contacting the AC Infinity API.  This is unlikely an issue with the integration, but rather a result of API instability.  Please try your request again later."
@@ -75,15 +76,15 @@ class ACInfinityController:
             [
                 ACInfinitySensor(self, sensor)
                 for sensor in controller_json[ControllerPropertyKey.DEVICE_INFO][
-                    ControllerPropertyKey.SENSORS
-                ]
-            ]
-            if ControllerPropertyKey.SENSORS
-            in controller_json[ControllerPropertyKey.DEVICE_INFO]
-            and controller_json[ControllerPropertyKey.DEVICE_INFO][
                 ControllerPropertyKey.SENSORS
             ]
-            is not None
+            ]
+            if ControllerPropertyKey.SENSORS
+               in controller_json[ControllerPropertyKey.DEVICE_INFO]
+               and controller_json[ControllerPropertyKey.DEVICE_INFO][
+                   ControllerPropertyKey.SENSORS
+               ]
+               is not None
             else []
         )
 
@@ -169,12 +170,12 @@ class ACInfinitySensor:
     def __get_device_info(
         controller: ACInfinityController, sensor_port: int, sensor_type: int
     ):
-        match sensor_type:
+        match int(sensor_type):
             case (
-                SensorType.PROBE_TEMPERATURE_F
-                | SensorType.PROBE_TEMPERATURE_C
-                | SensorType.PROBE_HUMIDITY
-                | SensorType.PROBE_VPD
+            SensorType.PROBE_TEMPERATURE_F
+            | SensorType.PROBE_TEMPERATURE_C
+            | SensorType.PROBE_HUMIDITY
+            | SensorType.PROBE_VPD
             ):
                 return DeviceInfo(
                     identifiers={
@@ -216,10 +217,10 @@ class ACInfinitySensor:
                     model="UIS Soil Sensor (AC-SLS3)",
                 )
             case (
-                SensorType.CONTROLLER_TEMPERATURE_F
-                | SensorType.CONTROLLER_TEMPERATURE_C
-                | SensorType.CONTROLLER_HUMIDITY
-                | SensorType.CONTROLLER_VPD
+            SensorType.CONTROLLER_TEMPERATURE_F
+            | SensorType.CONTROLLER_TEMPERATURE_C
+            | SensorType.CONTROLLER_HUMIDITY
+            | SensorType.CONTROLLER_VPD
             ):
                 return controller.device_info
             case _:
@@ -327,13 +328,18 @@ class ACInfinityService:
     # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
     _device_settings: dict[tuple[str, int], Any] = {}
 
-    def __init__(self, email: str, password: str) -> None:
+    def __init__(self, client: ACInfinityClient) -> None:
         """
         Args:
-            email: email address to use to log into the AC Infinity API.  Set by user via config_flow during integration setup
-            password: password to use to log into the AC Infinity API.  Set by the user via config_flow during integration setup
+            client: The http client to use to make requests to the AC Infinity API
         """
-        self._client = ACInfinityClient(HOST, email, password)
+        self._client = client
+
+    def get_device_ids(self) -> list[str]:
+        """
+        returns a list of devices associated with the account
+        """
+        return list(self._controller_properties.keys())
 
     def get_controller_property_exists(
         self, controller_id: str | int, property_key: str
@@ -609,8 +615,8 @@ class ACInfinityService:
                         ControllerPropertyKey.SENSORS
                         in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]
                         and controller_properties_json[
-                            ControllerPropertyKey.DEVICE_INFO
-                        ][ControllerPropertyKey.SENSORS]
+                        ControllerPropertyKey.DEVICE_INFO
+                    ][ControllerPropertyKey.SENSORS]
                         is not None
                     ):
                         for sensor_properties_json in controller_properties_json[
@@ -883,7 +889,7 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
         return self._ac_infinity
 
 
-class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
+class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     _attr_has_entity_name = True
     coordinator: ACInfinityDataUpdateCoordinator
     translation_key: str
@@ -918,6 +924,10 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator]):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the controller entity"""
 
+    @abstractmethod
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        """Returns true if the entity is enabled via options flowd"""
+
     @property
     @abstractmethod
     def is_suitable(self) -> bool:
@@ -933,12 +943,14 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         controller: ACInfinityController,
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._controller = controller
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -955,6 +967,9 @@ class ACInfinityControllerEntity(ACInfinityEntity):
     def controller(self) -> ACInfinityController:
         return self._controller
 
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, str(self._controller.device_id), "controller")
+
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.controller)
@@ -965,12 +980,14 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         sensor: ACInfinitySensor,
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._sensor = sensor
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -987,6 +1004,9 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     def sensor(self) -> ACInfinitySensor:
         return self._sensor
 
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, str(self._sensor.controller.device_id), "sensors")
+
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.sensor)
@@ -997,12 +1017,14 @@ class ACInfinityPortEntity(ACInfinityEntity):
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
         port: ACInfinityPort,
+        enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
         self._port = port
+        self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
@@ -1019,13 +1041,22 @@ class ACInfinityPortEntity(ACInfinityEntity):
     def port(self) -> ACInfinityPort:
         return self._port
 
+    def is_enabled(self, entry: ConfigEntry) -> bool:
+        return self._enabled_fn(entry, str(self._port.controller.device_id), f"port_{self._port.port_index}")
+
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.port)
 
 
 @dataclass(frozen=True)
-class ACInfinityControllerReadOnlyMixin[T]:
+class ACInfinityBaseMixin:
+    enabled_fn: Callable[[ConfigEntry, str, str], bool]
+    """ output if the entity is enabled via option flow"""
+
+
+@dataclass(frozen=True)
+class ACInfinityControllerReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for controller level sensors"""
 
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool]
@@ -1043,9 +1074,8 @@ class ACInfinityControllerReadWriteMixin[T](ACInfinityControllerReadOnlyMixin[T]
 
 
 @dataclass(frozen=True)
-class ACInfinitySensorReadOnlyMixin[T]:
+class ACInfinitySensorReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for controller level sensors"""
-
     suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool]
     """Input data object and a device id; output if suitable"""
     get_value_fn: Callable[[ACInfinityEntity, ACInfinitySensor], T]
@@ -1053,9 +1083,8 @@ class ACInfinitySensorReadOnlyMixin[T]:
 
 
 @dataclass(frozen=True)
-class ACInfinityPortReadOnlyMixin[T]:
+class ACInfinityPortReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for port device level sensors"""
-
     suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool]
     """Input data object, device id, and port number; output if suitable."""
     get_value_fn: Callable[[ACInfinityEntity, ACInfinityPort], T]
@@ -1071,19 +1100,46 @@ class ACInfinityPortReadWriteMixin[T](ACInfinityPortReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
+    def __init__(self, config: ConfigEntry):
+        super().__init__()
+        self._config_entry = config
+
     def append_if_suitable(self, entity: ACInfinityEntity):
-        if entity.is_suitable:
-            self.append(entity)
-            _LOGGER.info(
-                'Initializing entity "%s" (%s) for platform "%s".',
-                entity.unique_id,
-                entity.translation_key,
-                entity.platform_name,
-            )
+
+        if entity.is_enabled(self._config_entry):
+            if entity.is_suitable:
+                self.append(entity)
+                _LOGGER.debug(
+                    'Initializing entity "%s" (%s) for platform "%s".',
+                    entity.unique_id,
+                    entity.translation_key,
+                    entity.platform_name,
+                )
+            else:
+                _LOGGER.debug(
+                    'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
+                    entity.unique_id,
+                    entity.translation_key,
+                    entity.platform_name,
+                )
         else:
-            _LOGGER.info(
-                'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
+            _LOGGER.debug(
+                'Ignoring disabled entity "%s" (%s) for platform "%s".',
                 entity.unique_id,
                 entity.translation_key,
                 entity.platform_name,
             )
+
+
+def enabled_fn_sensor(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] != EntityConfigValue.Disable
+
+
+def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+    return setting == EntityConfigValue.All or setting == EntityConfigValue.SensorsAndControls
+
+
+def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
+    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+    return setting == EntityConfigValue.All or setting == EntityConfigValue.SensorsAndSettings

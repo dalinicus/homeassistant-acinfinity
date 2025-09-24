@@ -6,7 +6,6 @@
 [![Tests](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/tests.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/tests.yaml)
 
 [![HACS/HASS](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/validate.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/validate.yaml)
-[![Code Style](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/style.yaml)
 [![CodeQL](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/codeql.yaml)
 
 
@@ -17,8 +16,9 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
   - [HACS](#hacs)
   - [Manual Installation](#manual-installation)
 - [Initial Setup](#initial-setup)
-  - [Additional Configuration](#additional-configuration)
-- [Terms](#terms)
+- [Configuration](#configuration)
+  - [General Configuration](#general-configuration)
+  - [Enable / Disable Entities](#enable--disable-entities)
 - [Entities](#entities)
 
 # Compatibility
@@ -38,8 +38,6 @@ This integration requires the controller be connected to Wi-fi, and thus is not 
 
 This integration is made available through the Home Assistant Community Store default feed.  Simply search for "AC Infinity" and install it directly from HACS.
 
-![HACS-Install](/images/hacs-install.png)
-
 Please see the [official HACS documentation](https://hacs.xyz) for information on how to install and use HACS.
 
 ## Manual Installation
@@ -52,16 +50,30 @@ Add an integration entry as normal from integration section of the home assistan
 - `Email`: The e-mail registered with your AC Infinity account.
 - `Password`: The password for this account.
 
-![Initial-Setup](/images/initial-setup.png)
+You will then be asked to select which entities you'd like enabled for each controller tied to your AC Infinity app.  Please see [Enable / Disable Entities](#enable--disable-entities) section for more information.
 
-## Additional Configuration
+# Configuration
 
-After adding an integration entry, the following additional configurations can be modified via the configuration options dialog.
+The following configurations can be modified via the configuration options dialog.
 
+## General Configuration
 - `Polling Interval (Seconds)`: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
 - `Update Password`: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
 
-![Additional-Configuration](/images/additional-configuration.png)
+## Enable / Disable Entities
+
+This integration can provide a large number of entities for each device to accommodate for various operation modes a device may be in. Those with multiple controllers may see potential performance issues due the number of entities added. 
+You can enable or disable these entities as needed.  The following options are available, depending on the device type:
+
+- `Sensors, Controls, and Settings`: All entities are enabled
+- `Sensors and Settings`: Only sensors and settings are enabled
+- `Sensors and Controls`: Only sensors and controls are enabled
+- `Sensors Only`: Only sensors are enabled
+- `Disable`: All entities are disabled
+
+New controllers added to the AC Infinity app will be added with `Sensors Only` by default during the next home assistant restart.
+
+Entities disabled after initial setup will no longer be provided by this integration, but will not be automatically removed from home assistant.  They can be cleaned up manually via `https://<your-ha-instance>/config/entities`.
 
 # Entities
 

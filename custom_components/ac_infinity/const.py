@@ -5,18 +5,32 @@ from homeassistant.const import Platform
 MANUFACTURER = "AC Infinity"
 DOMAIN = "ac_infinity"
 PLATFORMS = [
+    Platform.BINARY_SENSOR,     # online in BINARY_SENSOR should be loaded first to create devices for via_device in SENSOR
     Platform.SENSOR,
-    Platform.BINARY_SENSOR,
     Platform.SELECT,
     Platform.NUMBER,
     Platform.TIME,
     Platform.SWITCH,
 ]
 HOST = "http://www.acinfinityserver.com"
-CONF_POLLING_INTERVAL = "polling_interval"
-CONF_UPDATE_PASSWORD = "update_password"
+
 DEFAULT_POLLING_INTERVAL = 10
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
+
+
+class ConfigurationKey:
+    POLLING_INTERVAL = "polling_interval"
+    UPDATE_PASSWORD = "update_password"
+    ENTITIES = "entities"
+    MODIFIED_AT = "modified_at"
+
+
+class EntityConfigValue:
+    All = "all"
+    SensorsAndSettings = "sensors_and_settings"
+    SensorsAndControls = "sensors_and_controls"
+    SensorsOnly = "sensors_only"
+    Disable = "disable"
 
 
 class CustomPortPropertyKey:
@@ -29,6 +43,7 @@ class ControllerPropertyKey:
     # /api/dev/devInfoListAll
     DEVICE_ID = "devId"
     DEVICE_NAME = "devName"
+    DEVICE_CODE = "devCode"
     MAC_ADDR = "devMacAddr"
     DEVICE_INFO = "deviceInfo"
     PORTS = "ports"
@@ -41,6 +56,7 @@ class ControllerPropertyKey:
     ONLINE = "online"
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
+    PORT_COUNT = "devPortCount"
 
 
 class ControllerType:

@@ -31,7 +31,7 @@ from .core import (
     ACInfinityPortReadOnlyMixin,
     ACInfinitySensor,
     ACInfinitySensorEntity,
-    ACInfinitySensorReadOnlyMixin,
+    ACInfinitySensorReadOnlyMixin, enabled_fn_sensor,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,6 +132,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription]
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:power-plug",
         translation_key="controller_online",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
         get_value_fn=__get_value_fn_controller_property_default,
     )
@@ -143,6 +144,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorBinarySensorEntityDescription] = 
         device_class=BinarySensorDeviceClass.MOISTURE,
         icon="mdi:waves",
         translation_key="water_sensor",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
         get_value_fn=__get_value_fn_sensor_value_default,
     ),
@@ -154,6 +156,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:power-plug",
         translation_key="port_online",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_port_property_default,
         get_value_fn=__get_value_fn_port_property_default,
     ),
@@ -162,6 +165,7 @@ PORT_DESCRIPTIONS: list[ACInfinityPortBinarySensorEntityDescription] = [
         device_class=BinarySensorDeviceClass.POWER,
         icon="mdi:power",
         translation_key="port_state",
+        enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_port_property_default,
         get_value_fn=__get_value_fn_port_property_default,
     ),
@@ -182,6 +186,7 @@ class ACInfinityControllerBinarySensorEntity(
         super().__init__(
             coordinator,
             controller,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
@@ -206,6 +211,7 @@ class ACInfinitySensorBinarySensorEntity(ACInfinitySensorEntity, BinarySensorEnt
         super().__init__(
             coordinator,
             sensor,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.BINARY_SENSOR,
@@ -238,6 +244,7 @@ class ACInfinityPortBinarySensorEntity(ACInfinityPortEntity, BinarySensorEntity)
         super().__init__(
             coordinator,
             port,
+            description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.BINARY_SENSOR,
@@ -258,7 +265,7 @@ async def async_setup_entry(
     coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
     controllers = coordinator.ac_infinity.get_all_controller_properties()
 
-    entities = ACInfinityEntities()
+    entities = ACInfinityEntities(config)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerBinarySensorEntity(

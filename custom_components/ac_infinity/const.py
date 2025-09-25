@@ -63,6 +63,8 @@ class ControllerType:
     UIS_69_PRO = 11
     UIS_69_PRO_PLUS = 18
     UIS_89_AI_PLUS = 20
+    UIS_OUTLET_AI = 21
+    UIS_OUTLET_AI_PLUS = 22
 
 
 class SensorPropertyKey:

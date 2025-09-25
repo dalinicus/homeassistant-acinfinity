@@ -386,6 +386,8 @@ class TestACInfinity:
             (11, "UIS Controller 69 Pro (CTR69P)"),
             (18, "UIS Controller 69 Pro+ (CTR69Q)"),
             (20, "UIS Controller AI+ (CTR89Q)"),
+            (21, "UIS Controller Outlet AI (AC-ADA4)"),
+            (22, "UIS Controller Outlet AI+ (AC-ADA8)"),
             (3, "UIS Controller Type 3"),
         ],
     )

@@ -137,6 +137,10 @@ class ACInfinityController:
                 return "UIS Controller 69 Pro+ (CTR69Q)"
             case ControllerType.UIS_89_AI_PLUS:
                 return "UIS Controller AI+ (CTR89Q)"
+            case ControllerType.UIS_OUTLET_AI:
+                return "UIS Controller Outlet AI (AC-ADA4)"
+            case ControllerType.UIS_OUTLET_AI_PLUS:
+                return "UIS Controller Outlet AI+ (AC-ADA8)"
             case _:
                 return f"UIS Controller Type {device_type}"
 

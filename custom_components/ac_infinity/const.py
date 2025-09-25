@@ -66,6 +66,10 @@ class ControllerType:
     UIS_OUTLET_AI = 21
     UIS_OUTLET_AI_PLUS = 22
 
+    @staticmethod
+    def is_ai_controller(device_type: int) -> bool:
+        return device_type in (ControllerType.UIS_89_AI_PLUS, ControllerType.UIS_OUTLET_AI, ControllerType.UIS_OUTLET_AI_PLUS)
+
 
 class SensorPropertyKey:
     # /api/dev/devInfoListAll via "sensors" property

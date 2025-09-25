@@ -17,7 +17,6 @@ HOST = "http://www.acinfinityserver.com"
 DEFAULT_POLLING_INTERVAL = 10
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
-
 class ConfigurationKey:
     POLLING_INTERVAL = "polling_interval"
     UPDATE_PASSWORD = "update_password"
@@ -36,6 +35,32 @@ class EntityConfigValue:
 class CustomPortPropertyKey:
     # Derived sensors
     NEXT_STATE_CHANGE = "nextStateChange"
+
+
+class AtType:
+    OFF = 1
+    ON = 2
+    AUTO = 3
+    TIMER_TO_ON = 4
+    TIMER_TO_OFF = 5
+    CYCLE = 6
+    SCHEDULE = 7
+    VPD = 8
+
+    __modeAndSettingIdStr = {
+        OFF: "[16,17]",
+        ON: "[16,18]",
+        AUTO: "[112,16,19,32,98,99]",
+        TIMER_TO_ON: "[16,20,21]",
+        TIMER_TO_OFF: "[16,20,21]",
+        CYCLE: "[16,22,23,40]",
+        SCHEDULE: "[16,22,23,40]",
+        VPD: "[16,81,32,98,99]",
+    }
+
+    @staticmethod
+    def get_mode_and_setting_id_str(at_type: int) -> str:
+        return AtType.__modeAndSettingIdStr[at_type]
 
 
 # noinspection SpellCheckingInspection

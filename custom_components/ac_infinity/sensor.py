@@ -522,11 +522,11 @@ async def async_setup_entry(
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
-        # The AI controller has two temperature measurements; controller temperature and probe temperature.
+        # The AI controller have two temperature measurements; controller temperature and probe temperature.
         # These values are available in the sensor array.  The external values are duplicated on the base fields used by
         # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
         # by skipping the controller descriptions for the base values.
-        if controller.device_type != ControllerType.UIS_89_AI_PLUS:
+        if not ControllerType.is_ai_controller(controller.device_type):
             for controller_description in CONTROLLER_DESCRIPTIONS:
                 controller_entity = ACInfinityControllerSensorEntity(
                     coordinator, controller_description, controller

@@ -173,6 +173,44 @@ class TestSensors:
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.native_value == expected
 
+    @pytest.mark.parametrize(
+        "device_id, mac_addr, is_ai_controller, expected_count",
+        [
+            (DEVICE_ID, MAC_ADDR, False, 3),  # Non-AI controller should have 3 controller entities (temp, humidity, vpd)
+            (AI_DEVICE_ID, AI_MAC_ADDR, True, 0),  # AI controller should have 0 controller entities due to is_ai_controller logic
+        ],
+    )
+    async def test_async_setup_entry_controller_descriptions_created_based_on_controller_type(
+        self, setup, device_id, mac_addr, is_ai_controller, expected_count
+    ):
+        """Controller sensor entities from CONTROLLER_DESCRIPTIONS should only be created for non-AI controllers"""
+
+        test_objects: ACTestObjects = setup
+
+        await async_setup_entry(
+            test_objects.hass,
+            test_objects.config_entry,
+            test_objects.entities.add_entities_callback,
+        )
+
+        # Look for controller entities (from CONTROLLER_DESCRIPTIONS) for the specified controller
+        controller_entities = [
+            entity
+            for entity in test_objects.entities.added_entities
+            if mac_addr in entity.unique_id
+            and isinstance(entity, ACInfinityControllerSensorEntity)
+            and (ControllerPropertyKey.TEMPERATURE in entity.unique_id
+                 or ControllerPropertyKey.HUMIDITY in entity.unique_id
+                 or ControllerPropertyKey.VPD in entity.unique_id)
+        ]
+
+        controller_type = "AI" if is_ai_controller else "non-AI"
+        assert len(controller_entities) == expected_count, (
+            f"Expected {expected_count} controller entities for {controller_type} controller "
+            f"(device_id: {device_id}), but found {len(controller_entities)}: "
+            f"{[e.unique_id for e in controller_entities]}"
+        )
+
     async def test_async_setup_entry_ai_controller_f_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for AI controllers"""
 

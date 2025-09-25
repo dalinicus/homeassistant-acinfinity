@@ -99,7 +99,7 @@ class ACInfinityController:
         return self._device_name
 
     @property
-    def device_type(self) -> str:
+    def device_type(self) -> int:
         """The integer id of the device type of this controller (Pro, Pro+, AI+, etc...)"""
         return self._device_type
 

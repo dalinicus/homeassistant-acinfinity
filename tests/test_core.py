@@ -13,8 +13,8 @@ from custom_components.ac_infinity.const import (
     MANUFACTURER,
     AdvancedSettingsKey,
     ControllerPropertyKey,
-    PortControlKey,
-    PortPropertyKey,
+    DeviceControlKey,
+    DevicePropertyKey,
     SensorPropertyKey,
     SensorType,
 )
@@ -298,8 +298,8 @@ class TestACInfinity:
     @pytest.mark.parametrize(
         "property_key, value",
         [
-            (PortPropertyKey.SPEAK, True),
-            (PortPropertyKey.NAME, True),
+            (DevicePropertyKey.SPEAK, True),
+            (DevicePropertyKey.NAME, True),
             ("keyNoExist", False),
         ],
     )
@@ -310,18 +310,18 @@ class TestACInfinity:
         """getting a port property gets the correct property from the correct port"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        ac_infinity._device_properties = PORT_PROPERTIES_DATA
 
-        result = ac_infinity.get_port_property_exists(device_id, 1, property_key)
+        result = ac_infinity.get_device_property_exists(device_id, 1, property_key)
         assert result == (value if device_id != "12345" else False)
 
     @pytest.mark.parametrize(
         "property_key, port_num, value",
         [
-            (PortPropertyKey.SPEAK, 1, 5),
-            (PortPropertyKey.SPEAK, 2, 7),
-            (PortPropertyKey.NAME, 3, "Circulating Fan"),
-            (PortPropertyKey.NAME, 1, "Grow Lights"),
+            (DevicePropertyKey.SPEAK, 1, 5),
+            (DevicePropertyKey.SPEAK, 2, 7),
+            (DevicePropertyKey.NAME, 3, "Circulating Fan"),
+            (DevicePropertyKey.NAME, 1, "Grow Lights"),
         ],
     )
     @pytest.mark.parametrize("device_id", [DEVICE_ID, str(DEVICE_ID)])
@@ -331,19 +331,19 @@ class TestACInfinity:
         """getting a port property gets the correct property from the correct port"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        ac_infinity._device_properties = PORT_PROPERTIES_DATA
 
-        result = ac_infinity.get_port_property(device_id, port_num, property_key)
+        result = ac_infinity.get_device_property(device_id, port_num, property_key)
         assert result == value
 
     @pytest.mark.parametrize(
         "property_key, device_id, port_num",
         [
-            (PortPropertyKey.SPEAK, "232161", 1),
+            (DevicePropertyKey.SPEAK, "232161", 1),
             ("MyFakeField", DEVICE_ID, 1),
-            (PortPropertyKey.SPEAK, DEVICE_ID, 9),
+            (DevicePropertyKey.SPEAK, DEVICE_ID, 9),
             ("MyFakeField", str(DEVICE_ID), 1),
-            (PortPropertyKey.SPEAK, str(DEVICE_ID), 9),
+            (DevicePropertyKey.SPEAK, str(DEVICE_ID), 9),
         ],
     )
     async def test_get_port_property_returns_null_properly(
@@ -352,9 +352,9 @@ class TestACInfinity:
         """the absence of a value should return None instead of keyerror"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        ac_infinity._device_properties = PORT_PROPERTIES_DATA
 
-        result = ac_infinity.get_port_property(device_id, port_num, property_key)
+        result = ac_infinity.get_device_property(device_id, port_num, property_key)
         assert result is None
 
     async def test_get_device_all_device_meta_data_returns_meta_data(self, mock_client):
@@ -366,10 +366,10 @@ class TestACInfinity:
         assert len(result) > 0
 
         device = result[0]
-        assert device.device_id == str(DEVICE_ID)
-        assert device.device_name == DEVICE_NAME
+        assert device.controller_id == str(DEVICE_ID)
+        assert device.controller_name == DEVICE_NAME
         assert device.mac_addr == MAC_ADDR
-        assert [port.port_index for port in device.ports] == [1, 2, 3, 4]
+        assert [port.device_port for port in device.devices] == [1, 2, 3, 4]
 
     @pytest.mark.parametrize("data", [{}, None])
     async def test_get_device_all_device_meta_data_returns_empty_list(self, mock_client, data):
@@ -414,8 +414,8 @@ class TestACInfinity:
     @pytest.mark.parametrize(
         "setting_key, value",
         [
-            (PortControlKey.ON_SPEED, True),
-            (PortControlKey.AT_TYPE, True),
+            (DeviceControlKey.ON_SPEED, True),
+            (DeviceControlKey.AT_TYPE, True),
             (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, True),
             (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, True),
             ("keyNoExist", False),
@@ -428,20 +428,20 @@ class TestACInfinity:
         """getting a port setting gets the correct setting from the correct port"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        result = ac_infinity.get_port_control_exists(device_id, 1, setting_key)
+        result = ac_infinity.get_device_control_exists(device_id, 1, setting_key)
         assert result == (value if device_id != "12345" else False)
 
     @pytest.mark.parametrize(
         "setting_key, value",
         [
-            (PortControlKey.ON_SPEED, 5),
+            (DeviceControlKey.ON_SPEED, 5),
             (
-                PortControlKey.OFF_SPEED,
+                DeviceControlKey.OFF_SPEED,
                 0,
             ),  # make sure 0 still returns 0 and not None or default
-            (PortControlKey.AT_TYPE, 2),
+            (DeviceControlKey.AT_TYPE, 2),
             (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, 1),
             (AdvancedSettingsKey.DYNAMIC_BUFFER_VPD, 6),
         ],
@@ -453,9 +453,9 @@ class TestACInfinity:
         """getting a port setting gets the correct setting from the correct port"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        result = ac_infinity.get_port_control(device_id, 1, setting_key)
+        result = ac_infinity.get_device_control(device_id, 1, setting_key)
         assert result == value
 
     @pytest.mark.parametrize("default_value", [0, None, 5455])
@@ -466,12 +466,12 @@ class TestACInfinity:
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        ac_infinity._port_controls[(str(DEVICE_ID), 1)][PortControlKey.SURPLUS] = None
+        ac_infinity._device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.SURPLUS] = None
 
-        result = ac_infinity.get_port_control(
-            device_id, 1, PortControlKey.SURPLUS, default_value=default_value
+        result = ac_infinity.get_device_control(
+            device_id, 1, DeviceControlKey.SURPLUS, default_value=default_value
         )
         assert result == default_value
 
@@ -491,7 +491,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._device_settings = DEVICE_SETTINGS_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting_exists(device_id, setting_key)
         assert result == (value if device_id != "12345" else False)
@@ -511,7 +511,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
         ac_infinity._device_settings = DEVICE_SETTINGS_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting(device_id, setting_key)
         assert result == value
@@ -524,9 +524,9 @@ class TestACInfinity:
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        ac_infinity._port_controls[(str(DEVICE_ID), 1)][
+        ac_infinity._device_controls[(str(DEVICE_ID), 1)][
             AdvancedSettingsKey.CALIBRATE_HUMIDITY
         ] = None
 
@@ -540,11 +540,11 @@ class TestACInfinity:
     @pytest.mark.parametrize(
         "setting_key, device_id",
         [
-            (PortControlKey.ON_SPEED, "232161"),
+            (DeviceControlKey.ON_SPEED, "232161"),
             ("MyFakeField", DEVICE_ID),
-            (PortPropertyKey.NAME, DEVICE_ID),
+            (DevicePropertyKey.NAME, DEVICE_ID),
             ("MyFakeField", str(DEVICE_ID)),
-            (PortPropertyKey.NAME, str(DEVICE_ID)),
+            (DevicePropertyKey.NAME, str(DEVICE_ID)),
         ],
     )
     async def test_get_port_control_returns_null_properly(
@@ -556,9 +556,9 @@ class TestACInfinity:
         """the absence of a value should return None instead of keyerror"""
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        result = ac_infinity.get_port_control(device_id, 1, setting_key)
+        result = ac_infinity.get_device_control(device_id, 1, setting_key)
         assert result is None
 
     async def test_update_port_control(self, mock_client):
@@ -570,11 +570,11 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        await ac_infinity.update_port_control(DEVICE_ID, 1, PortControlKey.AT_TYPE, 2)
+        await ac_infinity.update_device_control(DEVICE_ID, 1, DeviceControlKey.AT_TYPE, 2)
 
-        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
+        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(DeviceControlKey.AT_TYPE, 2)])
 
     async def test_update_port_controls(self, mock_client):
         future: Future = asyncio.Future()
@@ -585,13 +585,13 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
-        await ac_infinity.update_port_controls(
-            DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)]
+        await ac_infinity.update_device_controls(
+            DEVICE_ID, 1, [(DeviceControlKey.AT_TYPE, 2)]
         )
 
-        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)])
+        mock_client.set_device_mode_settings.assert_called_with(DEVICE_ID, 1, [(DeviceControlKey.AT_TYPE, 2)])
 
     async def test_update_port_controls_retried_on_failure(self, mocker: MockFixture, mock_client):
         """updating settings should be tried 5 times before failing"""
@@ -603,11 +603,11 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
         with pytest.raises(Exception):
-            await ac_infinity.update_port_controls(
-                DEVICE_ID, 1, [(PortControlKey.AT_TYPE, 2)]
+            await ac_infinity.update_device_controls(
+                DEVICE_ID, 1, [(DeviceControlKey.AT_TYPE, 2)]
             )
 
         assert mock_client.set_device_mode_settings.call_count == 5
@@ -661,7 +661,7 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
         with pytest.raises(Exception):
             await ac_infinity.update_controller_settings(
@@ -679,12 +679,12 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_properties = PORT_PROPERTIES_DATA
-        ac_infinity._port_properties[(str(DEVICE_ID), 1)][
-            PortPropertyKey.NAME
+        ac_infinity._device_properties = PORT_PROPERTIES_DATA
+        ac_infinity._device_properties[(str(DEVICE_ID), 1)][
+            DevicePropertyKey.NAME
         ] = DEVICE_NAME
 
-        await ac_infinity.update_port_setting(
+        await ac_infinity.update_device_setting(
             DEVICE_ID, 1, AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2
         )
 
@@ -704,12 +704,12 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_properties = PORT_PROPERTIES_DATA
-        ac_infinity._port_properties[(str(DEVICE_ID), 1)][
-            PortPropertyKey.NAME
+        ac_infinity._device_properties = PORT_PROPERTIES_DATA
+        ac_infinity._device_properties[(str(DEVICE_ID), 1)][
+            DevicePropertyKey.NAME
         ] = DEVICE_NAME
 
-        await ac_infinity.update_port_settings(
+        await ac_infinity.update_device_settings(
             DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
         )
 
@@ -730,10 +730,10 @@ class TestACInfinity:
 
         ac_infinity = ACInfinityService(mock_client)
         ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._port_controls = PORT_CONTROLS_DATA
+        ac_infinity._device_controls = PORT_CONTROLS_DATA
 
         with pytest.raises(Exception):
-            await ac_infinity.update_port_settings(
+            await ac_infinity.update_device_settings(
                 DEVICE_ID, 1, [(AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY, 2)]
             )
 

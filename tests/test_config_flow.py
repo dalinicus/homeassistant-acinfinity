@@ -223,7 +223,7 @@ class TestConfigFlow:
         mock_service = ACInfinityService(mock_client)
         # Set up the service's internal data structures like the real service
         mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._port_properties = PORT_PROPERTIES_DATA
+        mock_service._device_properties = PORT_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID)]
@@ -253,7 +253,7 @@ class TestConfigFlow:
         mock_service = ACInfinityService(mock_client)
         # Set up the service's internal data structures like the real service
         mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._port_properties = PORT_PROPERTIES_DATA
+        mock_service._device_properties = PORT_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID), str(AI_DEVICE_ID)]
@@ -646,7 +646,7 @@ class TestConfigFlow:
 
         # Set up the service's internal data structures like the real service
         test_objects.coordinator.ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        test_objects.coordinator.ac_infinity._port_properties = PORT_PROPERTIES_DATA
+        test_objects.coordinator.ac_infinity._device_properties = PORT_PROPERTIES_DATA
 
         await flow.async_step_enable_entities()
 

@@ -24,7 +24,7 @@ from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
-    HOST, ControllerPropertyKey, PortPropertyKey, EntityConfigValue,
+    HOST, ControllerPropertyKey, DevicePropertyKey, EntityConfigValue,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ ENTITY_CONFIG_OPTIONS_SENSORS = [
     OPTION_DISABLE
 ]
 
-ENTITY_CONFIG_OPTIONS_PORTS = [
+ENTITY_CONFIG_OPTIONS_DEVICES = [
     OPTION_ALL_ENTITIES,
     OPTION_SENSORS_AND_CONTROLS,
     OPTION_SENSORS_ONLY,
@@ -119,11 +119,11 @@ class ACInfinityFlowBase:
 
         for i in range(1, port_count + 1):
             entity_config_key = f"port_{i}"
-            description_placeholders[entity_config_key] = ac_infinity.get_port_property(device_id, i, PortPropertyKey.NAME)
+            description_placeholders[entity_config_key] = ac_infinity.get_device_property(device_id, i, DevicePropertyKey.NAME)
             entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(data, str(device_id), entity_config_key))] = selector(
                 {
                     "select": {
-                        "options": ENTITY_CONFIG_OPTIONS_PORTS,
+                        "options": ENTITY_CONFIG_OPTIONS_DEVICES,
                         "mode": "dropdown"
                     }
                 })
@@ -281,7 +281,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 try:
                     await client.login()
-                    _ = await client.get_devices_list_all()
+                    _ = await client.get_account_controllers()
                 except ACInfinityClientCannotConnect:
                     errors[ConfigurationKey.UPDATE_PASSWORD] = "cannot_connect"
                 except ACInfinityClientInvalidAuth:

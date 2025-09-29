@@ -8,10 +8,10 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SCHEDULE_DISABLED_VALUE,
-    PortControlKey,
+    DeviceControlKey,
 )
 from custom_components.ac_infinity.time import (
-    ACInfinityPortTimeEntity,
+    ACInfinityDeviceTimeEntity,
     async_setup_entry,
 )
 from tests import ACTestObjects, execute_and_get_device_entity, setup_entity_mocks
@@ -40,7 +40,7 @@ class TestTimes:
         assert len(test_objects.entities._added_entities) == 8
 
     @pytest.mark.parametrize(
-        "key", [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME]
+        "key", [DeviceControlKey.SCHEDULED_START_TIME, DeviceControlKey.SCHEDULED_END_TIME]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_schedule_end_time_created_for_each_port(
@@ -57,7 +57,7 @@ class TestTimes:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
+        [DeviceControlKey.SCHEDULED_START_TIME, DeviceControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize(
         "value,expected_hour,expected_minute",
@@ -80,10 +80,10 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortTimeEntity)
+        assert isinstance(entity, ACInfinityDeviceTimeEntity)
         assert entity.native_value
         assert entity.native_value.hour == expected_hour
         assert entity.native_value.minute == expected_minute
@@ -91,7 +91,7 @@ class TestTimes:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
+        [DeviceControlKey.SCHEDULED_START_TIME, DeviceControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize("value", [None, 1441, 65535])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -105,10 +105,10 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortTimeEntity)
+        assert isinstance(entity, ACInfinityDeviceTimeEntity)
         assert entity.native_value is None
         test_objects.write_ha_mock.assert_called()
 
@@ -118,7 +118,7 @@ class TestTimes:
     )
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.SCHEDULED_START_TIME, PortControlKey.SCHEDULED_END_TIME],
+        [DeviceControlKey.SCHEDULED_START_TIME, DeviceControlKey.SCHEDULED_END_TIME],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value(
@@ -134,7 +134,7 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortTimeEntity)
+        assert isinstance(entity, ACInfinityDeviceTimeEntity)
         await entity.async_set_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(

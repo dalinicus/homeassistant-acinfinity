@@ -17,7 +17,7 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientInvalidAuth,
     ACInfinityClientRequestFailed,
 )
-from custom_components.ac_infinity.const import AdvancedSettingsKey, PortControlKey
+from custom_components.ac_infinity.const import AdvancedSettingsKey, DeviceControlKey
 from tests.data_models import (
     DEVICE_ID,
     DEVICE_INFO_LIST_ALL_PAYLOAD,
@@ -164,7 +164,7 @@ class TestACInfinityClient:
             client._user_id = USER_ID
 
             with pytest.raises(ACInfinityClientRequestFailed):
-                await client.get_devices_list_all()
+                await client.get_account_controllers()
 
     async def test_get_devices_list_all_returns_user_devices(self):
         """When logged in, user devices should return a list of user devices"""
@@ -178,7 +178,7 @@ class TestACInfinityClient:
                 payload=DEVICE_INFO_LIST_ALL_PAYLOAD,
             )
 
-            result = await client.get_devices_list_all()
+            result = await client.get_account_controllers()
 
             assert result is not None
             assert result[0]["devId"] == f"{DEVICE_ID}"
@@ -187,13 +187,13 @@ class TestACInfinityClient:
         """When not logged in, get user devices should throw a connect error"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
-            await client.get_devices_list_all()
+            await client.get_account_controllers()
 
     async def test_get_device_port_settings_connect_error_on_not_logged_in(self):
         """When not logged in, get user devices should throw a connect error"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
-            await client.get_device_mode_settings_list(DEVICE_ID, 1)
+            await client.get_controller_devices(DEVICE_ID, 1)
 
     @staticmethod
     async def __make_generic_set_port_settings_call_and_get_sent_payload(
@@ -214,8 +214,8 @@ class TestACInfinityClient:
                 payload=UPDATE_SUCCESS_PAYLOAD,
             )
 
-            await client.set_device_mode_settings(
-                DEVICE_ID, 4, [(PortControlKey.ON_SPEED, 2)]
+            await client.update_device_control(
+                DEVICE_ID, 4, [(DeviceControlKey.ON_SPEED, 2)]
             )
 
             gen = (request for request in mocked.requests.values())
@@ -234,16 +234,16 @@ class TestACInfinityClient:
         for key in PORT_CONTROLS:
             # ignore fields we set or need to modify.  They are tested in subsequent test cases.
             if key not in [
-                PortControlKey.DEV_ID,
-                PortControlKey.MODE_SET_ID,
-                PortControlKey.ON_SPEED,
-                PortControlKey.DEV_ID,
-                PortControlKey.MODE_SET_ID,
-                PortControlKey.VPD_STATUS,
-                PortControlKey.VPD_NUMS,
-                PortControlKey.MASTER_PORT,
-                PortControlKey.DEV_SETTING,
-                PortControlKey.DEVICE_MAC_ADDR,
+                DeviceControlKey.DEV_ID,
+                DeviceControlKey.MODE_SET_ID,
+                DeviceControlKey.ON_SPEED,
+                DeviceControlKey.DEV_ID,
+                DeviceControlKey.MODE_SET_ID,
+                DeviceControlKey.VPD_STATUS,
+                DeviceControlKey.VPD_NUMS,
+                DeviceControlKey.MASTER_PORT,
+                DeviceControlKey.DEV_SETTING,
+                DeviceControlKey.DEVICE_MAC_ADDR,
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert payload[key] == (
@@ -256,7 +256,7 @@ class TestACInfinityClient:
             await self.__make_generic_set_port_settings_call_and_get_sent_payload()
         )
 
-        assert payload[PortControlKey.ON_SPEED] == 2
+        assert payload[DeviceControlKey.ON_SPEED] == 2
 
     @pytest.mark.parametrize("set_value", [0, None, 1])
     async def test_set_device_port_setting_zero_even_when_null(self, set_value):
@@ -265,24 +265,24 @@ class TestACInfinityClient:
         dev_mode_settings = GET_DEV_MODE_SETTING_LIST_PAYLOAD
 
         assert isinstance(dev_mode_settings["data"], dict)
-        dev_mode_settings["data"][PortControlKey.SURPLUS] = set_value
+        dev_mode_settings["data"][DeviceControlKey.SURPLUS] = set_value
         dev_mode_settings["data"][
-            PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED
+            DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED
         ] = set_value
-        dev_mode_settings["data"][PortControlKey.VPD_TARGET_ENABLED] = set_value
-        dev_mode_settings["data"][PortControlKey.EC_OR_TDS] = set_value
-        dev_mode_settings["data"][PortControlKey.MASTER_PORT] = set_value
+        dev_mode_settings["data"][DeviceControlKey.VPD_TARGET_ENABLED] = set_value
+        dev_mode_settings["data"][DeviceControlKey.EC_OR_TDS] = set_value
+        dev_mode_settings["data"][DeviceControlKey.MASTER_PORT] = set_value
 
         payload = await self.__make_generic_set_port_settings_call_and_get_sent_payload(
             dev_mode_settings
         )
 
         expected = set_value if set_value else 0
-        assert payload[PortControlKey.SURPLUS] == expected
-        assert payload[PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED] == expected
-        assert payload[PortControlKey.VPD_TARGET_ENABLED] == expected
-        assert payload[PortControlKey.EC_OR_TDS] == expected
-        assert payload[PortControlKey.MASTER_PORT] == expected
+        assert payload[DeviceControlKey.SURPLUS] == expected
+        assert payload[DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED] == expected
+        assert payload[DeviceControlKey.VPD_TARGET_ENABLED] == expected
+        assert payload[DeviceControlKey.EC_OR_TDS] == expected
+        assert payload[DeviceControlKey.MASTER_PORT] == expected
 
     async def test_set_device_port_setting_bad_fields_removed_and_missing_fields_added(
         self,
@@ -296,13 +296,13 @@ class TestACInfinityClient:
         )
 
         # bad fields removed
-        assert PortControlKey.DEV_SETTING not in payload
-        assert PortControlKey.IPC_SETTING not in payload
-        assert PortControlKey.DEVICE_MAC_ADDR not in payload
+        assert DeviceControlKey.DEV_SETTING not in payload
+        assert DeviceControlKey.IPC_SETTING not in payload
+        assert DeviceControlKey.DEVICE_MAC_ADDR not in payload
 
         # missing fields added
-        assert PortControlKey.VPD_STATUS in payload
-        assert PortControlKey.VPD_NUMS in payload
+        assert DeviceControlKey.VPD_STATUS in payload
+        assert DeviceControlKey.VPD_NUMS in payload
 
     async def test_set_device_port_setting_dev_id_and_mode_set_id_are_int_values(self):
         """When setting a value, fields that are not passed to the update call when using the Android/iOS app should
@@ -313,13 +313,13 @@ class TestACInfinityClient:
             await self.__make_generic_set_port_settings_call_and_get_sent_payload()
         )
 
-        assert PortControlKey.DEV_ID in payload
-        dev_id = payload[PortControlKey.DEV_ID]
+        assert DeviceControlKey.DEV_ID in payload
+        dev_id = payload[DeviceControlKey.DEV_ID]
         assert isinstance(dev_id, int)
         assert dev_id == DEVICE_ID
 
-        assert PortControlKey.MODE_SET_ID in payload
-        mode_set_id = payload[PortControlKey.MODE_SET_ID]
+        assert DeviceControlKey.MODE_SET_ID in payload
+        mode_set_id = payload[DeviceControlKey.MODE_SET_ID]
         assert isinstance(mode_set_id, int)
         assert mode_set_id == MODE_SET_ID
 
@@ -488,7 +488,7 @@ class TestACInfinityClient:
             await self.__make_generic_update_advanced_settings_call_and_get_sent_payload()
         )
 
-        assert PortControlKey.DEV_ID in payload
+        assert DeviceControlKey.DEV_ID in payload
         dev_id = payload[AdvancedSettingsKey.DEV_ID]
         assert isinstance(dev_id, int)
         assert dev_id == DEVICE_ID

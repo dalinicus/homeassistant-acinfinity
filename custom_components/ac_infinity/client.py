@@ -53,7 +53,7 @@ class ACInfinityClient:
         """returns true if the user id is set, false otherwise"""
         return True if self._user_id else False
 
-    async def get_devices_list_all(self):
+    async def get_account_controllers(self):
         """Obtains a list of controllers, including metadata and some sensor values.
         Does not include information related to settings.
         """
@@ -66,24 +66,24 @@ class ACInfinityClient:
         )
         return json["data"]
 
-    async def get_device_mode_settings_list(self, device_id: str | int, port_id: int):
+    async def get_controller_devices(self, controller_id: str | int, device_port: int):
         """Obtains the settings for a particular port on a controller, which includes information
         like speed, sensor triggers, mode timers, etc...
 
         Args:
-            device_id: The parent controller id of the port
-            port_id: The port on the controller of the settings list to grab
+            controller_id: The parent controller id of the port
+            device_port: The port on the controller of the settings list to grab
         """
         if not self.is_logged_in():
             raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
-            API_URL_GET_DEV_MODE_SETTING, {"devId": device_id, "port": port_id}, headers
+            API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
         return json["data"]
 
-    async def set_device_mode_settings(
+    async def update_device_control(
         self, key_values: dict[str, int]
     ):
         """Sets the provided settings on a port to a new values
@@ -97,7 +97,7 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__post(f"{API_URL_ADD_DEV_MODE}?{urlencode(key_values)}", None, headers)
 
-    async def set_ai_device_mode_settings(
+    async def update_ai_device_control(
         self, key_values: dict[str, int]
     ):
         """Sets the provided settings on a port to a new values
@@ -111,39 +111,39 @@ class ACInfinityClient:
         headers = self.__create_headers(use_auth_token=True)
         _ = await self.__put(f"{API_URL_MODE_AND_SETTINGS}?{urlencode(key_values)}", headers)
 
-    async def get_device_settings(self, device_id: str | int, port: int):
+    async def get_device_settings(self, controller_id: str | int, device_port: int):
         """Gets the current values of controller specific settings;
         such as temperature, humidity, and vpd calibration values
 
         Args:
-            device_id: The controller id of the settings to grab
-            port: 0 for controller settings, or the port number for port settings
+            controller_id: The controller id of the settings to grab
+            device_port: 0 for controller settings, or the port number for port settings
         """
         if not self.is_logged_in():
             raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
         json = await self.__post(
-            API_URL_GET_DEV_SETTING, {"devId": device_id, "port": port}, headers
+            API_URL_GET_DEV_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
         return json["data"]
 
     async def update_advanced_settings(
         self,
-        device_id: str | int,
-        port: int,
+        controller_id: str | int,
+        device_port: int,
         device_name: str,
         key_values: list[tuple[str, int]],
     ):
         """Sets a given controller setting to a new value
 
         Args:
-            device_id: The device id of the controller to update
-            port: 0 for controller settings, or the port number for port settings
+            controller_id: The device id of the controller to update
+            device_port: 0 for controller settings, or the port number for port settings
             device_name: The current controller name value as it exists in the coordinator from the last refresh call.
             key_values: key value pairs of settings to update
         """
-        settings = await self.get_device_settings(device_id, port)
+        settings = await self.get_device_settings(controller_id, device_port)
 
         # the fetch call does not contain the device name. If we use the payload without setting device name,
         # the ac infinity api will change the name of the controller to "None".  We need to set it first before anything.

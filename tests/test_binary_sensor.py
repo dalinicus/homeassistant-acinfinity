@@ -7,21 +7,21 @@ from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.binary_sensor import (
     ACInfinityControllerBinarySensorEntity,
-    ACInfinityPortBinarySensorEntity,
+    ACInfinityDeviceBinarySensorEntity,
     ACInfinitySensorBinarySensorEntity,
     async_setup_entry,
 )
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
-    PortPropertyKey,
+    DevicePropertyKey,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
-    ACInfinityPortEntity,
+    ACInfinityDeviceEntity,
 )
 from tests import (
     ACTestObjects,
@@ -75,8 +75,8 @@ class TestBinarySensors:
     @pytest.mark.parametrize(
         "setting, expected_class",
         [
-            (PortPropertyKey.STATE, BinarySensorDeviceClass.POWER),
-            (PortPropertyKey.ONLINE, BinarySensorDeviceClass.CONNECTIVITY),
+            (DevicePropertyKey.STATE, BinarySensorDeviceClass.POWER),
+            (DevicePropertyKey.ONLINE, BinarySensorDeviceClass.CONNECTIVITY),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -85,7 +85,7 @@ class TestBinarySensors:
     ):
         """Sensor for device port connected is created on setup"""
 
-        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityDeviceEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
@@ -125,7 +125,7 @@ class TestBinarySensors:
 
         test_objects.write_ha_mock.assert_called()
 
-    @pytest.mark.parametrize("setting", [PortPropertyKey.STATE, PortPropertyKey.ONLINE])
+    @pytest.mark.parametrize("setting", [DevicePropertyKey.STATE, DevicePropertyKey.ONLINE])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     @pytest.mark.parametrize(
         "value,expected",
@@ -141,17 +141,17 @@ class TestBinarySensors:
         """Reported sensor value matches the value in the json payload"""
 
         test_objects: ACTestObjects = setup
-        sensor: ACInfinityPortEntity = await execute_and_get_device_entity(
+        sensor: ACInfinityDeviceEntity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
             setting
         ] = value
 
         sensor._handle_coordinator_update()
 
-        assert isinstance(sensor, ACInfinityPortBinarySensorEntity)
+        assert isinstance(sensor, ACInfinityDeviceBinarySensorEntity)
         assert sensor.is_on == expected
 
         test_objects.write_ha_mock.assert_called()

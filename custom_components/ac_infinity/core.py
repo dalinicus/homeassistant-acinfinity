@@ -23,8 +23,8 @@ from .const import (
     MANUFACTURER,
     ControllerPropertyKey,
     ControllerType,
-    PortControlKey,
-    PortPropertyKey,
+    DeviceControlKey,
+    DevicePropertyKey,
     SensorPropertyKey,
     SensorType, ConfigurationKey, EntityConfigValue, AtType,
 )
@@ -49,18 +49,18 @@ class ACInfinityController:
             in the data field of the json returned.
         """
 
-        self._device_id = str(controller_json[ControllerPropertyKey.DEVICE_ID])
+        self._controller_id = str(controller_json[ControllerPropertyKey.DEVICE_ID])
         self._mac_addr = controller_json[ControllerPropertyKey.MAC_ADDR]
-        self._device_name = controller_json[ControllerPropertyKey.DEVICE_NAME]
-        self._device_type = controller_json[ControllerPropertyKey.DEVICE_TYPE]
-        self._identifier = (DOMAIN, self._device_id)
+        self._controller_name = controller_json[ControllerPropertyKey.DEVICE_NAME]
+        self._controller_type = controller_json[ControllerPropertyKey.DEVICE_TYPE]
+        self._identifier = (DOMAIN, self._controller_id)
 
-        ports = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
-        self._ports = [ACInfinityPort(self, port)for port in ports]
+        devices = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
+        self._devices = [ACInfinityDevice(self, device)for device in devices]
 
         self._device_info = DeviceInfo(
             identifiers={self._identifier},
-            name=self._device_name,
+            name=self._controller_name,
             manufacturer=MANUFACTURER,
             hw_version=controller_json[ControllerPropertyKey.HW_VERSION],
             sw_version=controller_json[ControllerPropertyKey.SW_VERSION],
@@ -76,19 +76,19 @@ class ACInfinityController:
             self._sensors = [ACInfinitySensor(self, sensor) for sensor in sensors]
 
     @property
-    def device_id(self) -> str:
+    def controller_id(self) -> str:
         """The unique identifier of the UIS Controller"""
-        return self._device_id
+        return self._controller_id
 
     @property
-    def device_name(self) -> str:
+    def controller_name(self) -> str:
         """The name of the controller as set in the Android/iOS app"""
-        return self._device_name
+        return self._controller_name
 
     @property
-    def device_type(self) -> int:
+    def controller_type(self) -> int:
         """The integer id of the device type of this controller (Pro, Pro+, AI+, etc...)"""
-        return self._device_type
+        return self._controller_type
 
     @property
     def mac_addr(self) -> str:
@@ -96,9 +96,9 @@ class ACInfinityController:
         return self._mac_addr
 
     @property
-    def ports(self) -> list["ACInfinityPort"]:
+    def devices(self) -> list["ACInfinityDevice"]:
         """A list of USB-C ports associated with this controller and their associated settings, with or without a UIS child device plugged into it."""
-        return self._ports
+        return self._devices
 
     @property
     def sensors(self) -> list["ACInfinitySensor"]:
@@ -168,9 +168,9 @@ class ACInfinitySensor:
             ):
                 return DeviceInfo(
                     identifiers={
-                        (DOMAIN, f"{controller.device_id}_{sensor_port}_spc24")
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_spc24")
                     },
-                    name=f"{controller.device_name} Probe Sensor",
+                    name=f"{controller.controller_name} Probe Sensor",
                     manufacturer=MANUFACTURER,
                     via_device=controller.identifier,
                     model="UIS Controller Sensor Probe (AC-SPC24)",
@@ -178,9 +178,9 @@ class ACInfinitySensor:
             case SensorType.CO2 | SensorType.LIGHT:
                 return DeviceInfo(
                     identifiers={
-                        (DOMAIN, f"{controller.device_id}_{sensor_port}_cos3")
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_cos3")
                     },
-                    name=f"{controller.device_name} CO2 + Light Sensor",
+                    name=f"{controller.controller_name} CO2 + Light Sensor",
                     manufacturer=MANUFACTURER,
                     via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
@@ -188,9 +188,9 @@ class ACInfinitySensor:
             case SensorType.WATER:
                 return DeviceInfo(
                     identifiers={
-                        (DOMAIN, f"{controller.device_id}_{sensor_port}_wds3")
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_wds3")
                     },
-                    name=f"{controller.device_name} Water Sensor",
+                    name=f"{controller.controller_name} Water Sensor",
                     manufacturer=MANUFACTURER,
                     via_device=controller.identifier,
                     model="UIS Water Sensor (AC-WDS3)",
@@ -198,9 +198,9 @@ class ACInfinitySensor:
             case SensorType.SOIL:
                 return DeviceInfo(
                     identifiers={
-                        (DOMAIN, f"{controller.device_id}_{sensor_port}_sls3")
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_sls3")
                     },
-                    name=f"{controller.device_name} Soil Sensor",
+                    name=f"{controller.controller_name} Soil Sensor",
                     manufacturer=MANUFACTURER,
                     via_device=controller.identifier,
                     model="UIS Soil Sensor (AC-SLS3)",
@@ -215,9 +215,9 @@ class ACInfinitySensor:
             case _:
                 return DeviceInfo(
                     identifiers={
-                        (DOMAIN, f"{controller.device_id}_{sensor_port}_unknown{sensor_type}")
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_unknown{sensor_type}")
                     },
-                    name=f"{controller.device_name} Unknown Sensor",
+                    name=f"{controller.controller_name} Unknown Sensor",
                     manufacturer=MANUFACTURER,
                     via_device=controller.identifier,
                     model=f"UIS Sensor Type {sensor_type}",
@@ -244,30 +244,30 @@ class ACInfinitySensor:
         return self._device_info
 
 
-class ACInfinityPort:
+class ACInfinityDevice:
     """
     A USB-C port associated with this controller and its associated settings,
     with or without a UIS child device (fan, light, etc...) plugged into it.
     """
 
     def __init__(
-        self, controller: ACInfinityController, port_json: dict[str, Any]
+        self, controller: ACInfinityController, device_json: dict[str, Any]
     ) -> None:
         """
         Args:
             controller: The controller that the USB-C port is attached to
-            port_json: Json of an individual controller. This is typically obtained from
+            device_json: Json of an individual controller. This is typically obtained from
             the ports field of a single controller returned from the /api/user/devInfoListAll endpoint.
             See the ports property on ACInfinityController.
         """
 
         self._controller = controller
-        self._port_index = port_json[PortPropertyKey.PORT]
-        self._port_name = port_json[PortPropertyKey.NAME]
+        self._device_port = device_json[DevicePropertyKey.PORT]
+        self._device_name = device_json[DevicePropertyKey.NAME]
 
         self._device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{controller.device_id}_{self._port_index}")},
-            name=f"{controller.device_name} {self.port_name}",
+            identifiers={(DOMAIN, f"{controller.controller_id}_{self._device_port}")},
+            name=f"{controller.controller_name} {self.device_name}",
             manufacturer=MANUFACTURER,
             via_device=controller.identifier,
             model="UIS Enabled Device",
@@ -279,14 +279,14 @@ class ACInfinityPort:
         return self._controller
 
     @property
-    def port_index(self) -> int:
+    def device_port(self) -> int:
         """The index of the USB-C device port, as labeled on the controller"""
-        return self._port_index
+        return self._device_port
 
     @property
-    def port_name(self) -> str:
+    def device_name(self) -> str:
         """The name of the USB-C device port, as set by the user in the Android/iOS app"""
-        return self._port_name
+        return self._device_name
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -306,10 +306,10 @@ class ACInfinityService:
     _sensor_properties: dict[tuple[str, int, int], Any] = {}
 
     # api/user/devInfoListAll json organized by controller device id and port index
-    _port_properties: dict[tuple[str, int], Any] = {}
+    _device_properties: dict[tuple[str, int], Any] = {}
 
     # api/dev/getDevModeSettingList json organized by controller device id and port index
-    _port_controls: dict[tuple[str, int], Any] = {}
+    _device_controls: dict[tuple[str, int], Any] = {}
 
     # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
     _device_settings: dict[tuple[str, int], Any] = {}
@@ -416,7 +416,7 @@ class ACInfinityService:
 
         return default_value
 
-    def get_port_property_exists(
+    def get_device_property_exists(
         self,
         controller_id: str | int,
         device_port: int,
@@ -431,14 +431,14 @@ class ACInfinityService:
         """
         normalized_id = (str(controller_id), device_port)
         return (
-            normalized_id in self._port_properties
-            and property_key in self._port_properties[normalized_id]
+            normalized_id in self._device_properties
+            and property_key in self._device_properties[normalized_id]
         )
 
-    def get_port_property(
+    def get_device_property(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         property_key: str,
         default_value=None,
     ):
@@ -446,13 +446,13 @@ class ACInfinityService:
 
         Args:
             controller_id:  the device id of the controller
-            port_index: the index of the port on the controller
+            device_port: the index of the port on the controller
             property_key: the json filed name for the data being retrieved
             default_value: the default value to return if the controller, port, or property doesn't exist
         """
-        normalized_id = (str(controller_id), port_index)
-        if normalized_id in self._port_properties:
-            found = self._port_properties[normalized_id]
+        normalized_id = (str(controller_id), device_port)
+        if normalized_id in self._device_properties:
+            found = self._device_properties[normalized_id]
             if property_key in found:
                 value = found[property_key]
                 return value if value is not None else default_value
@@ -468,7 +468,7 @@ class ACInfinityService:
             controller_id: the device id of the controller
             setting_key: the json field name for the data being retrieved
         """
-        return self.get_port_setting_exists(controller_id, 0, setting_key)
+        return self.get_device_setting_exists(controller_id, 0, setting_key)
 
     def get_controller_setting(
         self, controller_id: str | int, setting_key: str, default_value=None
@@ -480,25 +480,25 @@ class ACInfinityService:
             setting_key: the json field name for the data being retrieved
             default_value: the value to return if the controller or property doesn't exist
         """
-        return self.get_port_setting(controller_id, 0, setting_key, default_value)
+        return self.get_device_setting(controller_id, 0, setting_key, default_value)
 
-    def get_port_setting_exists(
-        self, controller_id: str | int, port_index: int, setting_key: str
+    def get_device_setting_exists(
+        self, controller_id: str | int, device_port: int, setting_key: str
     ) -> bool:
         """returns if a given setting exists on a given controller.
 
         Args:
             controller_id: the device id of the controller
-            port_index: the port index of the device.
+            device_port: the port index of the device.
             setting_key: the json field name for the data being retrieved
         """
-        normalized_id = (str(controller_id), port_index)
+        normalized_id = (str(controller_id), device_port)
         return normalized_id in self._device_settings and setting_key in self._device_settings[normalized_id]
 
-    def get_port_setting(
+    def get_device_setting(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         setting_key: str,
         default_value=None,
     ):
@@ -506,45 +506,45 @@ class ACInfinityService:
 
         Args:
             controller_id: the device id of the controller
-            port_index: the port index of the device
+            device_port: the port index of the device
             setting_key: the json field name for the data being retrieved
             default_value: the value to return if the controller or property doesn't exist
         """
         normalized_id = str(controller_id)
-        if (normalized_id, port_index) in self._device_settings:
-            result = self._device_settings[(normalized_id, port_index)]
+        if (normalized_id, device_port) in self._device_settings:
+            result = self._device_settings[(normalized_id, device_port)]
             if setting_key in result:
                 value = result[setting_key]
                 return value if value is not None else default_value
 
         return default_value
 
-    def get_port_control_exists(
+    def get_device_control_exists(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         setting_key: str,
     ) -> bool:
         """return if a given setting key exists on a given device port
 
         Args:
             controller_id: the device id of the controller
-            port_index: the index of the port on the controller
+            device_port: the index of the port on the controller
             setting_key: the setting to pull the value of
         """
-        normalized_id = (str(controller_id), port_index)
-        if normalized_id in self._port_controls:
-            found = self._port_controls[normalized_id]
+        normalized_id = (str(controller_id), device_port)
+        if normalized_id in self._device_controls:
+            found = self._device_controls[normalized_id]
             if setting_key in found:
                 return True
-            return setting_key in found[PortControlKey.DEV_SETTING]
+            return setting_key in found[DeviceControlKey.DEV_SETTING]
 
         return False
 
-    def get_port_control(
+    def get_device_control(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         setting_key: str,
         default_value=None,
     ):
@@ -552,18 +552,18 @@ class ACInfinityService:
 
         Args:
             controller_id: the device id of the controller
-            port_index: the index of the port on the controller
+            device_port: the index of the port on the controller
             setting_key: the setting to pull the value of
             default_value: the default value to return if the controller, port, or setting doesn't exist
         """
-        normalized_id = (str(controller_id), port_index)
-        if normalized_id in self._port_controls:
-            result = self._port_controls[normalized_id]
+        normalized_id = (str(controller_id), device_port)
+        if normalized_id in self._device_controls:
+            result = self._device_controls[normalized_id]
             if setting_key in result:
                 value = result[setting_key]
                 return value if value is not None else default_value
-            elif setting_key in result[PortControlKey.DEV_SETTING]:
-                value = result[PortControlKey.DEV_SETTING][setting_key]
+            elif setting_key in result[DeviceControlKey.DEV_SETTING]:
+                value = result[DeviceControlKey.DEV_SETTING][setting_key]
                 return value if value is not None else default_value
 
         return default_value
@@ -576,7 +576,7 @@ class ACInfinityService:
                 if not self._client.is_logged_in():
                     await self._client.login()
 
-                all_devices_json = await self._client.get_devices_list_all()
+                all_devices_json = await self._client.get_account_controllers()
                 for controller_properties_json in all_devices_json:
                     controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
 
@@ -597,19 +597,19 @@ class ACInfinityService:
                             # set sensor properties; sensor value, unit, and display precision
                             self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
-                    for port_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
-                        port_index = port_properties_json[PortPropertyKey.PORT]
+                    for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
+                        device_port = device_properties_json[DevicePropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self._port_properties[(controller_id, port_index)] = port_properties_json
+                        self._device_properties[(controller_id, device_port)] = device_properties_json
 
                         # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
-                        port_controls_json = await self._client.get_device_mode_settings_list(controller_id, port_index)
-                        self._port_controls[(controller_id, port_index)] = port_controls_json
+                        device_controls_json = await self._client.get_controller_devices(controller_id, device_port)
+                        self._device_controls[(controller_id, device_port)] = device_controls_json
 
                         # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
-                        port_settings_json = await self._client.get_device_settings(controller_id, port_index)
-                        self._device_settings[(controller_id, port_index)] = port_settings_json
+                        device_settings_json = await self._client.get_device_settings(controller_id, device_port)
+                        self._device_settings[(controller_id, device_port)] = device_settings_json
 
                 return  # update successful.  eject from the infinite while loop.
 
@@ -667,10 +667,10 @@ class ACInfinityService:
         device_name = self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_NAME)
         await self.__update_advanced_settings(controller_id, 0, device_name, key_values)
 
-    async def update_port_setting(
+    async def update_device_setting(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         setting_key: str,
         new_value: int,
     ):
@@ -678,32 +678,32 @@ class ACInfinityService:
 
         Args:
             controller_id: the device id of the controller
-            port_index: the port of the device
+            device_port: the port of the device
             setting_key: the setting to update the value of
             new_value: the new value of the setting to set
         """
-        await self.update_port_settings(controller_id, port_index, [(setting_key, new_value)])
+        await self.update_device_settings(controller_id, device_port, [(setting_key, new_value)])
 
-    async def update_port_settings(
+    async def update_device_settings(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         key_values: list[tuple[str, int]],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
         Args:
             controller_id: The device id of the controller to update
-            port_index: the port of the device
+            device_port: the port of the device
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        device_name = self.get_port_property(controller_id, port_index, PortPropertyKey.NAME)
-        await self.__update_advanced_settings(controller_id, port_index, device_name, key_values)
+        device_name = self.get_device_property(controller_id, device_port, DevicePropertyKey.NAME)
+        await self.__update_advanced_settings(controller_id, device_port, device_name, key_values)
 
     async def __update_advanced_settings(
         self,
         controller_id: str | int,
-        port: int,
+        device_port: int,
         device_name: str,
         key_values: list[tuple[str, int]],
     ):
@@ -711,14 +711,14 @@ class ACInfinityService:
 
         Args:
             controller_id: The device id of the controller to update
-            port: 0 for controller settings, or the port number for port settings
+            device_port: 0 for controller settings, or the port number for port settings
             device_name: The current controller name value as it exists in the coordinator from the last refresh call.
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
         try_count = 0
         while True:
             try:
-                await self._client.update_advanced_settings(controller_id, port, device_name, key_values)
+                await self._client.update_advanced_settings(controller_id, device_port, device_name, key_values)
                 return
 
             except (
@@ -741,10 +741,10 @@ class ACInfinityService:
                 _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
                 raise
 
-    async def update_port_control(
+    async def update_device_control(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         setting_key: str,
         new_value: int,
     ):
@@ -752,74 +752,93 @@ class ACInfinityService:
 
         Args:
             controller_id: the device id of the controller
-            port_index: the index of the port on the controller
+            device_port: the index of the port on the controller
             setting_key: the setting to update the value of
             new_value: the new value of the setting to set
         """
-        await self.update_port_controls(controller_id, port_index, {setting_key: new_value})
+        await self.update_device_controls(controller_id, device_port, {setting_key: new_value})
 
-    async def update_port_controls(
+    async def update_device_controls(
         self,
         controller_id: str | int,
-        port_index: int,
+        device_port: int,
         key_values: dict[str, int],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
         Args:
             controller_id: the device id of the controller
-            port_index: the index of the port on the controller
+            device_port: the index of the port on the controller
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
         try_count = 0
         while True:
             try:
-                existing = await self._client.get_device_mode_settings_list(controller_id, port_index)
-                at_type = key_values.get(PortControlKey.AT_TYPE, existing[PortControlKey.AT_TYPE])
+                existing = await self._client.get_controller_devices(controller_id, device_port)
+                at_type = key_values.get(DeviceControlKey.AT_TYPE, existing[DeviceControlKey.AT_TYPE])
+                is_ai_controller = ControllerType.is_ai_controller(self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE))
 
                 updated = {
-                    PortControlKey.DEV_ID: int(controller_id),
-                    PortControlKey.EXTERNAL_PORT: port_index,
-                    PortControlKey.AT_TYPE: at_type
+                    DeviceControlKey.DEV_ID: int(controller_id),
+                    DeviceControlKey.EXTERNAL_PORT: device_port,
+                    DeviceControlKey.AT_TYPE: at_type
                 }
+
+                if is_ai_controller:
+                    match at_type:
+                        case AtType.OFF:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[16,17]"
+                        case AtType.ON:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[16,18]"
+                        case AtType.AUTO:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[112,16,19,32,98,99]"
+                        case AtType.TIMER_TO_ON | AtType.TIMER_TO_OFF:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[16,20,21]"
+                        case AtType.CYCLE | AtType.SCHEDULE:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[16,22,23,40]"
+                        case AtType.VPD:
+                            updated[DeviceControlKey.MODE_AND_SETTING_ID_STR] = "[16,81,32,98,99]"
+                        case _:
+                            raise ValueError(f"Unable to find setting id string - Unknown atType {at_type}")
 
                 def user_input_or_existing(key: str):
                     updated[key] = key_values.get(key, existing[key])
 
                 match at_type:
                     case AtType.OFF:
-                        user_input_or_existing(PortControlKey.OFF_SPEED)
+                        user_input_or_existing(DeviceControlKey.OFF_SPEED)
                     case AtType.ON:
-                        user_input_or_existing(PortControlKey.ON_SPEED)
+                        user_input_or_existing(DeviceControlKey.ON_SPEED)
                     case AtType.AUTO:
-                        user_input_or_existing(PortControlKey.AUTO_HUMIDITY_LOW_ENABLED)
-                        user_input_or_existing(PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER)
-                        user_input_or_existing(PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED)
-                        user_input_or_existing(PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_LOW_ENABLED)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_LOW_TRIGGER)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_LOW_TRIGGER_F)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_HIGH_ENABLED)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_HIGH_TRIGGER)
-                        user_input_or_existing(PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F)
+                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED)
+                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED)
+                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_ENABLED)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_ENABLED)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F)
                     case AtType.TIMER_TO_ON | AtType.TIMER_TO_OFF:
-                        user_input_or_existing(PortControlKey.TIMER_DURATION_TO_ON)
-                        user_input_or_existing(PortControlKey.TIMER_DURATION_TO_OFF)
-                        user_input_or_existing(PortControlKey.SURPLUS)
+                        user_input_or_existing(DeviceControlKey.TIMER_DURATION_TO_ON)
+                        user_input_or_existing(DeviceControlKey.TIMER_DURATION_TO_OFF)
+                        user_input_or_existing(DeviceControlKey.SURPLUS)
                     case AtType.CYCLE:
-                        user_input_or_existing(PortControlKey.CYCLE_DURATION_ON)
-                        user_input_or_existing(PortControlKey.CYCLE_DURATION_OFF)
-                        user_input_or_existing(PortControlKey.SURPLUS)
+                        user_input_or_existing(DeviceControlKey.CYCLE_DURATION_ON)
+                        user_input_or_existing(DeviceControlKey.CYCLE_DURATION_OFF)
+                        user_input_or_existing(DeviceControlKey.SURPLUS)
                     case AtType.SCHEDULE:
-                        user_input_or_existing(PortControlKey.SCHEDULED_START_TIME)
-                        user_input_or_existing(PortControlKey.SCHEDULED_END_TIME)
+                        user_input_or_existing(DeviceControlKey.SCHEDULED_START_TIME)
+                        user_input_or_existing(DeviceControlKey.SCHEDULED_END_TIME)
                     case AtType.VPD:
                         raise NotImplementedError()
                     case _:
                         raise ValueError(f"Unable to update device controls: Unknown atType {at_type}")
 
-                await self._client.set_device_mode_settings(updated)
+                await self._client.update_ai_device_control(updated) if is_ai_controller else self._client.update_device_control(updated)
                 return
+
             except (
                 ACInfinityClientCannotConnect,
                 ACInfinityClientRequestFailed,
@@ -961,7 +980,7 @@ class ACInfinityControllerEntity(ACInfinityEntity):
         return self._controller
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, str(self._controller.device_id), "controller")
+        return self._enabled_fn(entry, str(self._controller.controller_id), "controller")
 
     @property
     def is_suitable(self) -> bool:
@@ -998,48 +1017,48 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         return self._sensor
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, str(self._sensor.controller.device_id), "sensors")
+        return self._enabled_fn(entry, str(self._sensor.controller.controller_id), "sensors")
 
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.sensor)
 
 
-class ACInfinityPortEntity(ACInfinityEntity):
+class ACInfinityDeviceEntity(ACInfinityEntity):
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        port: ACInfinityPort,
+        device: ACInfinityDevice,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
-        suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool],
+        suitable_fn: Callable[[ACInfinityEntity, ACInfinityDevice], bool],
         data_key: str,
         platform: str,
     ):
         super().__init__(coordinator, platform, data_key)
-        self._port = port
+        self._device = device
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
 
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{DOMAIN}_{self._port.controller.mac_addr}_port_{self._port.port_index}_{self.data_key}"
+        return f"{DOMAIN}_{self._device.controller.mac_addr}_port_{self._device.device_port}_{self.data_key}"
 
     @property
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
-        return self._port.device_info
+        return self._device.device_info
 
     @property
-    def port(self) -> ACInfinityPort:
-        return self._port
+    def device_port(self) -> ACInfinityDevice:
+        return self._device
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
-        return self._enabled_fn(entry, str(self._port.controller.device_id), f"port_{self._port.port_index}")
+        return self._enabled_fn(entry, str(self._device.controller.controller_id), f"port_{self._device.device_port}")
 
     @property
     def is_suitable(self) -> bool:
-        return self._suitable_fn(self, self.port)
+        return self._suitable_fn(self, self.device_port)
 
 
 @dataclass(frozen=True)
@@ -1076,19 +1095,19 @@ class ACInfinitySensorReadOnlyMixin[T](ACInfinityBaseMixin):
 
 
 @dataclass(frozen=True)
-class ACInfinityPortReadOnlyMixin[T](ACInfinityBaseMixin):
+class ACInfinityDeviceReadOnlyMixin[T](ACInfinityBaseMixin):
     """Mixin for retrieving values for port device level sensors"""
-    suitable_fn: Callable[[ACInfinityEntity, ACInfinityPort], bool]
+    suitable_fn: Callable[[ACInfinityEntity, ACInfinityDevice], bool]
     """Input data object, device id, and port number; output if suitable."""
-    get_value_fn: Callable[[ACInfinityEntity, ACInfinityPort], T]
+    get_value_fn: Callable[[ACInfinityEntity, ACInfinityDevice], T]
     """Input data object, device id, and port number; output the value."""
 
 
 @dataclass(frozen=True)
-class ACInfinityPortReadWriteMixin[T](ACInfinityPortReadOnlyMixin[T]):
+class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for port device level settings"""
 
-    set_value_fn: Callable[[ACInfinityEntity, ACInfinityPort, T], Awaitable[None]]
+    set_value_fn: Callable[[ACInfinityEntity, ACInfinityDevice, T], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
 
 

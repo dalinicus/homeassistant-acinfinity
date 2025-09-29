@@ -32,7 +32,7 @@ class EntityConfigValue:
     Disable = "disable"
 
 
-class CustomPortPropertyKey:
+class CustomDevicePropertyKey:
     # Derived sensors
     NEXT_STATE_CHANGE = "nextStateChange"
 
@@ -46,25 +46,6 @@ class AtType:
     CYCLE = 6
     SCHEDULE = 7
     VPD = 8
-
-    @staticmethod
-    def get_mode_and_setting_id_str(at_type: int) -> str:
-        match at_type:
-            case AtType.OFF:
-                return "[16,17]"
-            case AtType.ON:
-                return "[16,18]"
-            case AtType.AUTO:
-                return "[112,16,19,32,98,99]"
-            case AtType.TIMER_TO_ON | AtType.TIMER_TO_OFF:
-                return "[16,20,21]"
-            case AtType.CYCLE | AtType.SCHEDULE:
-                return "[16,22,23,40]"
-            case AtType.VPD:
-                return "[16,81,32,98,99]"
-            case _:
-                raise ValueError(f"Unable to find setting id string - Unknown atType {at_type}")
-
 
 # noinspection SpellCheckingInspection
 class ControllerPropertyKey:
@@ -139,7 +120,7 @@ class SensorReferenceKey:
 
 
 # noinspection SpellCheckingInspection
-class PortPropertyKey:
+class DevicePropertyKey:
     # /api/dev/devInfoListAll via "ports" property
     PORT = "port"
     NAME = "portName"
@@ -207,12 +188,13 @@ class AdvancedSettingsKey:
 
 
 # noinspection SpellCheckingInspection
-class PortControlKey:
+class DeviceControlKey:
     # /api/dev/getdevModeSettingsList
     # /api/dev/addDevMode
     DEV_ID = "devId"
     EXTERNAL_PORT = "externalPort"
     MODE_SET_ID = "modeSetid"
+    MODE_AND_SETTING_ID_STR = "modeAndSettingIdStr"
     SURPLUS = "surplus"
     ON_SPEED = "onSpead"
     OFF_SPEED = "offSpead"

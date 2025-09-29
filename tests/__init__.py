@@ -20,7 +20,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntity,
-    ACInfinityPortEntity,
+    ACInfinityDeviceEntity,
     ACInfinitySensorEntity,
     ACInfinityService,
 )
@@ -88,7 +88,7 @@ async def execute_and_get_controller_entity(
 
 async def execute_and_get_device_entity(
     setup_fixture, async_setup_entry, port: int, data_key: str, mac_addr: str = MAC_ADDR
-) -> ACInfinityPortEntity:
+) -> ACInfinityDeviceEntity:
     test_objects: ACTestObjects = setup_fixture
 
     await async_setup_entry(
@@ -107,7 +107,7 @@ async def execute_and_get_device_entity(
     assert len(found) == 1
     entity = found[0]
 
-    assert isinstance(entity, ACInfinityPortEntity)
+    assert isinstance(entity, ACInfinityDeviceEntity)
     return entity
 
 
@@ -156,8 +156,8 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._device_settings = DEVICE_SETTINGS_DATA
     ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
-    ac_infinity._port_properties = PORT_PROPERTIES_DATA
-    ac_infinity._port_controls = PORT_CONTROLS_DATA
+    ac_infinity._device_properties = PORT_PROPERTIES_DATA
+    ac_infinity._device_controls = PORT_CONTROLS_DATA
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,

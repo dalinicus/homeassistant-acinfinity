@@ -15,15 +15,15 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
-    CustomPortPropertyKey,
-    PortPropertyKey,
+    CustomDevicePropertyKey,
+    DevicePropertyKey,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType,
 )
 from custom_components.ac_infinity.sensor import (
     ACInfinityControllerSensorEntity,
-    ACInfinityPortSensorEntity,
+    ACInfinityDeviceSensorEntity,
     ACInfinitySensorSensorEntity,
     async_setup_entry,
 )
@@ -824,12 +824,12 @@ class TestSensors:
         """Sensor for device port speak created on setup"""
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, PortPropertyKey.SPEAK
+            setup, async_setup_entry, port, DevicePropertyKey.SPEAK
         )
 
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortPropertyKey.SPEAK}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DevicePropertyKey.SPEAK}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.POWER_FACTOR
 
@@ -838,12 +838,12 @@ class TestSensors:
         """Sensor for device port surplus created on setup"""
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
+            setup, async_setup_entry, port, DevicePropertyKey.REMAINING_TIME
         )
 
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{PortPropertyKey.REMAINING_TIME}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{DevicePropertyKey.REMAINING_TIME}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.DURATION
         assert entity.device_info is not None
@@ -853,12 +853,12 @@ class TestSensors:
         """Sensor for device port surplus created on setup"""
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
+            setup, async_setup_entry, port, CustomDevicePropertyKey.NEXT_STATE_CHANGE
         )
 
         assert (
             entity.unique_id
-            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{CustomPortPropertyKey.NEXT_STATE_CHANGE}"
+            == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{CustomDevicePropertyKey.NEXT_STATE_CHANGE}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.TIMESTAMP
         assert entity.device_info is not None
@@ -870,16 +870,16 @@ class TestSensors:
     ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
-            PortPropertyKey.SPEAK
+        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+            DevicePropertyKey.SPEAK
         ] = value
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, PortPropertyKey.SPEAK
+            setup, async_setup_entry, port, DevicePropertyKey.SPEAK
         )
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSensorEntity)
+        assert isinstance(entity, ACInfinityDeviceSensorEntity)
         assert entity.native_value == expected
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -891,15 +891,15 @@ class TestSensors:
         test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, PortPropertyKey.REMAINING_TIME
+            setup, async_setup_entry, port, DevicePropertyKey.REMAINING_TIME
         )
 
-        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
-            PortPropertyKey.REMAINING_TIME
+        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+            DevicePropertyKey.REMAINING_TIME
         ] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSensorEntity)
+        assert isinstance(entity, ACInfinityDeviceSensorEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -926,19 +926,19 @@ class TestSensors:
         test_objects: ACTestObjects = setup
 
         entity = await execute_and_get_device_entity(
-            setup, async_setup_entry, port, CustomPortPropertyKey.NEXT_STATE_CHANGE
+            setup, async_setup_entry, port, CustomDevicePropertyKey.NEXT_STATE_CHANGE
         )
 
         test_objects.ac_infinity._controller_properties[(str(DEVICE_ID))][
             ControllerPropertyKey.TIME_ZONE
         ] = "America/Chicago"
 
-        test_objects.ac_infinity._port_properties[(str(DEVICE_ID), port)][
-            PortPropertyKey.REMAINING_TIME
+        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+            DevicePropertyKey.REMAINING_TIME
         ] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSensorEntity)
+        assert isinstance(entity, ACInfinityDeviceSensorEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 

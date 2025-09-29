@@ -29,9 +29,9 @@ from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
-    ACInfinityPort,
-    ACInfinityPortEntity,
-    ACInfinityPortReadOnlyMixin,
+    ACInfinityDevice,
+    ACInfinityDeviceEntity,
+    ACInfinityDeviceReadOnlyMixin,
     ACInfinitySensor,
     ACInfinitySensorEntity,
     ACInfinitySensorReadOnlyMixin, enabled_fn_sensor,
@@ -41,8 +41,8 @@ from .const import (
     DOMAIN,
     ISSUE_URL,
     ControllerPropertyKey,
-    CustomPortPropertyKey,
-    PortPropertyKey,
+    CustomDevicePropertyKey,
+    DevicePropertyKey,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType, ControllerType,
@@ -79,8 +79,8 @@ class ACInfinitySensorSensorEntityDescription(
 
 
 @dataclass(frozen=True)
-class ACInfinityPortSensorEntityDescription(
-    ACInfinitySensorEntityDescription, ACInfinityPortReadOnlyMixin
+class ACInfinityDeviceSensorEntityDescription(
+    ACInfinitySensorEntityDescription, ACInfinityDeviceReadOnlyMixin
 ):
     """Describes ACInfinity Device Sensor Entities."""
 
@@ -89,18 +89,18 @@ def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return entity.ac_infinity.get_controller_property_exists(
-        controller.device_id, entity.data_key
+        controller.controller_id, entity.data_key
     )
 
 
 def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
     return entity.ac_infinity.get_sensor_property_exists(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
     ) and entity.ac_infinity.get_sensor_property_exists(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_DATA,
@@ -111,7 +111,7 @@ def __get_value_fn_sensor_value_default(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
     precision = entity.ac_infinity.get_sensor_property(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
@@ -119,7 +119,7 @@ def __get_value_fn_sensor_value_default(
     )
 
     data = entity.ac_infinity.get_sensor_property(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_DATA,
@@ -135,19 +135,19 @@ def __suitable_fn_sensor_temperature(
 ):
     return (
         entity.ac_infinity.get_sensor_property_exists(
-            sensor.controller.device_id,
+            sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
             SensorPropertyKey.SENSOR_PRECISION,
         )
         and entity.ac_infinity.get_sensor_property_exists(
-            sensor.controller.device_id,
+            sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
             SensorPropertyKey.SENSOR_DATA,
         )
         and entity.ac_infinity.get_sensor_property_exists(
-            sensor.controller.device_id,
+            sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
             SensorPropertyKey.SENSOR_UNIT,
@@ -159,7 +159,7 @@ def __get_value_fn_sensor_value_temperature(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
     precision = entity.ac_infinity.get_sensor_property(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
@@ -167,7 +167,7 @@ def __get_value_fn_sensor_value_temperature(
     )
 
     data = entity.ac_infinity.get_sensor_property(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_DATA,
@@ -175,7 +175,7 @@ def __get_value_fn_sensor_value_temperature(
     )
 
     unit = entity.ac_infinity.get_sensor_property(
-        sensor.controller.device_id,
+        sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_UNIT,
@@ -186,17 +186,17 @@ def __get_value_fn_sensor_value_temperature(
     return value if unit > 0 else round((5 * (value - 32) / 9), precision - 1)
 
 
-def __suitable_fn_port_property_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_property_exists(
-        port.controller.device_id, port.port_index, entity.data_key
+def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_property_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
-def __get_value_fn_port_property_default(
-    entity: ACInfinityEntity, port: ACInfinityPort
+def __get_value_fn_device_property_default(
+    entity: ACInfinityEntity, device: ACInfinityDevice
 ):
-    return entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, entity.data_key, 0
+    return entity.ac_infinity.get_device_property(
+        device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
@@ -206,21 +206,21 @@ def __get_value_fn_floating_point_as_int(
     # value stored as an integer, but represents a 2 digit precision float
     return (
         entity.ac_infinity.get_controller_property(
-            controller.device_id, entity.data_key, 0
+            controller.controller_id, entity.data_key, 0
         )
         / 100
     )
 
 
 def __get_next_mode_change_timestamp(
-    entity: ACInfinityEntity, port: ACInfinityPort
+    entity: ACInfinityEntity, device: ACInfinityDevice
 ) -> datetime | None:
-    remaining_seconds = entity.ac_infinity.get_port_property(
-        port.controller.device_id, port.port_index, PortPropertyKey.REMAINING_TIME, 0
+    remaining_seconds = entity.ac_infinity.get_device_property(
+        device.controller.controller_id, device.device_port, DevicePropertyKey.REMAINING_TIME, 0
     )
 
     timezone = entity.ac_infinity.get_controller_property(
-        port.controller.device_id, ControllerPropertyKey.TIME_ZONE
+        device.controller.controller_id, ControllerPropertyKey.TIME_ZONE
     )
 
     if remaining_seconds <= 0:
@@ -403,9 +403,9 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
     ),
 }
 
-PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
-    ACInfinityPortSensorEntityDescription(
-        key=PortPropertyKey.SPEAK,
+DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
+    ACInfinityDeviceSensorEntityDescription(
+        key=DevicePropertyKey.SPEAK,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=None,  # no units / bare integer value
@@ -413,11 +413,11 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         icon=None,  # default
         translation_key="current_power",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_port_property_default,
-        get_value_fn=__get_value_fn_port_property_default,
+        suitable_fn=__suitable_fn_device_property_default,
+        get_value_fn=__get_value_fn_device_property_default,
     ),
-    ACInfinityPortSensorEntityDescription(
-        key=PortPropertyKey.REMAINING_TIME,
+    ACInfinityDeviceSensorEntityDescription(
+        key=DevicePropertyKey.REMAINING_TIME,
         device_class=SensorDeviceClass.DURATION,
         state_class=None,
         native_unit_of_measurement=UnitOfTime.SECONDS,
@@ -425,11 +425,11 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSensorEntityDescription] = [
         icon=None,  # default
         translation_key="remaining_time",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_port_property_default,
-        get_value_fn=__get_value_fn_port_property_default,
+        suitable_fn=__suitable_fn_device_property_default,
+        get_value_fn=__get_value_fn_device_property_default,
     ),
-    ACInfinityPortSensorEntityDescription(
-        key=CustomPortPropertyKey.NEXT_STATE_CHANGE,
+    ACInfinityDeviceSensorEntityDescription(
+        key=CustomDevicePropertyKey.NEXT_STATE_CHANGE,
         device_class=SensorDeviceClass.TIMESTAMP,
         state_class=None,
         native_unit_of_measurement=None,
@@ -491,23 +491,23 @@ class ACInfinitySensorSensorEntity(ACInfinitySensorEntity, SensorEntity):
         return self.entity_description.get_value_fn(self, self.sensor)
 
 
-class ACInfinityPortSensorEntity(ACInfinityPortEntity, SensorEntity):
-    entity_description: ACInfinityPortSensorEntityDescription
+class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
+    entity_description: ACInfinityDeviceSensorEntityDescription
 
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        description: ACInfinityPortSensorEntityDescription,
-        port: ACInfinityPort,
+        description: ACInfinityDeviceSensorEntityDescription,
+        device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SENSOR
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.SENSOR
         )
         self.entity_description = description
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
-        return self.entity_description.get_value_fn(self, self.port)
+        return self.entity_description.get_value_fn(self, self.device_port)
 
 
 async def async_setup_entry(
@@ -526,7 +526,7 @@ async def async_setup_entry(
         # These values are available in the sensor array.  The external values are duplicated on the base fields used by
         # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
         # by skipping the controller descriptions for the base values.
-        if not ControllerType.is_ai_controller(controller.device_type):
+        if not ControllerType.is_ai_controller(controller.controller_type):
             for controller_description in CONTROLLER_DESCRIPTIONS:
                 controller_entity = ACInfinityControllerSensorEntity(
                     coordinator, controller_description, controller
@@ -547,11 +547,11 @@ async def async_setup_entry(
                     ISSUE_URL,
                 )
 
-        for port in controller.ports:
-            for port_description in PORT_DESCRIPTIONS:
-                port_entity = ACInfinityPortSensorEntity(
-                    coordinator, port_description, port
+        for device in controller.devices:
+            for device_description in DEVICE_DESCRIPTIONS:
+                device_entity = ACInfinityDeviceSensorEntity(
+                    coordinator, device_description, device
                 )
-                entities.append_if_suitable(port_entity)
+                entities.append_if_suitable(device_entity)
 
     add_entities_callback(entities)

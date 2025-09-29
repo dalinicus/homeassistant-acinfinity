@@ -18,15 +18,15 @@ from custom_components.ac_infinity.const import (
     SCHEDULE_MIDNIGHT_VALUE,
     AdvancedSettingsKey,
     ControllerType,
-    PortControlKey,
+    DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
-    ACInfinityPort,
-    ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin, enabled_fn_control, enabled_fn_setting,
+    ACInfinityDevice,
+    ACInfinityDeviceEntity,
+    ACInfinityDeviceReadWriteMixin, enabled_fn_control, enabled_fn_setting,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,43 +53,43 @@ class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
 
 
 @dataclass(frozen=True)
-class ACInfinityPortSwitchEntityDescription(
+class ACInfinityDeviceSwitchEntityDescription(
     ACInfinitySwitchEntityDescription,
-    ACInfinityPortReadWriteMixin,
+    ACInfinityDeviceReadWriteMixin,
     ACInfinitySwitchOnOffValuesMixin,
 ):
     """Describes ACInfinity Switch Entities."""
 
 
-def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.data_key
+def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_setting_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
-def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.data_key
+def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_control_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
-def __get_value_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_control(
-        port.controller.device_id, port.port_index, entity.data_key, 0
+def __get_value_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_control(
+        device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
-def __get_value_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_setting(
-        port.controller.device_id, port.port_index, entity.data_key, 0
+def __get_value_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_setting(
+        device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
-def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPort):
+def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinityDevice):
     return (
-        entity.ac_infinity.get_port_control(
-            port.controller.device_id,
-            port.port_index,
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id,
+            device.device_port,
             entity.data_key,
             SCHEDULE_DISABLED_VALUE,
         )
@@ -97,156 +97,156 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, port: ACInfinityPo
     )
 
 
-def __set_value_fn_port_control_default(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+def __set_value_fn_device_control_default(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_port_control(
-        port.controller.device_id, port.port_index, entity.data_key, value
+    return entity.ac_infinity.update_device_control(
+        device.controller.controller_id, device.device_port, entity.data_key, value
     )
 
 
-def __set_value_fn_port_setting_default(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: int
+def __set_value_fn_device_setting_default(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_port_setting(
-        port.controller.device_id, port.port_index, entity.data_key, value
+    return entity.ac_infinity.update_device_setting(
+        device.controller.controller_id, device.device_port, entity.data_key, value
     )
 
 
-PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.VPD_HIGH_ENABLED,
+DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.VPD_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_high_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.VPD_LOW_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.VPD_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="vpd_mode_low_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.VPD_TARGET_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.VPD_TARGET_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="target_vpd_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_TEMP_HIGH_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_high_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_TEMP_LOW_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_TEMP_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_temp_low_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_high_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_TARGET_TEMP_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_TARGET_TEMP_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="target_temp_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
         icon=None,  # default
         translation_key="target_humidity_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
-        get_value_fn=__get_value_fn_port_control_default,
-        set_value_fn=__set_value_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.SCHEDULED_START_TIME,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.SCHEDULED_START_TIME,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_MIDNIGHT_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_on_time_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=__set_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
-        key=PortControlKey.SCHEDULED_END_TIME,
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.SCHEDULED_END_TIME,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_EOD_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
         icon=None,  # default
         translation_key="schedule_mode_off_time_enabled",
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
-        set_value_fn=__set_value_fn_port_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
     ),
-    ACInfinityPortSwitchEntityDescription(
+    ACInfinityDeviceSwitchEntityDescription(
         key=AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
@@ -254,37 +254,37 @@ PORT_DESCRIPTIONS: list[ACInfinityPortSwitchEntityDescription] = [
         icon=None,  # default
         translation_key="sunrise_timer_enabled",
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_port_setting_default,
-        get_value_fn=__get_value_fn_port_setting_default,
-        set_value_fn=__set_value_fn_port_setting_default,
+        suitable_fn=__suitable_fn_device_setting_default,
+        get_value_fn=__get_value_fn_device_setting_default,
+        set_value_fn=__set_value_fn_device_setting_default,
     ),
 ]
 
 
-class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
-    entity_description: ACInfinityPortSwitchEntityDescription
+class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
+    entity_description: ACInfinityDeviceSwitchEntityDescription
 
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        description: ACInfinityPortSwitchEntityDescription,
-        port: ACInfinityPort,
+        description: ACInfinityDeviceSwitchEntityDescription,
+        device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SWITCH
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.SWITCH
         )
         self.entity_description = description
 
     @property
     def is_on(self) -> bool | None:
-        return self.entity_description.get_value_fn(self, self.port)
+        return self.entity_description.get_value_fn(self, self.device_port)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         _LOGGER.info(
             'User requesting value update of entity "%s" to "On"', self.unique_id
         )
         await self.entity_description.set_value_fn(
-            self, self.port, self.entity_description.on_value
+            self, self.device_port, self.entity_description.on_value
         )
         await self.coordinator.async_request_refresh()
 
@@ -293,7 +293,7 @@ class ACInfinityPortSwitchEntity(ACInfinityPortEntity, SwitchEntity):
             'User requesting value update of entity "%s" to "Off"', self.unique_id
         )
         await self.entity_description.set_value_fn(
-            self, self.port, self.entity_description.off_value
+            self, self.device_port, self.entity_description.off_value
         )
         await self.coordinator.async_request_refresh()
 
@@ -308,13 +308,13 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
-        if controller.device_type == ControllerType.UIS_89_AI_PLUS:
+        if controller.controller_type == ControllerType.UIS_89_AI_PLUS:
             # controls and settings not yet supported for the AI controller
             continue
 
-        for port in controller.ports:
-            for description in PORT_DESCRIPTIONS:
-                entity = ACInfinityPortSwitchEntity(coordinator, description, port)
+        for device in controller.devices:
+            for description in DEVICE_DESCRIPTIONS:
+                entity = ACInfinityDeviceSwitchEntity(coordinator, description, device)
                 entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

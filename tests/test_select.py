@@ -7,11 +7,11 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     AdvancedSettingsKey,
-    PortControlKey,
+    DeviceControlKey,
 )
 from custom_components.ac_infinity.select import (
     ACInfinityControllerSelectEntity,
-    ACInfinityPortSelectEntity,
+    ACInfinityDeviceSelectEntity,
     async_setup_entry,
 )
 from tests import (
@@ -69,7 +69,7 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "setting,option_count",
-        [(PortControlKey.AT_TYPE, 8), (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, 2)],
+        [(DeviceControlKey.AT_TYPE, 8), (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, 2)],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_mode_created_for_each_port(
@@ -84,7 +84,7 @@ class TestSelectors:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
 
         assert entity.entity_description.options is not None
@@ -179,15 +179,15 @@ class TestSelectors:
             setup,
             async_setup_entry,
             port,
-            PortControlKey.AT_TYPE,
+            DeviceControlKey.AT_TYPE,
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
-            PortControlKey.AT_TYPE
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+            DeviceControlKey.AT_TYPE
         ] = at_type
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         assert entity.current_option == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -217,14 +217,14 @@ class TestSelectors:
             setup,
             async_setup_entry,
             port,
-            PortControlKey.AT_TYPE,
+            DeviceControlKey.AT_TYPE,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         await entity.async_select_option(at_type_string)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, PortControlKey.AT_TYPE, expected
+            str(DEVICE_ID), port, DeviceControlKey.AT_TYPE, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -255,7 +255,7 @@ class TestSelectors:
         ] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         assert entity.current_option == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -282,7 +282,7 @@ class TestSelectors:
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         await entity.async_select_option(at_type_string)
 
         test_objects.port_setting_set_mock.assert_called_with(
@@ -321,7 +321,7 @@ class TestSelectors:
         ] = load_type
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         assert entity.current_option == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -351,7 +351,7 @@ class TestSelectors:
             AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         await entity.async_select_option(load_type_string)
 
         test_objects.port_setting_set_mock.assert_called_with(
@@ -374,12 +374,12 @@ class TestSelectors:
             AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         with pytest.raises(ValueError):
             await entity.async_select_option("Pizza")
 
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.AUTO_SETTINGS_MODE, PortControlKey.VPD_SETTINGS_MODE]
+        "setting", [DeviceControlKey.AUTO_SETTINGS_MODE, DeviceControlKey.VPD_SETTINGS_MODE]
     )
     @pytest.mark.parametrize(
         "setting_mode,expected",
@@ -403,17 +403,17 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
             setting
         ] = setting_mode
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         assert entity.current_option == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.AUTO_SETTINGS_MODE, PortControlKey.VPD_SETTINGS_MODE]
+        "setting", [DeviceControlKey.AUTO_SETTINGS_MODE, DeviceControlKey.VPD_SETTINGS_MODE]
     )
     @pytest.mark.parametrize(
         "expected,setting_mode_string",
@@ -438,7 +438,7 @@ class TestSelectors:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSelectEntity)
+        assert isinstance(entity, ACInfinityDeviceSelectEntity)
         await entity.async_select_option(setting_mode_string)
 
         test_objects.port_control_set_mock.assert_called_with(

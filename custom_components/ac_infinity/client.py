@@ -1,10 +1,11 @@
 import logging
+from urllib.parse import urlencode
 
 import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.ac_infinity.const import AdvancedSettingsKey, PortControlKey
+from custom_components.ac_infinity.const import AdvancedSettingsKey
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ API_URL_LOGIN = "/api/user/appUserLogin"
 API_URL_GET_DEVICE_INFO_LIST_ALL = "/api/user/devInfoListAll"
 API_URL_GET_DEV_MODE_SETTING = "/api/dev/getdevModeSettingList"
 API_URL_ADD_DEV_MODE = "/api/dev/addDevMode"
+API_URL_MODE_AND_SETTINGS = "/api/dev/modeAndSetting"
 API_URL_GET_DEV_SETTING = "/api/dev/getDevSetting"
 API_URL_UPDATE_ADV_SETTING = "/api/dev/updateAdvSetting"
 
@@ -82,50 +84,32 @@ class ACInfinityClient:
         return json["data"]
 
     async def set_device_mode_settings(
-        self, device_id: str | int, port_id: int, key_values: list[tuple[str, int]]
+        self, key_values: dict[str, int]
     ):
         """Sets the provided settings on a port to a new values
 
         Args:
-            device_id: The parent controller id of port
-            port_id: The port on the controller you want to set setting values for
             key_values: The key value pairs of settings to set
         """
-        settings = await self.get_device_mode_settings_list(device_id, port_id)
-
-        # Remove fields that are not part of update payload, as well as the devSettings structure so we're not messing
-        # with the controller settings.
-        for key in [
-            PortControlKey.DEVICE_MAC_ADDR,
-            PortControlKey.IPC_SETTING,
-            PortControlKey.DEV_SETTING,
-        ]:
-            if key in settings:
-                del settings[key]
-
-        # Add defaulted fields that exist in the update call on the phone app, but may not exist in the fetch call
-        for key in [
-            PortControlKey.VPD_STATUS,
-            PortControlKey.VPD_NUMS,
-        ]:
-            if key not in settings:
-                settings[key] = 0
-
-        # Convert ids that are strings on the fetch call to int values for the update call
-        settings[PortControlKey.DEV_ID] = int(settings[PortControlKey.DEV_ID])
-        settings[PortControlKey.MODE_SET_ID] = int(settings[PortControlKey.MODE_SET_ID])
-
-        # Set values changed by the user
-        for key, value in key_values:
-            settings[key] = int(value)
-
-        # Set any values that are None to 0 as that's what the update endpoint expects.
-        for key in settings:
-            if settings[key] is None:
-                settings[key] = 0
+        if not self.is_logged_in():
+            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
 
         headers = self.__create_headers(use_auth_token=True)
-        _ = await self.__post(API_URL_ADD_DEV_MODE, settings, headers)
+        _ = await self.__post(f"{API_URL_ADD_DEV_MODE}?{urlencode(key_values)}", None, headers)
+
+    async def set_ai_device_mode_settings(
+        self, key_values: dict[str, int]
+    ):
+        """Sets the provided settings on a port to a new values
+
+        Args:
+            key_values: The key value pairs of settings to set
+        """
+        if not self.is_logged_in():
+            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+
+        headers = self.__create_headers(use_auth_token=True)
+        _ = await self.__put(f"{API_URL_MODE_AND_SETTINGS}?{urlencode(key_values)}", headers)
 
     async def get_device_settings(self, device_id: str | int, port: int):
         """Gets the current values of controller specific settings;
@@ -234,6 +218,26 @@ class ACInfinityClient:
         session = await self.__get_session()
         async with async_timeout.timeout(10), session.post(
             f"{self._host}{path}", data=post_data, headers=headers
+        ) as response:
+            if response.status != 200:
+                raise ACInfinityClientCannotConnect
+
+            json = await response.json()
+            if path == API_URL_UPDATE_ADV_SETTING:
+                _LOGGER.info(json)
+            if json["code"] != 200:
+                if path == API_URL_LOGIN:
+                    raise ACInfinityClientInvalidAuth
+                else:
+                    raise ACInfinityClientRequestFailed(json)
+
+            return json
+
+    async def __put(self, path, headers):
+        """generically make a put request to the AC Infinity API"""
+        session = await self.__get_session()
+        async with async_timeout.timeout(10), session.put(
+            f"{self._host}{path}", headers=headers
         ) as response:
             if response.status != 200:
                 raise ACInfinityClientCannotConnect

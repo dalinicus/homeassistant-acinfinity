@@ -375,12 +375,12 @@ def __set_value_fn_temp_auto_low(
     return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
-        [
+        {
             # value is received from HA as C
-            (PortControlKey.AUTO_TEMP_LOW_TRIGGER, int(value or 0)),
+            PortControlKey.AUTO_TEMP_LOW_TRIGGER: int(value or 0),
             # degrees F must be calculated and set in addition to C
-            (PortControlKey.AUTO_TEMP_LOW_TRIGGER_F, int(round((value * 1.8) + 32, 0))),
-        ],
+            PortControlKey.AUTO_TEMP_LOW_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
+        },
     )
 
 
@@ -390,15 +390,12 @@ def __set_value_fn_temp_auto_high(
     return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
-        [
+        {
             # value is received from HA as C
-            (PortControlKey.AUTO_TEMP_HIGH_TRIGGER, int(value or 0)),
+            PortControlKey.AUTO_TEMP_HIGH_TRIGGER: int(value or 0),
             # degrees F must be calculated and set in addition to C
-            (
-                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
-                int(round((value * 1.8) + 32, 0)),
-            ),
-        ],
+            PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
+        },
     )
 
 
@@ -408,12 +405,12 @@ def __set_value_fn_target_temp(
     return entity.ac_infinity.update_port_controls(
         port.controller.device_id,
         port.port_index,
-        [
+        {
             # value is received from HA as C
-            (PortControlKey.AUTO_TARGET_TEMP, int(value or 0)),
+            PortControlKey.AUTO_TARGET_TEMP: int(value or 0),
             # degrees F must be calculated and set in addition to C
-            (PortControlKey.AUTO_TARGET_TEMP_F, int(round((value * 1.8) + 32, 0))),
-        ],
+            PortControlKey.AUTO_TARGET_TEMP_F: int(round((value * 1.8) + 32, 0)),
+        },
     )
 
 

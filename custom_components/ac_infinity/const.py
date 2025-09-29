@@ -47,20 +47,23 @@ class AtType:
     SCHEDULE = 7
     VPD = 8
 
-    __modeAndSettingIdStr = {
-        OFF: "[16,17]",
-        ON: "[16,18]",
-        AUTO: "[112,16,19,32,98,99]",
-        TIMER_TO_ON: "[16,20,21]",
-        TIMER_TO_OFF: "[16,20,21]",
-        CYCLE: "[16,22,23,40]",
-        SCHEDULE: "[16,22,23,40]",
-        VPD: "[16,81,32,98,99]",
-    }
-
     @staticmethod
     def get_mode_and_setting_id_str(at_type: int) -> str:
-        return AtType.__modeAndSettingIdStr[at_type]
+        match at_type:
+            case AtType.OFF:
+                return "[16,17]"
+            case AtType.ON:
+                return "[16,18]"
+            case AtType.AUTO:
+                return "[112,16,19,32,98,99]"
+            case AtType.TIMER_TO_ON | AtType.TIMER_TO_OFF:
+                return "[16,20,21]"
+            case AtType.CYCLE | AtType.SCHEDULE:
+                return "[16,22,23,40]"
+            case AtType.VPD:
+                return "[16,81,32,98,99]"
+            case _:
+                raise ValueError(f"Unable to find setting id string - Unknown atType {at_type}")
 
 
 # noinspection SpellCheckingInspection
@@ -208,6 +211,7 @@ class PortControlKey:
     # /api/dev/getdevModeSettingsList
     # /api/dev/addDevMode
     DEV_ID = "devId"
+    EXTERNAL_PORT = "externalPort"
     MODE_SET_ID = "modeSetid"
     SURPLUS = "surplus"
     ON_SPEED = "onSpead"

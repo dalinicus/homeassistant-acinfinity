@@ -832,7 +832,11 @@ class ACInfinityService:
                         user_input_or_existing(DeviceControlKey.SCHEDULED_START_TIME)
                         user_input_or_existing(DeviceControlKey.SCHEDULED_END_TIME)
                     case AtType.VPD:
-                        raise NotImplementedError()
+                        user_input_or_existing(DeviceControlKey.VPD_HIGH_ENABLED)
+                        user_input_or_existing(DeviceControlKey.VPD_HIGH_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.VPD_LOW_ENABLED)
+                        user_input_or_existing(DeviceControlKey.VPD_LOW_TRIGGER)
+                        user_input_or_existing(DeviceControlKey.VPD_TARGET_ENABLED)
                     case _:
                         raise ValueError(f"Unable to update device controls: Unknown atType {at_type}")
 

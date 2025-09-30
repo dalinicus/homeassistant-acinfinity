@@ -399,21 +399,6 @@ def __set_value_fn_temp_auto_high(
     )
 
 
-def __set_value_fn_target_temp(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
-):
-    return entity.ac_infinity.update_device_controls(
-        device.controller.controller_id,
-        device.device_port,
-        {
-            # value is received from HA as C
-            DeviceControlKey.AUTO_TARGET_TEMP: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.AUTO_TARGET_TEMP_F: int(round((value * 1.8) + 32, 0)),
-        },
-    )
-
-
 def __set_value_fn_dynamic_transition_temp(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
@@ -682,21 +667,6 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         set_value_fn=__set_value_fn_vpd_control,
     ),
     ACInfinityDeviceNumberEntityDescription(
-        key=DeviceControlKey.VPD_TARGET,
-        device_class=NumberDeviceClass.PRESSURE,
-        mode=NumberMode.BOX,
-        native_min_value=0,
-        native_max_value=9.9,
-        native_step=0.1,
-        icon="mdi:water-thermometer-outline",
-        translation_key="target_vpd",
-        native_unit_of_measurement=None,
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_vpd_control,
-        set_value_fn=__set_value_fn_vpd_control,
-    ),
-    ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
         device_class=NumberDeviceClass.HUMIDITY,
         mode=NumberMode.AUTO,
@@ -720,21 +690,6 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_step=1,
         icon="mdi:water-percent",
         translation_key="auto_mode_humidity_high_trigger",
-        native_unit_of_measurement=None,
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_device_control_default,
-    ),
-    ACInfinityDeviceNumberEntityDescription(
-        key=DeviceControlKey.AUTO_TARGET_HUMIDITY,
-        device_class=NumberDeviceClass.HUMIDITY,
-        mode=NumberMode.AUTO,
-        native_min_value=0,
-        native_max_value=100,
-        native_step=1,
-        icon="mdi:water-percent",
-        translation_key="target_humidity",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -770,21 +725,6 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_temp_auto_high,
-    ),
-    ACInfinityDeviceNumberEntityDescription(
-        key=DeviceControlKey.AUTO_TARGET_TEMP,
-        device_class=NumberDeviceClass.TEMPERATURE,
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        mode=NumberMode.AUTO,
-        native_min_value=0,
-        native_max_value=90,
-        native_step=1,
-        icon=None,
-        translation_key="target_temp",
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_target_temp,
     ),
     ACInfinityDeviceNumberEntityDescription(
         # F - native value 0-20

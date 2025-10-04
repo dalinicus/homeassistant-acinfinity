@@ -33,6 +33,31 @@ ACINFINITY_API_ERROR = "Retry limit exceeded contacting the AC Infinity API.  Th
 
 _LOGGER = logging.getLogger(__name__)
 
+MODE_CONTROL_KEYS = [
+    DeviceControlKey.OFF_SPEED,
+    DeviceControlKey.ON_SPEED,
+    DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED,
+    DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+    DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
+    DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+    DeviceControlKey.AUTO_TEMP_LOW_ENABLED,
+    DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
+    DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
+    DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
+    DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
+    DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
+    DeviceControlKey.TIMER_DURATION_TO_ON,
+    DeviceControlKey.TIMER_DURATION_TO_OFF,
+    DeviceControlKey.SURPLUS,
+    DeviceControlKey.CYCLE_DURATION_ON,
+    DeviceControlKey.CYCLE_DURATION_OFF,
+    DeviceControlKey.SCHEDULED_START_TIME,
+    DeviceControlKey.SCHEDULED_END_TIME,
+    DeviceControlKey.VPD_HIGH_ENABLED,
+    DeviceControlKey.VPD_HIGH_TRIGGER,
+    DeviceControlKey.VPD_LOW_ENABLED,
+    DeviceControlKey.VPD_LOW_TRIGGER,
+]
 
 class ACInfinityController:
     """
@@ -801,44 +826,8 @@ class ACInfinityService:
                         case _:
                             raise ValueError(f"Unable to find setting id string - Unknown atType {at_type}")
 
-                def user_input_or_existing(key: str):
+                for key in MODE_CONTROL_KEYS:
                     updated[key] = key_values.get(key, existing[key])
-
-                match at_type:
-                    case AtType.OFF:
-                        user_input_or_existing(DeviceControlKey.OFF_SPEED)
-                    case AtType.ON:
-                        user_input_or_existing(DeviceControlKey.ON_SPEED)
-                    case AtType.AUTO:
-                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED)
-                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED)
-                        user_input_or_existing(DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_ENABLED)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_ENABLED)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F)
-                    case AtType.TIMER_TO_ON | AtType.TIMER_TO_OFF:
-                        user_input_or_existing(DeviceControlKey.TIMER_DURATION_TO_ON)
-                        user_input_or_existing(DeviceControlKey.TIMER_DURATION_TO_OFF)
-                        user_input_or_existing(DeviceControlKey.SURPLUS)
-                    case AtType.CYCLE:
-                        user_input_or_existing(DeviceControlKey.CYCLE_DURATION_ON)
-                        user_input_or_existing(DeviceControlKey.CYCLE_DURATION_OFF)
-                        user_input_or_existing(DeviceControlKey.SURPLUS)
-                    case AtType.SCHEDULE:
-                        user_input_or_existing(DeviceControlKey.SCHEDULED_START_TIME)
-                        user_input_or_existing(DeviceControlKey.SCHEDULED_END_TIME)
-                    case AtType.VPD:
-                        user_input_or_existing(DeviceControlKey.VPD_HIGH_ENABLED)
-                        user_input_or_existing(DeviceControlKey.VPD_HIGH_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.VPD_LOW_ENABLED)
-                        user_input_or_existing(DeviceControlKey.VPD_LOW_TRIGGER)
-                        user_input_or_existing(DeviceControlKey.VPD_TARGET_ENABLED)
-                    case _:
-                        raise ValueError(f"Unable to update device controls: Unknown atType {at_type}")
 
                 await self._client.update_ai_device_control(updated) if is_ai_controller else self._client.update_device_control(updated)
                 return

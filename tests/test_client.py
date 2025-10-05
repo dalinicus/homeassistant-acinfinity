@@ -193,7 +193,7 @@ class TestACInfinityClient:
         """When not logged in, get user devices should throw a connect error"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
-            await client.get_controller_devices(DEVICE_ID, 1)
+            await client.get_device_mode_settings(DEVICE_ID, 1)
 
     @staticmethod
     async def __make_generic_set_port_settings_call_and_get_sent_payload(

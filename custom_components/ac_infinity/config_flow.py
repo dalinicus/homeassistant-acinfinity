@@ -146,8 +146,6 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         self.device_index: int = 0
         self.entities: dict[str, Any] = {}
 
-
-
     @staticmethod
     @callback
     def async_get_options_flow(
@@ -414,5 +412,3 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             and self.config_entry.data[conf_key] is not None
             else default
         )
-
-

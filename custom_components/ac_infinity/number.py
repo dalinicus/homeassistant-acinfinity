@@ -15,7 +15,6 @@ from homeassistant.core import HomeAssistant
 from custom_components.ac_infinity.const import (
     DOMAIN,
     AdvancedSettingsKey,
-    ControllerType,
     DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
@@ -295,15 +294,15 @@ def __set_value_fn_cal_temp(
     return entity.ac_infinity.update_controller_settings(
         controller.controller_id,
         (
-            [
-                (AdvancedSettingsKey.CALIBRATE_TEMP, int(value or 0)),
-                (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
-            ]
+            {
+                AdvancedSettingsKey.CALIBRATE_TEMP: int(value or 0),
+                AdvancedSettingsKey.CALIBRATE_TEMP_F: 0,
+            }
             if temp_unit > 0
-            else [
-                (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
-                (AdvancedSettingsKey.CALIBRATE_TEMP_F, int(value or 0)),
-            ]
+            else {
+                AdvancedSettingsKey.CALIBRATE_TEMP: 0,
+                AdvancedSettingsKey.CALIBRATE_TEMP_F: int(value or 0),
+            }
         ),
     )
 
@@ -415,18 +414,16 @@ def __set_value_fn_dynamic_transition_temp(
         device.controller.controller_id,
         device.device_port,
         (
-            [
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP, int(value or 0)),
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value or 0) * 2),
-            ]
+            {
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP: int(value or 0),
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F: int(value or 0) * 2,
+            }
             if temp_unit > 0
-            else [
-                (
-                    AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP,
-                    math.floor(int(value or 0) / 2),
-                ),
-                (AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F, int(value or 0)),
-            ]
+            else
+            {
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP: math.floor(int(value or 0) / 2),
+                AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP_F: int(value or 0),
+            }
         ),
     )
 
@@ -447,18 +444,15 @@ def __set_value_fn_dynamic_buffer_temp(
         device.controller.controller_id,
         device.device_port,
         (
-            [
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP, int(value or 0)),
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value or 0) * 2),
-            ]
+            {
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP: int(value or 0),
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F: int(value or 0) * 2,
+            }
             if temp_unit > 0
-            else [
-                (
-                    AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP,
-                    math.floor(int(value or 0) / 2),
-                ),
-                (AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F, int(value or 0)),
-            ]
+            else {
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP: math.floor(int(value or 0) / 2),
+                AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP_F: int(value or 0),
+            }
         ),
     )
 

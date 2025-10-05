@@ -17,7 +17,6 @@ from custom_components.ac_infinity.const import (
     SCHEDULE_EOD_VALUE,
     SCHEDULE_MIDNIGHT_VALUE,
     AdvancedSettingsKey,
-    ControllerType,
     DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
@@ -139,18 +138,6 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         set_value_fn=__set_value_fn_device_control_default,
     ),
     ACInfinityDeviceSwitchEntityDescription(
-        key=DeviceControlKey.VPD_TARGET_ENABLED,
-        device_class=SwitchDeviceClass.SWITCH,
-        on_value=1,
-        off_value=0,
-        icon=None,  # default
-        translation_key="target_vpd_enabled",
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_device_control_default,
-    ),
-    ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
@@ -193,30 +180,6 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_device_control_default,
-    ),
-    ACInfinityDeviceSwitchEntityDescription(
-        key=DeviceControlKey.AUTO_TARGET_TEMP_ENABLED,
-        device_class=SwitchDeviceClass.SWITCH,
-        on_value=1,
-        off_value=0,
-        icon=None,  # default
-        translation_key="target_temp_enabled",
-        enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_device_control_default,
-    ),
-    ACInfinityDeviceSwitchEntityDescription(
-        key=DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
-        device_class=SwitchDeviceClass.SWITCH,
-        on_value=1,
-        off_value=0,
-        icon=None,  # default
-        translation_key="target_humidity_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,

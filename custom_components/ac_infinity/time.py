@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant
 from custom_components.ac_infinity.const import (
     DOMAIN,
     SCHEDULE_DISABLED_VALUE,
-    ControllerType,
     DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (

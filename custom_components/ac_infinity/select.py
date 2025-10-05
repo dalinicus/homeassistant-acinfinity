@@ -7,10 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN,
-    AdvancedSettingsKey,
-    ControllerType,
-    DeviceControlKey,
+    ControllerPropertyKey, ControllerType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -65,18 +62,31 @@ DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
 
 OUTSIDE_CLIMATE_OPTIONS = ["Neutral", "Lower", "Higher"]
 
-DEVICE_LOAD_TYPE_OPTIONS = {
+STANDARD_DEVICE_LOAD_TYPE_OPTIONS = {
     1: "Grow Light",
     2: "Humidifier",
+    3: "Dehumidifier",
     4: "Heater",
     5: "AC",
     6: "Fan",
+    8: "Water Pump"
 }
 
-SETTINGS_MODE_OPTIONS = [
-    "Auto",
-    "Target",
-]
+AI_DEVICE_LOAD_TYPE_OPTIONS = {
+    128: "Outlet",
+    129: "Grow Light",
+    130: "Humidifier",
+    131: "Dehumidifier",
+    132: "Heater",
+    133: "AC",
+    134: "Circulation Fan",
+    135: "Ventilation Fan",
+    136: "Peristaltic Pump",
+    137: "Water Pump",
+    138: "CO2 Regulator"
+}
+
+DEVICE_LOAD_TYPE_OPTIONS = STANDARD_DEVICE_LOAD_TYPE_OPTIONS | AI_DEVICE_LOAD_TYPE_OPTIONS
 
 
 def __suitable_fn_controller_setting_default(
@@ -99,20 +109,26 @@ def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInf
     )
 
 
+def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
+    controller_type = entity.ac_infinity.get_controller_property(device.controller.controller_id, ControllerPropertyKey.DEVICE_TYPE)
+    return not ControllerType.is_ai_controller(controller_type) and entity.ac_infinity.get_device_setting_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
+    )
+
+
+def __suitable_fn_device_setting_ai_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
+    controller_type = entity.ac_infinity.get_controller_property(device.controller.controller_id, ControllerPropertyKey.DEVICE_TYPE)
+    return ControllerType.is_ai_controller(controller_type) and entity.ac_infinity.get_device_setting_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
+    )
+
+
 def __get_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
     return OUTSIDE_CLIMATE_OPTIONS[
         entity.ac_infinity.get_controller_setting(
             controller.controller_id, entity.data_key, 0
-        )
-    ]
-
-
-def __get_value_fn_setting_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return SETTINGS_MODE_OPTIONS[
-        entity.ac_infinity.get_device_control(
-            device.controller.controller_id, device.device_port, entity.data_key, 0
         )
     ]
 
@@ -158,17 +174,6 @@ def __set_value_fn_outside_climate(
         controller.controller_id,
         entity.data_key,
         OUTSIDE_CLIMATE_OPTIONS.index(value),
-    )
-
-
-def __set_value_fn_setting_mode(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
-):
-    return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        SETTINGS_MODE_OPTIONS.index(value),
     )
 
 
@@ -244,9 +249,18 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         translation_key="device_load_type",
-        options=list(DEVICE_LOAD_TYPE_OPTIONS.values()),
+        options=list(STANDARD_DEVICE_LOAD_TYPE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_device_setting_default,
+        suitable_fn=__suitable_fn_device_setting_basic_controller,
+        get_value_fn=__get_value_fn_device_load_type,
+        set_value_fn=__set_value_fn_device_load_type,
+    ),
+    ACInfinityDeviceSelectEntityDescription(
+        key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        translation_key="device_load_type",
+        options=list(AI_DEVICE_LOAD_TYPE_OPTIONS.values()),
+        enabled_fn=enabled_fn_setting,
+        suitable_fn=__suitable_fn_device_setting_ai_controller,
         get_value_fn=__get_value_fn_device_load_type,
         set_value_fn=__set_value_fn_device_load_type,
     ),

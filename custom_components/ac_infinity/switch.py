@@ -308,9 +308,6 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
-        if controller.controller_type == ControllerType.UIS_89_AI_PLUS:
-            # controls and settings not yet supported for the AI controller
-            continue
 
         for device in controller.devices:
             for description in DEVICE_DESCRIPTIONS:

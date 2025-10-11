@@ -100,7 +100,7 @@ def __set_value_fn_device_control_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
     return entity.ac_infinity.update_device_control(
-        device.controller.controller_id, device.device_port, entity.data_key, value
+        device, entity.data_key, value
     )
 
 
@@ -108,7 +108,7 @@ def __set_value_fn_device_setting_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
     return entity.ac_infinity.update_device_setting(
-        device.controller.controller_id, device.device_port, entity.data_key, value
+        device, entity.data_key, value
     )
 
 

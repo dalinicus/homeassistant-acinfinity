@@ -78,19 +78,19 @@ def __suitable_fn_controller_setting_temp_impl(
 def __suitable_fn_controller_setting_temp_f(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return __suitable_fn_controller_setting_temp_impl(entity, controller, 0)
+    return not controller.is_ai_controller and __suitable_fn_controller_setting_temp_impl(entity, controller, 0)
 
 
 def __suitable_fn_controller_setting_temp_c(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return __suitable_fn_controller_setting_temp_impl(entity, controller, 1)
+    return not controller.is_ai_controller and __suitable_fn_controller_setting_temp_impl(entity, controller, 1)
 
 
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_setting_exists(
+    return not controller.is_ai_controller and entity.ac_infinity.get_controller_setting_exists(
         controller.controller_id, entity.data_key
     )
 
@@ -102,7 +102,7 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
 
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_setting_exists(
+    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -122,11 +122,11 @@ def __suitable_fn_device_setting_temp_impl(
 
 
 def __suitable_fn_device_setting_temp_f(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return __suitable_fn_device_setting_temp_impl(entity, device, 0)
+    return not device.controller.is_ai_controller and __suitable_fn_device_setting_temp_impl(entity, device, 0)
 
 
 def __suitable_fn_device_setting_temp_c(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return __suitable_fn_device_setting_temp_impl(entity, device, 1)
+    return not device.controller.is_ai_controller and __suitable_fn_device_setting_temp_impl(entity, device, 1)
 
 
 def __get_value_fn_controller_setting_default(
@@ -250,30 +250,20 @@ def __get_value_fn_dynamic_buffer_temp(entity: ACInfinityEntity, device: ACInfin
 def __set_value_fn_device_setting_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
-    return entity.ac_infinity.update_device_setting(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        int(value or 0),
-    )
+    return entity.ac_infinity.update_device_setting(device, entity.data_key, int(value or 0))
 
 
 def __set_value_fn_device_control_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
-    return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        int(value or 0),
-    )
+    return entity.ac_infinity.update_device_control(device, entity.data_key, int(value or 0))
 
 
 def __set_value_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController, value: float
 ):
     return entity.ac_infinity.update_controller_setting(
-        controller.controller_id, entity.data_key, int(value or 0)
+        controller, entity.data_key, int(value or 0)
     )
 
 
@@ -292,7 +282,7 @@ def __set_value_fn_cal_temp(
         value = -10
 
     return entity.ac_infinity.update_controller_settings(
-        controller.controller_id,
+        controller,
         (
             {
                 AdvancedSettingsKey.CALIBRATE_TEMP: int(value or 0),
@@ -322,7 +312,7 @@ def __set_value_fn_vpd_leaf_temp_offset(
         value = -10
 
     return entity.ac_infinity.update_controller_setting(
-        controller.controller_id,
+        controller,
         (
             AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
             if temp_unit > 0
@@ -336,44 +326,28 @@ def __set_value_fn_timer_duration(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
     # value configured as minutes but stored as seconds
-    return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        int((value or 0) * 60),
-    )
+    return entity.ac_infinity.update_device_control(device, entity.data_key, int((value or 0) * 60))
 
 
 def __set_value_fn_vpd_control(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
-    return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        int((value or 0) * 10),
-    )
+    return entity.ac_infinity.update_device_control(device, entity.data_key, int((value or 0) * 10))
 
 
 def __set_value_fn_vpd_setting(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
     # value configured as percent (10.2%) but stored as tenths of a percent (102)
-    return entity.ac_infinity.update_device_setting(
-        device.controller.controller_id,
-        device.device_port,
-        entity.data_key,
-        int((value or 0) * 10),
-    )
+    return entity.ac_infinity.update_device_setting(device, entity.data_key, int((value or 0) * 10))
 
 
 def __set_value_fn_temp_auto_low(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
     return entity.ac_infinity.update_device_controls(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         {
             # value is received from HA as C
             DeviceControlKey.AUTO_TEMP_LOW_TRIGGER: int(value or 0),
@@ -387,8 +361,7 @@ def __set_value_fn_temp_auto_high(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
     return entity.ac_infinity.update_device_controls(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         {
             # value is received from HA as C
             DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: int(value or 0),
@@ -411,8 +384,7 @@ def __set_value_fn_dynamic_transition_temp(
         value = 10
 
     return entity.ac_infinity.update_device_settings(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         (
             {
                 AdvancedSettingsKey.DYNAMIC_TRANSITION_TEMP: int(value or 0),
@@ -441,8 +413,7 @@ def __set_value_fn_dynamic_buffer_temp(
         value = 10
 
     return entity.ac_infinity.update_device_settings(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         (
             {
                 AdvancedSettingsKey.DYNAMIC_BUFFER_TEMP: int(value or 0),

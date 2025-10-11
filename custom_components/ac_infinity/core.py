@@ -19,6 +19,7 @@ from homeassistant.helpers.update_coordinator import (
 from custom_components.ac_infinity.client import ACInfinityClient, ACInfinityClientInvalidAuth, \
     ACInfinityClientCannotConnect, ACInfinityClientRequestFailed
 from .const import (
+    AI_CONTROLLER_TYPES,
     DOMAIN,
     MANUFACTURER,
     ControllerPropertyKey,
@@ -91,6 +92,11 @@ class ACInfinityController:
     def controller_type(self) -> int:
         """The integer id of the device type of this controller (Pro, Pro+, AI+, etc...)"""
         return self._controller_type
+
+    @property
+    def is_ai_controller(self) -> bool:
+        """Returns true if this controller is an AI controller"""
+        return self._controller_type in AI_CONTROLLER_TYPES
 
     @property
     def mac_addr(self) -> str:
@@ -644,126 +650,90 @@ class ACInfinityService:
 
     async def update_controller_setting(
         self,
-        controller_id: str | int,
+        controller: ACInfinityController,
         setting_key: str,
         new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
         Args:
-            controller_id: the device id of the controller
+            controller: the controller
             setting_key: the setting to update the value of
             new_value: the new value of the setting to set
         """
-        await self.update_controller_settings(controller_id, {setting_key: new_value})
+        await self.update_controller_settings(controller, {setting_key: new_value})
 
     async def update_controller_settings(
-        self, controller_id: str | int, key_values: dict[str, int]
+        self, controller: ACInfinityController, key_values: dict[str, int]
     ):
         """Update the values of a set of settings via the AC Infinity API
 
         Args:
-            controller_id: The device id of the controller to update
+            controller: controller to update
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        device_name = self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_NAME)
-        await self.__update_advanced_settings(controller_id, 0, device_name, key_values)
+        if controller.is_ai_controller:
+            raise NotImplementedError("AI controllers do not support updating controller settings: %s", key_values)
+        else:
+            await self.__update_advanced_settings(controller.controller_id, 0, controller.controller_name, key_values)
 
     async def update_device_setting(
         self,
-        controller_id: str | int,
-        device_port: int,
+        device: ACInfinityDevice,
         setting_key: str,
         new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
         Args:
-            controller_id: the device id of the controller
-            device_port: the port of the device
+            device: the device
             setting_key: the setting to update the value of
             new_value: the new value of the setting to set
         """
-        await self.update_device_settings(controller_id, device_port, {setting_key: new_value})
+        await self.update_device_settings(device, {setting_key: new_value})
 
     async def update_device_settings(
         self,
-        controller_id: str | int,
-        device_port: int,
+        device: ACInfinityDevice,
         key_values: dict[str, int],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
         Args:
-            controller_id: The device id of the controller to update
-            device_port: the port of the device
+            device: the device
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        device_name = self.get_device_property(controller_id, device_port, DevicePropertyKey.NAME)
-        await self.__update_advanced_settings(controller_id, device_port, device_name, key_values)
-
-    async def __update_advanced_settings(
-        self,
-        controller_id: str | int,
-        device_port: int,
-        device_name: str,
-        key_values: dict[str, int],
-    ):
-        """Update the values of a set of settings via the AC Infinity API
-
-        Args:
-            controller_id: The device id of the controller to update
-            device_port: 0 for controller settings, or the port number for port settings
-            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
-        """
-        try_count = 0
-        while True:
-            try:
-                device_type = self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE)
-                if ControllerType.is_ai_controller(device_type):
-                    await self._client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
-                else:
-                    await self._client.update_device_setting(controller_id, device_port, device_name, key_values)
-
-                return
-            except (
-                ACInfinityClientCannotConnect,
-                ACInfinityClientRequestFailed,
-                aiohttp.ClientError,
-                asyncio.TimeoutError
-            ) as ex:
-                if try_count < 4:
-                    try_count += 1
-                    _LOGGER.warning("Unable to update advanced controller settings. Retry attempt %s/4", str(try_count))
-                    await asyncio.sleep(1)
-                else:
-                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
-                    raise
-            except ACInfinityClientInvalidAuth as ex:
-                _LOGGER.error("Unable to update advanced controller settings: Authentication failed", exc_info=ex)
-                raise
-            except Exception as ex:
-                _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
-                raise
+        if device.controller.is_ai_controller:
+            await self.__update_ai_control_and_settings(device.controller.controller_id, device.device_port, key_values)
+        else:
+            await self.__update_advanced_settings(device.controller.controller_id, device.device_port, device.device_name, key_values)
 
     async def update_device_control(
         self,
-        controller_id: str | int,
-        device_port: int,
+        device: ACInfinityDevice,
         setting_key: str,
         new_value: int,
     ):
         """Update the value of a setting via the AC Infinity API
 
         Args:
-            controller_id: the device id of the controller
-            device_port: the index of the port on the controller
+            device: the index of the port on the controller
             setting_key: the setting to update the value of
             new_value: the new value of the setting to set
         """
-        await self.update_device_controls(controller_id, device_port, {setting_key: new_value})
+        await self.update_device_controls(device, {setting_key: new_value})
 
     async def update_device_controls(
+        self,
+        device: ACInfinityDevice,
+        key_values: dict[str, int],
+    ):
+        if device.controller.is_ai_controller:
+            await self.__update_ai_control_and_settings(device.controller.controller_id, device.device_port, key_values)
+        else:
+            await self.__update_device_controls(device.controller.controller_id, device.device_port, key_values)
+
+    async def __update_device_controls(
         self,
         controller_id: str | int,
         device_port: int,
@@ -779,11 +749,7 @@ class ACInfinityService:
         try_count = 0
         while True:
             try:
-                device_type = self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE)
-                if ControllerType.is_ai_controller(device_type):
-                    await self._client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
-                else:
-                    await self._client.update_device_control(controller_id, device_port, key_values)
+                await self._client.update_device_control(controller_id, device_port, key_values)
                 return
 
             except (
@@ -805,6 +771,86 @@ class ACInfinityService:
                 raise
             except Exception as ex:
                 _LOGGER.error("Unable to update device controls: Unexpected error", exc_info=ex)
+                raise
+
+    async def __update_advanced_settings(
+        self,
+        controller_id: str | int,
+        device_port: int,
+        device_name: str,
+        key_values: dict[str, int],
+    ):
+        """Update the values of a set of settings via the AC Infinity API
+
+        Args:
+            controller_id: The device id of the controller to update
+            device_port: 0 for controller settings, or the port number for port settings
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        try_count = 0
+        while True:
+            try:
+                await self._client.update_device_setting(controller_id, device_port, device_name, key_values)
+                return
+
+            except (
+                ACInfinityClientCannotConnect,
+                ACInfinityClientRequestFailed,
+                aiohttp.ClientError,
+                asyncio.TimeoutError
+            ) as ex:
+                if try_count < 4:
+                    try_count += 1
+                    _LOGGER.warning("Unable to update advanced controller settings. Retry attempt %s/4", str(try_count))
+                    await asyncio.sleep(1)
+                else:
+                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                    raise
+            except ACInfinityClientInvalidAuth as ex:
+                _LOGGER.error("Unable to update advanced controller settings: Authentication failed", exc_info=ex)
+                raise
+            except Exception as ex:
+                _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
+                raise
+
+    async def __update_ai_control_and_settings(
+        self,
+        controller_id: str | int,
+        device_port: int,
+        key_values: dict[str, int],
+    ):
+        """Update the values of a set of settings via the AC Infinity API
+
+        Args:
+            controller_id: the device id of the controller
+            device_port: the index of the port on the controller
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        try_count = 0
+        while True:
+            try:
+                await self._client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
+                return
+
+            except (
+                ACInfinityClientCannotConnect,
+                ACInfinityClientRequestFailed,
+                aiohttp.ClientError,
+                asyncio.TimeoutError
+            ) as ex:
+
+                if try_count < 0:
+                    try_count += 1
+                    _LOGGER.warning("Unable to update ai device controls and settings. Retry attempt %s/4", str(try_count))
+                    await asyncio.sleep(1)
+                else:
+                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                    raise
+            except ACInfinityClientInvalidAuth as ex:
+                _LOGGER.error("Unable to update ai device controls and settings: Authentication failed", exc_info=ex)
+                raise
+            except Exception as ex:
+                _LOGGER.error("Unable to update ai device controls and settings: Unexpected error", exc_info=ex)
                 raise
 
     async def close(self) -> None:
@@ -1103,3 +1149,4 @@ def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: st
 def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
     setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
     return setting == EntityConfigValue.All or setting == EntityConfigValue.SensorsAndSettings
+

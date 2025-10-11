@@ -81,8 +81,7 @@ def __get_value_fn_time(entity: ACInfinityEntity, device: ACInfinityDevice):
 
 def __set_value_fn_time(entity: ACInfinityEntity, device: ACInfinityDevice, value: time):
     return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         entity.data_key,
         __get_total_minutes_from_time(value),
     )

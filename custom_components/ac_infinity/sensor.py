@@ -88,7 +88,11 @@ class ACInfinityDeviceSensorEntityDescription(
 def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_property_exists(
+    # The AI controller have two temperature measurements; controller temperature and probe temperature.
+    # These values are available in the sensor array.  The external values are duplicated on the base fields used by
+    # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
+    # by skipping the controller descriptions for the base values.
+    return not controller.is_ai_controller and entity.ac_infinity.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
@@ -521,17 +525,11 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
-
-        # The AI controller have two temperature measurements; controller temperature and probe temperature.
-        # These values are available in the sensor array.  The external values are duplicated on the base fields used by
-        # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
-        # by skipping the controller descriptions for the base values.
-        if not ControllerType.is_ai_controller(controller.controller_type):
-            for controller_description in CONTROLLER_DESCRIPTIONS:
-                controller_entity = ACInfinityControllerSensorEntity(
-                    coordinator, controller_description, controller
-                )
-                entities.append_if_suitable(controller_entity)
+        for controller_description in CONTROLLER_DESCRIPTIONS:
+            controller_entity = ACInfinityControllerSensorEntity(
+                coordinator, controller_description, controller
+            )
+            entities.append_if_suitable(controller_entity)
 
         for sensor in controller.sensors:
             if sensor.sensor_type in SENSOR_DESCRIPTIONS:

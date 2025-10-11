@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    ControllerPropertyKey, ControllerType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
+    DOMAIN, AdvancedSettingsKey, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -92,7 +92,7 @@ DEVICE_LOAD_TYPE_OPTIONS = STANDARD_DEVICE_LOAD_TYPE_OPTIONS | AI_DEVICE_LOAD_TY
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_setting_exists(
+    return not controller.is_ai_controller and entity.ac_infinity.get_controller_setting_exists(
         controller.controller_id, entity.data_key
     )
 
@@ -110,15 +110,13 @@ def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInf
 
 
 def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
-    controller_type = entity.ac_infinity.get_controller_property(device.controller.controller_id, ControllerPropertyKey.DEVICE_TYPE)
-    return not ControllerType.is_ai_controller(controller_type) and entity.ac_infinity.get_device_setting_exists(
+    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
 def __suitable_fn_device_setting_ai_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
-    controller_type = entity.ac_infinity.get_controller_property(device.controller.controller_id, ControllerPropertyKey.DEVICE_TYPE)
-    return ControllerType.is_ai_controller(controller_type) and entity.ac_infinity.get_device_setting_exists(
+    return device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -171,7 +169,7 @@ def __set_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController, value: str
 ):
     return entity.ac_infinity.update_controller_setting(
-        controller.controller_id,
+        controller,
         entity.data_key,
         OUTSIDE_CLIMATE_OPTIONS.index(value),
     )
@@ -181,8 +179,7 @@ def __set_value_fn_active_mode(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
     return entity.ac_infinity.update_device_control(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         DeviceControlKey.AT_TYPE,
         # data is 1 based.  Adjust from 0 based enum by adding 1
         MODE_OPTIONS.index(value) + 1,
@@ -193,8 +190,7 @@ def __set_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
     return entity.ac_infinity.update_device_setting(
-        device.controller.controller_id,
-        device.device_port,
+        device,
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         DYNAMIC_RESPONSE_OPTIONS.index(value),
     )
@@ -206,8 +202,7 @@ def __set_value_fn_device_load_type(
     for key, val in DEVICE_LOAD_TYPE_OPTIONS.items():
         if val == value:
             return entity.ac_infinity.update_device_setting(
-                device.controller.controller_id,
-                device.device_port,
+                device,
                 AdvancedSettingsKey.DEVICE_LOAD_TYPE,
                 key,
             )

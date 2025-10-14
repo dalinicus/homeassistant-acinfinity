@@ -12,6 +12,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
+    AtType,
     DOMAIN,
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
@@ -61,7 +62,7 @@ class ACInfinityDeviceSwitchEntityDescription(
 
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_setting_exists(
+    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -124,6 +125,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.VPD,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.VPD_LOW_ENABLED,
@@ -136,6 +138,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.VPD,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
@@ -148,6 +151,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_LOW_ENABLED,
@@ -160,6 +164,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
@@ -172,6 +177,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED,
@@ -184,6 +190,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.SCHEDULED_START_TIME,
@@ -196,6 +203,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.SCHEDULE,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.SCHEDULED_END_TIME,
@@ -208,6 +216,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_schedule_enabled,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.SCHEDULE,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
@@ -220,6 +229,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
+        at_type=None
     ),
 ]
 
@@ -234,7 +244,7 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.SWITCH
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.SWITCH
         )
         self.entity_description = description
 

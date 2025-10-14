@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN, AdvancedSettingsKey, DeviceControlKey,
+    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -47,22 +47,33 @@ class ACInfinityDeviceSelectEntityDescription(
     """Describes ACInfinity Select Port Entities."""
 
 
-MODE_OPTIONS = [
-    "Off",
-    "On",
-    "Auto",
-    "Timer to On",
-    "Timer to Off",
-    "Cycle",
-    "Schedule",
-    "VPD",
-]
+MODE_OPTIONS = {
+    AtType.OFF: "Off",
+    AtType.ON: "On",
+    AtType.AUTO: "Auto",
+    AtType.TIMER_TO_ON: "Timer to On",
+    AtType.TIMER_TO_OFF: "Timer to Off",
+    AtType.CYCLE: "Cycle",
+    AtType.SCHEDULE: "Schedule",
+    AtType.VPD: "VPD"
+}
+MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 
-DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
+DYNAMIC_RESPONSE_OPTIONS = {
+    0: "Transition",
+    1: "Buffer"
+}
+DYNAMIC_RESPONSE_OPTIONS_REVERSE = {v: k for k, v in DYNAMIC_RESPONSE_OPTIONS.items()}
 
-OUTSIDE_CLIMATE_OPTIONS = ["Neutral", "Lower", "Higher"]
+OUTSIDE_CLIMATE_OPTIONS = {
+    0: "Neutral",
+    1: "Lower",
+    2: "Higher"
+}
+OUTSIDE_CLIMATE_OPTIONS_REVERSE = {v: k for k, v in OUTSIDE_CLIMATE_OPTIONS.items()}
 
 STANDARD_DEVICE_LOAD_TYPE_OPTIONS = {
+    0: "No Device Type",
     1: "Grow Light",
     2: "Humidifier",
     3: "Dehumidifier",
@@ -71,6 +82,7 @@ STANDARD_DEVICE_LOAD_TYPE_OPTIONS = {
     6: "Fan",
     8: "Water Pump"
 }
+STANDARD_DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in STANDARD_DEVICE_LOAD_TYPE_OPTIONS.items()}
 
 AI_DEVICE_LOAD_TYPE_OPTIONS = {
     128: "Outlet",
@@ -85,8 +97,10 @@ AI_DEVICE_LOAD_TYPE_OPTIONS = {
     137: "Water Pump",
     138: "CO2 Regulator"
 }
+AI_DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in AI_DEVICE_LOAD_TYPE_OPTIONS.items()}
 
 DEVICE_LOAD_TYPE_OPTIONS = STANDARD_DEVICE_LOAD_TYPE_OPTIONS | AI_DEVICE_LOAD_TYPE_OPTIONS
+DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in DEVICE_LOAD_TYPE_OPTIONS.items()}
 
 
 def __suitable_fn_controller_setting_default(
@@ -133,11 +147,9 @@ def __get_value_fn_outside_climate(
 
 def __get_value_fn_active_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
     return MODE_OPTIONS[
-        # data is 1 based.  Adjust to 0 based enum by subtracting 1
         entity.ac_infinity.get_device_control(
             device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 1
         )
-        - 1
     ]
 
 
@@ -155,14 +167,14 @@ def __get_value_fn_dynamic_response_type(
 
 
 def __get_value_fn_device_load_type(entity: ACInfinityEntity, device: ACInfinityDevice):
-    value = entity.ac_infinity.get_device_setting(
-        device.controller.controller_id,
-        device.device_port,
-        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        1,
-    )
-
-    return DEVICE_LOAD_TYPE_OPTIONS.get(value, "Unknown Device Type")
+    return DEVICE_LOAD_TYPE_OPTIONS[
+        entity.ac_infinity.get_device_setting(
+            device.controller.controller_id,
+            device.device_port,
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+            1,
+        )
+    ]
 
 
 def __set_value_fn_outside_climate(
@@ -171,7 +183,7 @@ def __set_value_fn_outside_climate(
     return entity.ac_infinity.update_controller_setting(
         controller,
         entity.data_key,
-        OUTSIDE_CLIMATE_OPTIONS.index(value),
+        OUTSIDE_CLIMATE_OPTIONS_REVERSE[value],
     )
 
 
@@ -181,8 +193,7 @@ def __set_value_fn_active_mode(
     return entity.ac_infinity.update_device_control(
         device,
         DeviceControlKey.AT_TYPE,
-        # data is 1 based.  Adjust from 0 based enum by adding 1
-        MODE_OPTIONS.index(value) + 1,
+        MODE_OPTIONS_REVERSE[value],
     )
 
 
@@ -192,29 +203,25 @@ def __set_value_fn_dynamic_response_type(
     return entity.ac_infinity.update_device_setting(
         device,
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
-        DYNAMIC_RESPONSE_OPTIONS.index(value),
+        DYNAMIC_RESPONSE_OPTIONS_REVERSE[value],
     )
 
 
 def __set_value_fn_device_load_type(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
-    for key, val in DEVICE_LOAD_TYPE_OPTIONS.items():
-        if val == value:
-            return entity.ac_infinity.update_device_setting(
-                device,
-                AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-                key,
-            )
-
-    raise ValueError(f"Unknown Device Type: {value}")
+    return entity.ac_infinity.update_device_setting(
+        device,
+        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        DEVICE_LOAD_TYPE_OPTIONS_REVERSE[value]
+    )
 
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(
         key=AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
         translation_key="outside_climate_temperature",
-        options=OUTSIDE_CLIMATE_OPTIONS,
+        options=list(OUTSIDE_CLIMATE_OPTIONS.values()),
         suitable_fn=__suitable_fn_controller_setting_default,
         enabled_fn=enabled_fn_setting,
         get_value_fn=__get_value_fn_outside_climate,
@@ -223,7 +230,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(
         key=AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
         translation_key="outside_climate_humidity",
-        options=OUTSIDE_CLIMATE_OPTIONS,
+        options=list(OUTSIDE_CLIMATE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_controller_setting_default,
         get_value_fn=__get_value_fn_outside_climate,
@@ -235,11 +242,12 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
     ACInfinityDeviceSelectEntityDescription(
         key=DeviceControlKey.AT_TYPE,
         translation_key="active_mode",
-        options=MODE_OPTIONS,
+        options=list(MODE_OPTIONS.values()),
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+        at_type=None
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
@@ -249,24 +257,17 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_device_load_type,
         set_value_fn=__set_value_fn_device_load_type,
-    ),
-    ACInfinityDeviceSelectEntityDescription(
-        key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        translation_key="device_load_type",
-        options=list(AI_DEVICE_LOAD_TYPE_OPTIONS.values()),
-        enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_device_setting_ai_controller,
-        get_value_fn=__get_value_fn_device_load_type,
-        set_value_fn=__set_value_fn_device_load_type,
+        at_type=None
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
-        options=DYNAMIC_RESPONSE_OPTIONS,
+        options=list(DYNAMIC_RESPONSE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_device_setting_default,
+        suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
+        at_type=None
     ),
 ]
 
@@ -313,7 +314,7 @@ class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
         description: ACInfinityDeviceSelectEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
-        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.SELECT)
+        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property

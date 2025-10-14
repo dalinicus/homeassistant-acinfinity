@@ -246,6 +246,7 @@ class ACInfinityDeviceBinarySensorEntity(ACInfinityDeviceEntity, BinarySensorEnt
             device,
             description.enabled_fn,
             description.suitable_fn,
+            None,
             description.key,
             Platform.BINARY_SENSOR,
         )

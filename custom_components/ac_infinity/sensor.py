@@ -505,7 +505,7 @@ class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.SENSOR
+            coordinator, device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR
         )
         self.entity_description = description
 

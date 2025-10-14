@@ -13,9 +13,7 @@ from homeassistant.const import Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN,
-    AdvancedSettingsKey,
-    DeviceControlKey,
+    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -525,6 +523,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.OFF_SPEED,
@@ -540,6 +539,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.TIMER_DURATION_TO_ON,
@@ -555,6 +555,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
+        at_type=AtType.TIMER_TO_ON
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.TIMER_DURATION_TO_OFF,
@@ -570,6 +571,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
+        at_type=AtType.TIMER_TO_OFF
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.CYCLE_DURATION_ON,
@@ -585,6 +587,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
+        at_type=AtType.CYCLE
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.CYCLE_DURATION_OFF,
@@ -600,6 +603,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_timer_duration,
         set_value_fn=__set_value_fn_timer_duration,
+        at_type=AtType.CYCLE
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.VPD_LOW_TRIGGER,
@@ -615,6 +619,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_vpd_control,
         set_value_fn=__set_value_fn_vpd_control,
+        at_type=AtType.VPD
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.VPD_HIGH_TRIGGER,
@@ -630,6 +635,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_vpd_control,
         set_value_fn=__set_value_fn_vpd_control,
+        at_type=AtType.VPD
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
@@ -645,6 +651,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
@@ -660,6 +667,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
@@ -675,6 +683,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_temp_auto_low,
+        at_type=AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
@@ -690,6 +699,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_temp_auto_high,
+        at_type=AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
         # F - native value 0-20
@@ -706,6 +716,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_temp_f,
         get_value_fn=__get_value_fn_dynamic_transition_temp,
         set_value_fn=__set_value_fn_dynamic_transition_temp,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         # C - native value 0-10
@@ -722,6 +733,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_temp_c,
         get_value_fn=__get_value_fn_dynamic_transition_temp,
         set_value_fn=__set_value_fn_dynamic_transition_temp,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_TRANSITION_HUMIDITY,
@@ -737,6 +749,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_TRANSITION_VPD,
@@ -752,6 +765,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_vpd_setting,
         set_value_fn=__set_value_fn_vpd_setting,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         # F - native value 0-20
@@ -768,6 +782,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_temp_f,
         get_value_fn=__get_value_fn_dynamic_buffer_temp,
         set_value_fn=__set_value_fn_dynamic_buffer_temp,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         # C - native value 0-10
@@ -784,6 +799,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_temp_c,
         get_value_fn=__get_value_fn_dynamic_buffer_temp,
         set_value_fn=__set_value_fn_dynamic_buffer_temp,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_BUFFER_HUMIDITY,
@@ -799,6 +815,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_BUFFER_VPD,
@@ -814,6 +831,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_vpd_setting,
         set_value_fn=__set_value_fn_vpd_setting,
+        at_type=None
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=AdvancedSettingsKey.SUNRISE_TIMER_DURATION,
@@ -826,9 +844,10 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="sunrise_timer_minutes",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_device_control_default,
+        suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
+        at_type=None
     ),
 ]
 
@@ -874,7 +893,7 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.NUMBER
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.NUMBER
         )
         self.entity_description = description
 

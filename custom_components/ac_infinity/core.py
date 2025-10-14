@@ -1025,6 +1025,7 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
         device: ACInfinityDevice,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityDevice], bool],
+        at_type: int | None,
         data_key: str,
         platform: str,
     ):
@@ -1032,6 +1033,7 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
         self._device = device
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
+        self._at_type = at_type
 
     @property
     def unique_id(self) -> str:
@@ -1053,6 +1055,15 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def is_suitable(self) -> bool:
         return self._suitable_fn(self, self.device_port)
+
+    @property
+    def available(self) -> bool:
+        """If an entity is set up with a mode whitelist, this will only return true the active mode is in the whitelist"""
+        return super().available and self._at_type is None or self.ac_infinity.get_device_control(
+            self._device.controller.controller_id,
+            self.device_port.device_port,
+            DeviceControlKey.AT_TYPE
+        ) == self._at_type
 
 
 @dataclass(frozen=True)
@@ -1100,7 +1111,8 @@ class ACInfinityDeviceReadOnlyMixin[T](ACInfinityBaseMixin):
 @dataclass(frozen=True)
 class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for port device level settings"""
-
+    at_type: int | None
+    """List of modes that the control is applicable for"""
     set_value_fn: Callable[[ACInfinityEntity, ACInfinityDevice, T], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
 

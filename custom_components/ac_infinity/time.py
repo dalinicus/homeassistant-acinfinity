@@ -9,9 +9,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN,
-    SCHEDULE_DISABLED_VALUE,
-    DeviceControlKey,
+    AtType, DOMAIN, SCHEDULE_DISABLED_VALUE, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
@@ -96,6 +94,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceTimeEntityDescription] = [
         enabled_fn=enabled_fn_control,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
+        at_type=AtType.SCHEDULE,
     ),
     ACInfinityDeviceTimeEntityDescription(
         key=DeviceControlKey.SCHEDULED_END_TIME,
@@ -105,6 +104,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceTimeEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_time,
         set_value_fn=__set_value_fn_time,
+        at_type=AtType.SCHEDULE,
     ),
 ]
 
@@ -119,7 +119,7 @@ class ACInfinityDeviceTimeEntity(ACInfinityDeviceEntity, TimeEntity):
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.key, Platform.TIME
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.TIME
         )
         self.entity_description = description
 

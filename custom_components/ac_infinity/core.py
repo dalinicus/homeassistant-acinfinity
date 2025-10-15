@@ -733,6 +733,7 @@ class ACInfinityService:
         else:
             await self.__update_device_controls(device.controller.controller_id, device.device_port, key_values)
 
+
     async def __update_device_controls(
         self,
         controller_id: str | int,
@@ -1058,8 +1059,12 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
 
     @property
     def available(self) -> bool:
-        """If an entity is set up with a mode whitelist, this will only return true the active mode is in the whitelist"""
-        return super().available and self._at_type is None or self.ac_infinity.get_device_control(
+        """Returns true if the device is online and, if provided, the active mode matches the at_type filter"""
+        return super().available and self.ac_infinity.get_device_property(
+            self._device.controller.controller_id,
+            self.device_port.device_port,
+            DevicePropertyKey.ONLINE
+        ) == 1 and self._at_type is None or self.ac_infinity.get_device_control(
             self._device.controller.controller_id,
             self.device_port.device_port,
             DeviceControlKey.AT_TYPE

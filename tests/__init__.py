@@ -176,10 +176,10 @@ def setup_entity_mocks(mocker: MockFixture):
     coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
 
     port_control_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_control", return_value=future
+        ac_infinity, "update_device_control", return_value=future
     )
     port_control_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_controls", return_value=future
+        ac_infinity, "update_device_controls", return_value=future
     )
     controller_setting_set_mock = mocker.patch.object(
         ac_infinity, "update_controller_setting", return_value=future
@@ -188,10 +188,10 @@ def setup_entity_mocks(mocker: MockFixture):
         ac_infinity, "update_controller_settings", return_value=future
     )
     port_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_setting", return_value=future
+        ac_infinity, "update_device_setting", return_value=future
     )
     port_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_settings", return_value=future
+        ac_infinity, "update_device_settings", return_value=future
     )
     refresh_mock = mocker.patch.object(
         coordinator, "async_request_refresh", return_value=future

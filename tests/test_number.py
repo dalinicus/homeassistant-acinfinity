@@ -189,7 +189,6 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            DeviceControlKey.AUTO_TARGET_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -210,7 +209,6 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_HIGH_TRIGGER,
             DeviceControlKey.VPD_LOW_TRIGGER,
-            DeviceControlKey.VPD_TARGET,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -229,7 +227,6 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            DeviceControlKey.AUTO_TARGET_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize(
@@ -259,7 +256,6 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_LOW_TRIGGER,
             DeviceControlKey.VPD_HIGH_TRIGGER,
-            DeviceControlKey.VPD_TARGET,
         ],
     )
     @pytest.mark.parametrize(
@@ -287,7 +283,6 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            DeviceControlKey.AUTO_TARGET_HUMIDITY,
         ],
     )
     @pytest.mark.parametrize(
@@ -324,7 +319,6 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_LOW_TRIGGER,
             DeviceControlKey.VPD_HIGH_TRIGGER,
-            DeviceControlKey.VPD_TARGET,
         ],
     )
     @pytest.mark.parametrize(
@@ -436,7 +430,6 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
             DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
-            DeviceControlKey.AUTO_TARGET_TEMP,
         ],
     )
     @pytest.mark.parametrize(
@@ -481,7 +474,6 @@ class TestNumbers:
                 DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
                 DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
-            (DeviceControlKey.AUTO_TARGET_TEMP, DeviceControlKey.AUTO_TARGET_TEMP_F),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

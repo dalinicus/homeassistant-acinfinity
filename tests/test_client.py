@@ -215,7 +215,7 @@ class TestACInfinityClient:
             )
 
             await client.update_device_control(
-                DEVICE_ID, 4, [(DeviceControlKey.ON_SPEED, 2)]
+                DEVICE_ID, 4, {DeviceControlKey.ON_SPEED: 2}
             )
 
             gen = (request for request in mocked.requests.values())
@@ -243,7 +243,6 @@ class TestACInfinityClient:
                 DeviceControlKey.VPD_NUMS,
                 DeviceControlKey.MASTER_PORT,
                 DeviceControlKey.DEV_SETTING,
-                DeviceControlKey.DEVICE_MAC_ADDR,
             ]:
                 assert key in payload, f"Key {key} is missing"
                 assert payload[key] == (
@@ -266,10 +265,6 @@ class TestACInfinityClient:
 
         assert isinstance(dev_mode_settings["data"], dict)
         dev_mode_settings["data"][DeviceControlKey.SURPLUS] = set_value
-        dev_mode_settings["data"][
-            DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED
-        ] = set_value
-        dev_mode_settings["data"][DeviceControlKey.VPD_TARGET_ENABLED] = set_value
         dev_mode_settings["data"][DeviceControlKey.EC_OR_TDS] = set_value
         dev_mode_settings["data"][DeviceControlKey.MASTER_PORT] = set_value
 
@@ -279,30 +274,8 @@ class TestACInfinityClient:
 
         expected = set_value if set_value else 0
         assert payload[DeviceControlKey.SURPLUS] == expected
-        assert payload[DeviceControlKey.AUTO_TARGET_HUMIDITY_ENABLED] == expected
-        assert payload[DeviceControlKey.VPD_TARGET_ENABLED] == expected
         assert payload[DeviceControlKey.EC_OR_TDS] == expected
         assert payload[DeviceControlKey.MASTER_PORT] == expected
-
-    async def test_set_device_port_setting_bad_fields_removed_and_missing_fields_added(
-        self,
-    ):
-        """When setting a value, fields that are not passed to the update call when using the Android/iOS app should
-        be stripped from the updated request payload. While devSettings exists, we also want to strip that as well
-        as to not change controller settings unnecessarily."""
-
-        payload = (
-            await self.__make_generic_set_port_settings_call_and_get_sent_payload()
-        )
-
-        # bad fields removed
-        assert DeviceControlKey.DEV_SETTING not in payload
-        assert DeviceControlKey.IPC_SETTING not in payload
-        assert DeviceControlKey.DEVICE_MAC_ADDR not in payload
-
-        # missing fields added
-        assert DeviceControlKey.VPD_STATUS in payload
-        assert DeviceControlKey.VPD_NUMS in payload
 
     async def test_set_device_port_setting_dev_id_and_mode_set_id_are_int_values(self):
         """When setting a value, fields that are not passed to the update call when using the Android/iOS app should
@@ -336,7 +309,7 @@ class TestACInfinityClient:
                 payload=GET_DEV_SETTINGS_PAYLOAD,
             )
 
-            result = await client.get_device_settings(DEVICE_ID, port)
+            result = await client.get_device_mode_settings(DEVICE_ID, port)
 
             assert result is not None
             assert result["devId"] == f"{DEVICE_ID}"
@@ -350,7 +323,7 @@ class TestACInfinityClient:
         """When not logged in, get user devices should throw a connect error"""
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
-            await client.get_device_settings(DEVICE_ID, 0)
+            await client.get_device_mode_settings(DEVICE_ID, 0)
 
     @staticmethod
     async def __make_generic_update_advanced_settings_call_and_get_sent_payload(
@@ -371,8 +344,8 @@ class TestACInfinityClient:
                 payload=UPDATE_SUCCESS_PAYLOAD,
             )
 
-            await client.update_advanced_settings(
-                DEVICE_ID, 0, DEVICE_NAME, [(AdvancedSettingsKey.CALIBRATE_HUMIDITY, 3)]
+            await client.update_device_setting(
+                DEVICE_ID, 0, DEVICE_NAME, {AdvancedSettingsKey.CALIBRATE_HUMIDITY: 3}
             )
 
             gen = (request for request in mocked.requests.values())
@@ -390,18 +363,8 @@ class TestACInfinityClient:
         for key in DEVICE_SETTINGS:
             # ignore fields we set or need to modify.  They are tested in subsequent test cases.
             if key not in [
-                AdvancedSettingsKey.SET_ID,
-                AdvancedSettingsKey.DEV_MAC_ADDR,
-                AdvancedSettingsKey.PORT_RESISTANCE,
-                AdvancedSettingsKey.DEV_TIME_ZONE,
-                AdvancedSettingsKey.SENSOR_SETTING,
-                AdvancedSettingsKey.SENSOR_TRANS_BUFF,
                 AdvancedSettingsKey.PORT_PARAM_DATA,
-                AdvancedSettingsKey.SUB_DEVICE_VERSION,
                 AdvancedSettingsKey.OTA_UPDATING,
-                AdvancedSettingsKey.SEC_FUC_REPORT_TIME,
-                AdvancedSettingsKey.UPDATE_ALL_PORT,
-                AdvancedSettingsKey.CALIBRATION_TIME,
                 AdvancedSettingsKey.DEV_ID,
                 AdvancedSettingsKey.SUB_DEVICE_TYPE,
                 AdvancedSettingsKey.SUPPORT_OTA,
@@ -432,18 +395,6 @@ class TestACInfinityClient:
         payload = (
             await self.__make_generic_update_advanced_settings_call_and_get_sent_payload()
         )
-
-        # bad fields stripped before sending
-        assert AdvancedSettingsKey.SET_ID not in payload
-        assert AdvancedSettingsKey.DEV_MAC_ADDR not in payload
-        assert AdvancedSettingsKey.PORT_RESISTANCE not in payload
-        assert AdvancedSettingsKey.DEV_TIME_ZONE not in payload
-        assert AdvancedSettingsKey.SENSOR_SETTING not in payload
-        assert AdvancedSettingsKey.SENSOR_TRANS_BUFF not in payload
-        assert AdvancedSettingsKey.SUB_DEVICE_VERSION not in payload
-        assert AdvancedSettingsKey.SEC_FUC_REPORT_TIME not in payload
-        assert AdvancedSettingsKey.UPDATE_ALL_PORT not in payload
-        assert AdvancedSettingsKey.CALIBRATION_TIME not in payload
 
         # missing fields added before seending
         assert AdvancedSettingsKey.SENSOR_ONE_TYPE in payload

@@ -88,7 +88,7 @@ class ACInfinityClient:
     def __transfer_values(device_control_keys: list[str], new_values: dict, existing_values: dict, replace_none_with: int | str = ''):
         updated = {}
         for key in device_control_keys:
-            value = new_values.get(key, existing_values.get(key, 0))
+            value = new_values.get(key, existing_values.get(key, replace_none_with))
             if value is None:
                 updated[key] = replace_none_with
             elif isinstance(value, (dict, list)):

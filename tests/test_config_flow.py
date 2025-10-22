@@ -32,8 +32,8 @@ from tests import ACTestObjects, setup_entity_mocks
 
 from .data_models import (
     EMAIL, ENTRY_ID, PASSWORD, POLLING_INTERVAL, DEVICE_ID, AI_DEVICE_ID, DEVICE_NAME, DEVICE_NAME_AI,
-    CONTROLLER_PROPERTIES_DATA, PORT_PROPERTIES_DATA, CONTROLLER_PROPERTIES, AI_CONTROLLER_PROPERTIES,
-    PORT_PROPERTY_ONE, PORT_PROPERTY_TWO, PORT_PROPERTY_THREE, PORT_PROPERTY_FOUR
+    CONTROLLER_PROPERTIES_DATA, DEVICE_PROPERTIES_DATA, CONTROLLER_PROPERTIES, AI_CONTROLLER_PROPERTIES,
+    DEVICE_PROPERTY_ONE, DEVICE_PROPERTY_TWO, DEVICE_PROPERTY_THREE, DEVICE_PROPERTY_FOUR
 )
 
 CONFIG_FLOW_USER_INPUT = {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
@@ -52,7 +52,7 @@ def setup_config_flow(mocker: MockFixture):
     mocker.patch.object(config_entries.ConfigFlow, "async_set_unique_id")
     mocker.patch.object(config_entries.ConfigFlow, "_abort_if_unique_id_configured")
     mocker.patch.object(ACInfinityClient, "login", return_value=future)
-    mocker.patch.object(ACInfinityClient, "get_devices_list_all", return_value=future)
+    mocker.patch.object(ACInfinityClient, "get_account_controllers", return_value=future)
 
     return mocker, test_objects
 
@@ -68,7 +68,7 @@ def setup_options_flow(mocker: MockFixture):
     mocker.patch.object(config_entries.OptionsFlow, "async_show_menu")
     mocker.patch.object(config_entries.OptionsFlow, "async_create_entry")
     mocker.patch.object(ACInfinityClient, "login", return_value=future)
-    mocker.patch.object(ACInfinityClient, "get_devices_list_all", return_value=future)
+    mocker.patch.object(ACInfinityClient, "get_account_controllers", return_value=future)
 
     return mocker, test_objects
 
@@ -223,7 +223,7 @@ class TestConfigFlow:
         mock_service = ACInfinityService(mock_client)
         # Set up the service's internal data structures like the real service
         mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._device_properties = PORT_PROPERTIES_DATA
+        mock_service._device_properties = DEVICE_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID)]
@@ -253,7 +253,7 @@ class TestConfigFlow:
         mock_service = ACInfinityService(mock_client)
         # Set up the service's internal data structures like the real service
         mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._device_properties = PORT_PROPERTIES_DATA
+        mock_service._device_properties = DEVICE_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID), str(AI_DEVICE_ID)]
@@ -646,7 +646,7 @@ class TestConfigFlow:
 
         # Set up the service's internal data structures like the real service
         test_objects.coordinator.ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        test_objects.coordinator.ac_infinity._device_properties = PORT_PROPERTIES_DATA
+        test_objects.coordinator.ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
 
         await flow.async_step_enable_entities()
 
@@ -668,8 +668,8 @@ class TestConfigFlow:
         description_placeholders = call_args[1]["description_placeholders"]
         assert description_placeholders["controller"] == DEVICE_NAME
         assert description_placeholders["device_code"] == CONTROLLER_PROPERTIES["devCode"]
-        assert description_placeholders["port_1"] == PORT_PROPERTY_ONE["portName"]
-        assert description_placeholders["port_4"] == PORT_PROPERTY_FOUR["portName"]
+        assert description_placeholders["port_1"] == DEVICE_PROPERTY_ONE["portName"]
+        assert description_placeholders["port_4"] == DEVICE_PROPERTY_FOUR["portName"]
 
     async def test_options_flow_enable_entities_creates_entities_config_if_missing(self, setup_options_flow):
         """When entities config doesn't exist in config entry, it should be created"""

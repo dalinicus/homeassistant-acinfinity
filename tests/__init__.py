@@ -33,8 +33,8 @@ from tests.data_models import (
     HOST,
     MAC_ADDR,
     PASSWORD,
-    PORT_CONTROLS_DATA,
-    PORT_PROPERTIES_DATA,
+    DEVICE_CONTROLS_DATA,
+    DEVICE_PROPERTIES_DATA,
     SENSOR_PROPERTIES_DATA, DEVICE_ID, AI_DEVICE_ID, CONFIG_ENTRY_DATA,
 )
 
@@ -156,8 +156,8 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._device_settings = DEVICE_SETTINGS_DATA
     ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
-    ac_infinity._device_properties = PORT_PROPERTIES_DATA
-    ac_infinity._device_controls = PORT_CONTROLS_DATA
+    ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+    ac_infinity._device_controls = DEVICE_CONTROLS_DATA
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,

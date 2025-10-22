@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from abc import abstractmethod, ABC
 from collections.abc import Awaitable
@@ -87,11 +88,6 @@ class ACInfinityController:
     def controller_name(self) -> str:
         """The name of the controller as set in the Android/iOS app"""
         return self._controller_name
-
-    @property
-    def controller_type(self) -> int:
-        """The integer id of the device type of this controller (Pro, Pro+, AI+, etc...)"""
-        return self._controller_type
 
     @property
     def is_ai_controller(self) -> bool:
@@ -733,7 +729,6 @@ class ACInfinityService:
         else:
             await self.__update_device_controls(device.controller.controller_id, device.device_port, key_values)
 
-
     async def __update_device_controls(
         self,
         controller_id: str | int,
@@ -750,7 +745,7 @@ class ACInfinityService:
         try_count = 0
         while True:
             try:
-                await self._client.update_device_control(controller_id, device_port, key_values)
+                await self._client.update_device_controls(controller_id, device_port, key_values)
                 return
 
             except (
@@ -760,7 +755,7 @@ class ACInfinityService:
                 asyncio.TimeoutError
             ) as ex:
 
-                if try_count < 0:
+                if try_count < 4:
                     try_count += 1
                     _LOGGER.warning("Unable to update device controls. Retry attempt %s/4", str(try_count))
                     await asyncio.sleep(1)
@@ -791,7 +786,7 @@ class ACInfinityService:
         try_count = 0
         while True:
             try:
-                await self._client.update_device_setting(controller_id, device_port, device_name, key_values)
+                await self._client.update_device_settings(controller_id, device_port, device_name, key_values)
                 return
 
             except (
@@ -840,7 +835,7 @@ class ACInfinityService:
                 asyncio.TimeoutError
             ) as ex:
 
-                if try_count < 0:
+                if try_count < 4:
                     try_count += 1
                     _LOGGER.warning("Unable to update ai device controls and settings. Retry attempt %s/4", str(try_count))
                     await asyncio.sleep(1)
@@ -1064,11 +1059,11 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
             self._device.controller.controller_id,
             self.device_port.device_port,
             DevicePropertyKey.ONLINE
-        ) == 1 and self._at_type is None or self.ac_infinity.get_device_control(
+        ) == 1 and (self._at_type is None or self.ac_infinity.get_device_control(
             self._device.controller.controller_id,
             self.device_port.device_port,
             DeviceControlKey.AT_TYPE
-        ) == self._at_type
+        ) == self._at_type)
 
 
 @dataclass(frozen=True)

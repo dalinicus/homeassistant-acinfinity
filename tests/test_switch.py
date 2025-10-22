@@ -41,7 +41,7 @@ class TestSwitches:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 48
+        assert len(test_objects.entities._added_entities) == 36
 
     @pytest.mark.parametrize(
         "setting",
@@ -191,7 +191,7 @@ class TestSwitches:
         await entity.async_turn_on()
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -222,7 +222,7 @@ class TestSwitches:
         await entity.async_turn_on()
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -259,7 +259,7 @@ class TestSwitches:
         await entity.async_turn_off()
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -287,6 +287,6 @@ class TestSwitches:
         await entity.async_turn_off()
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()

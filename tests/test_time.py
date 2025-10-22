@@ -138,6 +138,6 @@ class TestTimes:
         await entity.async_set_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()

@@ -1,3 +1,5 @@
+from typing import Any
+
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 
 from custom_components.ac_infinity.const import (
@@ -65,7 +67,7 @@ LOGIN_PAYLOAD = {
     },
 }
 
-PORT_PROPERTY_ONE = {
+DEVICE_PROPERTY_ONE = {
     "speak": 5,
     "deviceType": None,
     "trend": 0,
@@ -85,7 +87,7 @@ PORT_PROPERTY_ONE = {
     "overcurrentStatus": 0,
 }
 
-PORT_PROPERTY_TWO = {
+DEVICE_PROPERTY_TWO = {
     "speak": 7,
     "deviceType": None,
     "trend": 0,
@@ -105,7 +107,7 @@ PORT_PROPERTY_TWO = {
     "overcurrentStatus": 0,
 }
 
-PORT_PROPERTY_THREE = {
+DEVICE_PROPERTY_THREE = {
     "speak": 5,
     "deviceType": None,
     "trend": 0,
@@ -125,7 +127,7 @@ PORT_PROPERTY_THREE = {
     "overcurrentStatus": 0,
 }
 
-PORT_PROPERTY_FOUR = {
+DEVICE_PROPERTY_FOUR = {
     "speak": 0,
     "deviceType": None,
     "trend": 0,
@@ -306,10 +308,10 @@ CONTROLLER_PROPERTIES = {
         "masterPort": 2,
         "allPortStatus": 7,
         "ports": [
-            PORT_PROPERTY_ONE,
-            PORT_PROPERTY_TWO,
-            PORT_PROPERTY_THREE,
-            PORT_PROPERTY_FOUR,
+            DEVICE_PROPERTY_ONE,
+            DEVICE_PROPERTY_TWO,
+            DEVICE_PROPERTY_THREE,
+            DEVICE_PROPERTY_FOUR,
         ],
         "logCreateTime": None,
         "isOpenAutomation": 0,
@@ -376,10 +378,10 @@ AI_CONTROLLER_PROPERTIES = {
         "masterPort": 2,
         "allPortStatus": 7,
         "ports": [
-            PORT_PROPERTY_ONE,
-            PORT_PROPERTY_TWO,
-            PORT_PROPERTY_THREE,
-            PORT_PROPERTY_FOUR,
+            DEVICE_PROPERTY_ONE,
+            DEVICE_PROPERTY_TWO,
+            DEVICE_PROPERTY_THREE,
+            DEVICE_PROPERTY_FOUR,
         ],
         "sensors": [
             SENSOR_PROPERTY_CONTROLLER_TEMP_F,
@@ -436,7 +438,7 @@ DEVICE_CONTROLS = {
     "devId": str(DEVICE_ID),
     "externalPort": 4,
     "offSpead": 0,
-    "onSpead": 10,
+    "onSpead": 5,
     "onSelfSpead": 0,
     "activeHt": 0,
     "devHt": 66,
@@ -550,7 +552,7 @@ DEVICE_CONTROLS = {
     "unit": 0,
     "speak": 0,
     "trend": 0,
-    "atType": 1,
+    "atType": 2,
     "temperatureF": 7228,
     "isOpenAutomation": 0,
     "devTimeZone": None,
@@ -594,7 +596,7 @@ DEVICE_CONTROLS = {
         "devBth": 14,
         "devBt": 7,
         "devBh": 3,
-        "devBvpd": 8,
+        "devBvpd": 6,
         "isFlag": 0,
         "devTimeZone": None,
         "loadType": 0,
@@ -642,7 +644,7 @@ DEVICE_CONTROLS = {
     "ipcSetting": None
 }
 
-DEVICE_SETTINGS = {
+DEVICE_SETTINGS: dict[str, Any] = {
     "setId": str(MODE_SET_ID),
     "devId": str(DEVICE_ID),
     "devMacAddr": None,
@@ -654,39 +656,41 @@ DEVICE_SETTINGS = {
     "backlightSwitch": 1,
     "hasKeytoneSwitch": 0,
     "keytoneSwitch": 1,
-    "devCt": 0,
-    "devCh": 5,
-    "devTt": 2,
-    "devTh": 3,
-    "devCompany": 1,
-    "devTth": 5,
     "devCth": 0,
+    "devCt": 0,
+    "devCth2": None,
+    "devCt2": None,
+    "devCh": 5,
+    "devTt": 0,
+    "devTh": 1,
+    "devCompany": 1,
+    "devTth": 1,
     "vpdCth": 0,
     "vpdCt": 0,
-    "vpdTransition": 3,
+    "vpdTransition": 1,
     "offSpead": 0,
-    "onSpead": 2,
+    "onSpead": 10,
     "onSelfSpead": 0,
     "portResistance": 3300,
-    "devBth": 2,
-    "devBt": 1,
-    "devBh": 2,
-    "devBvpd": 4,
-    "isFlag": 1,
+    "devBth": 14,
+    "devBt": 7,
+    "devBh": 3,
+    "devBvpd": 8,
+    "isFlag": 0,
     "devTimeZone": None,
-    "loadType": 0,
-    "tempCompare": 0,
-    "humiCompare": 0,
+    "loadType": 8,
+    "tempCompare": 2,
+    "humiCompare": 1,
     "settingMode": 0,
     "vpdSettingMode": 0,
     "atType": 1,
-    "onTimeSwitch": 0,
-    "onTime": 0,
+    "onTimeSwitch": 1,
+    "onTime": 60,
     "sensorSettingStr": None,
     "sensorSetting": None,
     "sensorTransBuffStr": None,
     "sensorTransBuff": None,
-    "portParamData": "",
+    "portParamData": "[0, 2, 1, 2, 3, 232, 2, 1, 0]",
     "photocellSwitch": 1,
     "isOpenDoseTime": 0,
     "onDoseTime": 0,
@@ -707,10 +711,14 @@ DEVICE_SETTINGS = {
     "secFucDevtype": 0,
     "secFucDevEffect": 0,
     "secFucParamNums": 0,
-    "secFucParams": "",
+    "secFucParams": None,
     "secFucReportTime": 0,
-    "updateAllPort": True,
+    "toward": None,
+    "powerState": None,
+    "updateAllPort": None,
+    "timestamp": None,
     "calibrationTime": None,
+    "fieldSet": []
 }
 
 DEVICE_INFO_LIST_ALL = [CONTROLLER_PROPERTIES, AI_CONTROLLER_PROPERTIES]
@@ -724,8 +732,15 @@ GET_DEV_MODE_SETTING_LIST_PAYLOAD = {
     "code": 200,
     "data": DEVICE_CONTROLS,
 }
-GET_DEV_SETTINGS_PAYLOAD = {"msg": "操作成功", "code": 200, "data": DEVICE_SETTINGS}
-UPDATE_SUCCESS_PAYLOAD = {"msg": "操作成功", "code": 200}
+GET_DEV_SETTINGS_PAYLOAD = {
+    "msg": "操作成功",
+    "code": 200,
+    "data": DEVICE_SETTINGS
+}
+UPDATE_SUCCESS_PAYLOAD = {
+    "msg": "操作成功",
+    "code": 200
+}
 
 CONTROLLER_PROPERTIES_DATA = {
     str(DEVICE_ID): CONTROLLER_PROPERTIES,
@@ -778,13 +793,13 @@ SENSOR_PROPERTIES_DATA = {
     (str(AI_DEVICE_ID), UNKNOWN_ACCESS_PORT, 999): SENSOR_PROPERTY_UNKNOWN,
 }
 
-PORT_PROPERTIES_DATA = {
-    (str(DEVICE_ID), 1): PORT_PROPERTY_ONE,
-    (str(DEVICE_ID), 2): PORT_PROPERTY_TWO,
-    (str(DEVICE_ID), 3): PORT_PROPERTY_THREE,
-    (str(DEVICE_ID), 4): PORT_PROPERTY_FOUR,
+DEVICE_PROPERTIES_DATA = {
+    (str(DEVICE_ID), 1): DEVICE_PROPERTY_ONE,
+    (str(DEVICE_ID), 2): DEVICE_PROPERTY_TWO,
+    (str(DEVICE_ID), 3): DEVICE_PROPERTY_THREE,
+    (str(DEVICE_ID), 4): DEVICE_PROPERTY_FOUR,
 }
-PORT_CONTROLS_DATA = {
+DEVICE_CONTROLS_DATA = {
     (str(DEVICE_ID), 1): DEVICE_CONTROLS,
     (str(DEVICE_ID), 2): DEVICE_CONTROLS,
     (str(DEVICE_ID), 3): DEVICE_CONTROLS,

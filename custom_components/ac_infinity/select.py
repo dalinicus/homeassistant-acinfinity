@@ -117,20 +117,8 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
     )
 
 
-def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_setting_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
-    )
-
-
 def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
     return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
-    )
-
-
-def __suitable_fn_device_setting_ai_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -180,6 +168,9 @@ def __get_value_fn_device_load_type(entity: ACInfinityEntity, device: ACInfinity
 def __set_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController, value: str
 ):
+    if value not in OUTSIDE_CLIMATE_OPTIONS.values():
+        raise ValueError(f"Invalid outside climate: {value}")
+
     return entity.ac_infinity.update_controller_setting(
         controller,
         entity.data_key,
@@ -190,6 +181,9 @@ def __set_value_fn_outside_climate(
 def __set_value_fn_active_mode(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
+    if value not in MODE_OPTIONS.values():
+        raise ValueError(f"Invalid mode: {value}")
+
     return entity.ac_infinity.update_device_control(
         device,
         DeviceControlKey.AT_TYPE,
@@ -200,6 +194,9 @@ def __set_value_fn_active_mode(
 def __set_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
+    if value not in DYNAMIC_RESPONSE_OPTIONS.values():
+        raise ValueError(f"Invalid dynamic response type: {value}")
+
     return entity.ac_infinity.update_device_setting(
         device,
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
@@ -210,10 +207,13 @@ def __set_value_fn_dynamic_response_type(
 def __set_value_fn_device_load_type(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
+    if value not in DEVICE_LOAD_TYPE_OPTIONS.values():
+        raise ValueError(f"Invalid device load type: {value}")
+
     return entity.ac_infinity.update_device_setting(
         device,
         AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        DEVICE_LOAD_TYPE_OPTIONS_REVERSE[value]
+        STANDARD_DEVICE_LOAD_TYPE_OPTIONS_REVERSE[value]
     )
 
 

@@ -41,7 +41,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 91
+        assert len(test_objects.entities._added_entities) == 79
 
     @pytest.mark.parametrize(
         "setting", [DeviceControlKey.OFF_SPEED, DeviceControlKey.ON_SPEED]
@@ -104,7 +104,7 @@ class TestNumbers:
         await entity.async_set_native_value(4)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, 4
+            entity._device, setting, 4
         )
         test_objects.refresh_mock.assert_called()
 
@@ -180,7 +180,7 @@ class TestNumbers:
         await entity.async_set_native_value(field_value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -310,7 +310,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -346,7 +346,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -421,7 +421,7 @@ class TestNumbers:
         await entity.async_set_native_value(field_value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -494,7 +494,7 @@ class TestNumbers:
         await entity.async_set_native_value(c)
 
         test_objects.port_control_sets_mock.assert_called_with(
-            str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
+            entity._device, {setting: c, f_setting: f}
         )
         test_objects.refresh_mock.assert_called()
 
@@ -612,19 +612,19 @@ class TestNumbers:
 
         if temp_unit > 0:
             test_objects.controller_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                [
-                    (AdvancedSettingsKey.CALIBRATE_TEMP, expected),
-                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
-                ],
+                entity._controller,
+                {
+                    AdvancedSettingsKey.CALIBRATE_TEMP: expected,
+                    AdvancedSettingsKey.CALIBRATE_TEMP_F: 0,
+                },
             )
         else:
             test_objects.controller_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                [
-                    (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
-                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, expected),
-                ],
+                entity._controller,
+                {
+                    AdvancedSettingsKey.CALIBRATE_TEMP: 0,
+                    AdvancedSettingsKey.CALIBRATE_TEMP_F: expected,
+                },
             )
         test_objects.refresh_mock.assert_called()
 
@@ -661,7 +661,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.controller_set_mock.assert_called_with(
-            str(DEVICE_ID),
+            entity._controller,
             (
                 AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
                 if temp_unit > 0
@@ -692,7 +692,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.controller_set_mock.assert_called_with(
-            str(DEVICE_ID), AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
+            entity._controller, AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
         )
 
         test_objects.refresh_mock.assert_called()
@@ -846,21 +846,19 @@ class TestNumbers:
 
         if temp_unit > 0:
             test_objects.port_setting_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                port,
-                [
-                    (setting, expected),
-                    (f_setting, f_expected),
-                ],
+                entity._device,
+                {
+                    setting: expected,
+                    f_setting: f_expected,
+                },
             )
         else:
             test_objects.port_setting_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                port,
-                [
-                    (setting, expected),
-                    (f_setting, f_expected),
-                ],
+                entity._device,
+                {
+                    setting: expected,
+                    f_setting: f_expected,
+                },
             )
         test_objects.refresh_mock.assert_called()
 
@@ -890,7 +888,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()
@@ -921,7 +919,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()
@@ -980,6 +978,6 @@ class TestNumbers:
         await entity.async_set_native_value(156)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
+            entity._device, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
         )
         test_objects.refresh_mock.assert_called()

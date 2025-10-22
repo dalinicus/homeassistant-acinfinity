@@ -85,12 +85,12 @@ class ACInfinityClient:
         return body["data"]
 
     @staticmethod
-    def __transfer_values(device_control_keys: list[str], new_values: dict, existing_values: dict, replace_none_with: int | str = ''):
-        updated = {}
+    def __transfer_values(device_control_keys: list[str], new_values: dict, existing_values: dict):
+        updated: dict[str, str | int | bool] = {}
         for key in device_control_keys:
-            value = new_values.get(key, existing_values.get(key, replace_none_with))
+            value = new_values.get(key, existing_values.get(key, 0))
             if value is None:
-                updated[key] = replace_none_with
+                updated[key] = 0
             elif isinstance(value, (dict, list)):
                 updated[key] = json.dumps(value)
             elif isinstance(value, bool):
@@ -100,7 +100,7 @@ class ACInfinityClient:
 
         return updated
 
-    async def update_device_control(
+    async def update_device_controls(
         self, controller_id: str | int, device_port: int, key_values: dict[str, int]
     ):
         """Sets the provided settings on a port to a new values
@@ -128,7 +128,7 @@ class ACInfinityClient:
         updated = self.__transfer_values(device_control_keys, key_values, existing_values)
         _ = await self.__post(f"{API_URL_ADD_DEV_MODE}?{urlencode(updated)}", None, headers)
 
-    async def update_device_setting(
+    async def update_device_settings(
         self, controller_id: str | int, device_port: int, device_name: str, key_values: dict[str, int]
     ):
         """Sets the provided settings on a port to a new values
@@ -148,13 +148,13 @@ class ACInfinityClient:
         )
         existing_values = body["data"]
 
-        device_control_keys: list[str] = [
+        device_settings_keys: list[str] = [
             getattr(AdvancedSettingsKey, attr)
             for attr in dir(AdvancedSettingsKey)
             if not attr.startswith('_')
         ]
 
-        updated = self.__transfer_values(device_control_keys, key_values, existing_values)
+        updated = self.__transfer_values(device_settings_keys, key_values, existing_values)
         updated[AdvancedSettingsKey.DEV_NAME] = device_name
 
         _ = await self.__post(f"{API_URL_UPDATE_ADV_SETTING}?{urlencode(updated)}", None, headers)
@@ -187,7 +187,7 @@ class ACInfinityClient:
             if not attr.startswith('_')
         ]
 
-        updated = self.__transfer_values(device_control_keys, key_values, flattened, replace_none_with=0)
+        updated = self.__transfer_values(device_control_keys, key_values, flattened)
 
         at_type = updated[DeviceControlKey.AT_TYPE]
         match at_type:
@@ -250,10 +250,7 @@ class ACInfinityClient:
 
             body = await response.json()
             if body["code"] != 200:
-                if path == API_URL_LOGIN:
-                    raise ACInfinityClientInvalidAuth
-                else:
-                    raise ACInfinityClientRequestFailed(body)
+                raise ACInfinityClientRequestFailed(body)
 
             return body
 

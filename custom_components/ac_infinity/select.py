@@ -59,6 +59,11 @@ MODE_OPTIONS = {
 }
 MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 
+SETTINGS_MODE_OPTIONS = [
+    "Auto",
+    "Target",
+]
+
 DYNAMIC_RESPONSE_OPTIONS = {
     0: "Transition",
     1: "Buffer"
@@ -191,6 +196,24 @@ def __set_value_fn_active_mode(
     )
 
 
+def __get_value_fn_setting_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return SETTINGS_MODE_OPTIONS[
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id, device.device_port, entity.data_key, 0
+        )
+    ]
+
+
+def __set_value_fn_setting_mode(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
+):
+    return entity.ac_infinity.update_device_control(
+        device,
+        entity.data_key,
+        SETTINGS_MODE_OPTIONS.index(value),
+    )
+
+
 def __set_value_fn_dynamic_response_type(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
@@ -248,6 +271,26 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
         at_type=None
+    ),
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.SETTING_MODE,
+        translation_key="auto_settings_mode",
+        options=SETTINGS_MODE_OPTIONS,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_setting_mode,
+        set_value_fn=__set_value_fn_setting_mode,
+        at_type=AtType.AUTO,
+    ),
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.VPD_SETTING_MODE,
+        translation_key="vpd_settings_mode",
+        options=SETTINGS_MODE_OPTIONS,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_setting_mode,
+        set_value_fn=__set_value_fn_setting_mode,
+        at_type=AtType.VPD,
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,

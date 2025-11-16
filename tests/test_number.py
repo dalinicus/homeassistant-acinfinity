@@ -41,7 +41,7 @@ class TestNumbers:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 79
+        assert len(test_objects.entities._added_entities) == 91
 
     @pytest.mark.parametrize(
         "setting", [DeviceControlKey.OFF_SPEED, DeviceControlKey.ON_SPEED]
@@ -189,6 +189,7 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -209,6 +210,7 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_HIGH_TRIGGER,
             DeviceControlKey.VPD_LOW_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -227,6 +229,7 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize(
@@ -256,6 +259,7 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_LOW_TRIGGER,
             DeviceControlKey.VPD_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize(
@@ -283,6 +287,7 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
             DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize(
@@ -319,6 +324,7 @@ class TestNumbers:
         [
             DeviceControlKey.VPD_LOW_TRIGGER,
             DeviceControlKey.VPD_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize(
@@ -430,6 +436,7 @@ class TestNumbers:
         [
             DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
             DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
+            DeviceControlKey.TARGET_TEMP,
         ],
     )
     @pytest.mark.parametrize(
@@ -474,6 +481,7 @@ class TestNumbers:
                 DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
                 DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])

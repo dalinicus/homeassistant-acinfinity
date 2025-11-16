@@ -141,6 +141,19 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         at_type=AtType.VPD,
     ),
     ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.TARGET_VPD_SWITCH,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_vpd_enabled",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.VPD,
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
@@ -167,6 +180,19 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         at_type=AtType.AUTO,
     ),
     ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.TARGET_TEMP_SWITCH,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_temp_enabled",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
         key=DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
@@ -186,6 +212,19 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         off_value=0,
         icon=None,  # default
         translation_key="auto_mode_humidity_low_enabled",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_default,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type=AtType.AUTO,
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.TARGET_HUMI_SWITCH,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,  # default
+        translation_key="target_humidity_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_device_control_default,

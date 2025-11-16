@@ -98,6 +98,15 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
+def __suitable_fn_device_control_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_control_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
+    )
+
+def __suitable_fn_device_control_ai_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return device.controller.is_ai_controller and entity.ac_infinity.get_device_control_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
+    )
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
     return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
@@ -534,7 +543,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="on_power",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
+        suitable_fn=__suitable_fn_device_control_basic_controller,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
         at_type=None
@@ -550,7 +559,23 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="off_power",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
+        suitable_fn=__suitable_fn_device_control_basic_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type=None
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.ON_SELF_SPEED,
+        device_class=NumberDeviceClass.POWER_FACTOR,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=10,
+        native_step=1,
+        icon="mdi:knob",
+        translation_key="on_power",
+        native_unit_of_measurement=None,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
         at_type=None

@@ -19,8 +19,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Configuration](#configuration)
   - [General Configuration](#general-configuration)
   - [Enable / Disable Entities](#enable--disable-entities)
-- [Entities](#entities)
-
+    
 # Compatibility
 
 This integration is compatible with the following UIS Controllers

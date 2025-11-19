@@ -7,13 +7,13 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     AdvancedSettingsKey,
-    PortControlKey,
+    DeviceControlKey,
 )
 from custom_components.ac_infinity.switch import (
     SCHEDULE_DISABLED_VALUE,
     SCHEDULE_EOD_VALUE,
     SCHEDULE_MIDNIGHT_VALUE,
-    ACInfinityPortSwitchEntity,
+    ACInfinityDeviceSwitchEntity,
     async_setup_entry,
 )
 from tests import (
@@ -46,17 +46,17 @@ class TestSwitches:
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
-            PortControlKey.AUTO_HUMIDITY_LOW_ENABLED,
-            PortControlKey.AUTO_TEMP_HIGH_ENABLED,
-            PortControlKey.AUTO_TEMP_LOW_ENABLED,
-            PortControlKey.AUTO_TARGET_TEMP_ENABLED,
-            PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED,
-            PortControlKey.VPD_HIGH_ENABLED,
-            PortControlKey.VPD_LOW_ENABLED,
-            PortControlKey.VPD_TARGET_ENABLED,
-            PortControlKey.SCHEDULED_START_TIME,
-            PortControlKey.SCHEDULED_END_TIME,
+            DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED,
+            DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED,
+            DeviceControlKey.AUTO_TEMP_HIGH_ENABLED,
+            DeviceControlKey.AUTO_TEMP_LOW_ENABLED,
+            DeviceControlKey.TARGET_TEMP_SWITCH,
+            DeviceControlKey.TARGET_HUMI_SWITCH,
+            DeviceControlKey.VPD_HIGH_ENABLED,
+            DeviceControlKey.VPD_LOW_ENABLED,
+            DeviceControlKey.TARGET_VPD_SWITCH,
+            DeviceControlKey.SCHEDULED_START_TIME,
+            DeviceControlKey.SCHEDULED_END_TIME,
             AdvancedSettingsKey.SUNRISE_TIMER_ENABLED,
         ],
     )
@@ -78,41 +78,41 @@ class TestSwitches:
         "setting,value,expected",
         [
             # enabled
-            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1, True),
-            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1, True),
-            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1, True),
-            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1, True),
-            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 1, True),
-            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 1, True),
-            (PortControlKey.VPD_HIGH_ENABLED, 1, True),
-            (PortControlKey.VPD_LOW_ENABLED, 1, True),
-            (PortControlKey.VPD_TARGET_ENABLED, 1, True),
-            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
-            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
+            (DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1, True),
+            (DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1, True),
+            (DeviceControlKey.AUTO_TEMP_HIGH_ENABLED, 1, True),
+            (DeviceControlKey.AUTO_TEMP_LOW_ENABLED, 1, True),
+            (DeviceControlKey.TARGET_TEMP_SWITCH, 1, True),
+            (DeviceControlKey.TARGET_HUMI_SWITCH, 1, True),
+            (DeviceControlKey.VPD_HIGH_ENABLED, 1, True),
+            (DeviceControlKey.VPD_LOW_ENABLED, 1, True),
+            (DeviceControlKey.TARGET_VPD_SWITCH, 1, True),
+            (DeviceControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
+            (DeviceControlKey.SCHEDULED_END_TIME, SCHEDULE_MIDNIGHT_VALUE, True),
             # disabled
-            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0, False),
-            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0, False),
-            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0, False),
-            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0, False),
-            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 0, False),
-            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 0, False),
-            (PortControlKey.VPD_HIGH_ENABLED, 0, False),
-            (PortControlKey.VPD_LOW_ENABLED, 0, False),
-            (PortControlKey.VPD_TARGET_ENABLED, 0, False),
-            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
-            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
+            (DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0, False),
+            (DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0, False),
+            (DeviceControlKey.AUTO_TEMP_HIGH_ENABLED, 0, False),
+            (DeviceControlKey.AUTO_TEMP_LOW_ENABLED, 0, False),
+            (DeviceControlKey.TARGET_TEMP_SWITCH, 0, False),
+            (DeviceControlKey.TARGET_HUMI_SWITCH, 0, False),
+            (DeviceControlKey.VPD_HIGH_ENABLED, 0, False),
+            (DeviceControlKey.VPD_LOW_ENABLED, 0, False),
+            (DeviceControlKey.TARGET_VPD_SWITCH, 0, False),
+            (DeviceControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE, False),
+            (DeviceControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE, False),
             # None
-            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, None, False),
-            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, None, False),
-            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, None, False),
-            (PortControlKey.AUTO_TEMP_LOW_ENABLED, None, False),
-            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, None, False),
-            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, None, False),
-            (PortControlKey.VPD_HIGH_ENABLED, None, False),
-            (PortControlKey.VPD_LOW_ENABLED, None, False),
-            (PortControlKey.VPD_TARGET_ENABLED, None, False),
-            (PortControlKey.SCHEDULED_START_TIME, None, False),
-            (PortControlKey.SCHEDULED_END_TIME, None, False),
+            (DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED, None, False),
+            (DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED, None, False),
+            (DeviceControlKey.AUTO_TEMP_HIGH_ENABLED, None, False),
+            (DeviceControlKey.AUTO_TEMP_LOW_ENABLED, None, False),
+            (DeviceControlKey.TARGET_TEMP_SWITCH, None, False),
+            (DeviceControlKey.TARGET_HUMI_SWITCH, None, False),
+            (DeviceControlKey.VPD_HIGH_ENABLED, None, False),
+            (DeviceControlKey.VPD_LOW_ENABLED, None, False),
+            (DeviceControlKey.TARGET_VPD_SWITCH, None, False),
+            (DeviceControlKey.SCHEDULED_START_TIME, None, False),
+            (DeviceControlKey.SCHEDULED_END_TIME, None, False),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -129,11 +129,11 @@ class TestSwitches:
             setting,
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
 
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         assert entity.is_on == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -165,7 +165,7 @@ class TestSwitches:
 
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         assert entity.is_on == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -173,17 +173,17 @@ class TestSwitches:
         "setting,expected",
         [
             # enabled
-            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1),
-            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1),
-            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 1),
-            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 1),
-            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 1),
-            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 1),
-            (PortControlKey.VPD_HIGH_ENABLED, 1),
-            (PortControlKey.VPD_LOW_ENABLED, 1),
-            (PortControlKey.VPD_TARGET_ENABLED, 1),
-            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
-            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
+            (DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 1),
+            (DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED, 1),
+            (DeviceControlKey.AUTO_TEMP_HIGH_ENABLED, 1),
+            (DeviceControlKey.AUTO_TEMP_LOW_ENABLED, 1),
+            (DeviceControlKey.TARGET_TEMP_SWITCH, 1),
+            (DeviceControlKey.TARGET_HUMI_SWITCH, 1),
+            (DeviceControlKey.VPD_HIGH_ENABLED, 1),
+            (DeviceControlKey.VPD_LOW_ENABLED, 1),
+            (DeviceControlKey.TARGET_VPD_SWITCH, 1),
+            (DeviceControlKey.SCHEDULED_START_TIME, SCHEDULE_MIDNIGHT_VALUE),
+            (DeviceControlKey.SCHEDULED_END_TIME, SCHEDULE_EOD_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -202,11 +202,11 @@ class TestSwitches:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         await entity.async_turn_on()
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -233,28 +233,28 @@ class TestSwitches:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         await entity.async_turn_on()
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
         [
-            (PortControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0),
-            (PortControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0),
-            (PortControlKey.AUTO_TEMP_HIGH_ENABLED, 0),
-            (PortControlKey.AUTO_TEMP_LOW_ENABLED, 0),
-            (PortControlKey.AUTO_TARGET_TEMP_ENABLED, 0),
-            (PortControlKey.AUTO_TARGET_HUMIDITY_ENABLED, 0),
-            (PortControlKey.VPD_HIGH_ENABLED, 0),
-            (PortControlKey.VPD_LOW_ENABLED, 0),
-            (PortControlKey.VPD_TARGET_ENABLED, 0),
-            (PortControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
-            (PortControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
+            (DeviceControlKey.AUTO_HUMIDITY_HIGH_ENABLED, 0),
+            (DeviceControlKey.AUTO_HUMIDITY_LOW_ENABLED, 0),
+            (DeviceControlKey.AUTO_TEMP_HIGH_ENABLED, 0),
+            (DeviceControlKey.AUTO_TEMP_LOW_ENABLED, 0),
+            (DeviceControlKey.TARGET_TEMP_SWITCH, 0),
+            (DeviceControlKey.TARGET_HUMI_SWITCH, 0),
+            (DeviceControlKey.VPD_HIGH_ENABLED, 0),
+            (DeviceControlKey.VPD_LOW_ENABLED, 0),
+            (DeviceControlKey.TARGET_VPD_SWITCH, 0),
+            (DeviceControlKey.SCHEDULED_START_TIME, SCHEDULE_DISABLED_VALUE),
+            (DeviceControlKey.SCHEDULED_END_TIME, SCHEDULE_DISABLED_VALUE),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -273,11 +273,11 @@ class TestSwitches:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         await entity.async_turn_off()
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
@@ -301,10 +301,10 @@ class TestSwitches:
             setting,
         )
 
-        assert isinstance(entity, ACInfinityPortSwitchEntity)
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
         await entity.async_turn_off()
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()

@@ -7,10 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    DOMAIN,
-    AdvancedSettingsKey,
-    ControllerType,
-    PortControlKey,
+    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -19,9 +16,9 @@ from custom_components.ac_infinity.core import (
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
-    ACInfinityPort,
-    ACInfinityPortEntity,
-    ACInfinityPortReadWriteMixin, enabled_fn_setting, enabled_fn_control,
+    ACInfinityDevice,
+    ACInfinityDeviceEntity,
+    ACInfinityDeviceReadWriteMixin, enabled_fn_setting, enabled_fn_control,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,58 +41,90 @@ class ACInfinityControllerSelectEntityDescription(
 
 
 @dataclass(frozen=True)
-class ACInfinityPortSelectEntityDescription(
-    ACInfinitySelectEntityDescription, ACInfinityPortReadWriteMixin
+class ACInfinityDeviceSelectEntityDescription(
+    ACInfinitySelectEntityDescription, ACInfinityDeviceReadWriteMixin
 ):
     """Describes ACInfinity Select Port Entities."""
 
 
-MODE_OPTIONS = [
-    "Off",
-    "On",
-    "Auto",
-    "Timer to On",
-    "Timer to Off",
-    "Cycle",
-    "Schedule",
-    "VPD",
-]
-
-DYNAMIC_RESPONSE_OPTIONS = ["Transition", "Buffer"]
-
-OUTSIDE_CLIMATE_OPTIONS = ["Neutral", "Lower", "Higher"]
-
-DEVICE_LOAD_TYPE_OPTIONS = {
-    1: "Grow Light",
-    2: "Humidifier",
-    4: "Heater",
-    5: "AC",
-    6: "Fan",
+MODE_OPTIONS = {
+    AtType.OFF: "Off",
+    AtType.ON: "On",
+    AtType.AUTO: "Auto",
+    AtType.TIMER_TO_ON: "Timer to On",
+    AtType.TIMER_TO_OFF: "Timer to Off",
+    AtType.CYCLE: "Cycle",
+    AtType.SCHEDULE: "Schedule",
+    AtType.VPD: "VPD"
 }
+MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 
 SETTINGS_MODE_OPTIONS = [
     "Auto",
     "Target",
 ]
 
+DYNAMIC_RESPONSE_OPTIONS = {
+    0: "Transition",
+    1: "Buffer"
+}
+DYNAMIC_RESPONSE_OPTIONS_REVERSE = {v: k for k, v in DYNAMIC_RESPONSE_OPTIONS.items()}
+
+OUTSIDE_CLIMATE_OPTIONS = {
+    0: "Neutral",
+    1: "Lower",
+    2: "Higher"
+}
+OUTSIDE_CLIMATE_OPTIONS_REVERSE = {v: k for k, v in OUTSIDE_CLIMATE_OPTIONS.items()}
+
+STANDARD_DEVICE_LOAD_TYPE_OPTIONS = {
+    0: "No Device Type",
+    1: "Grow Light",
+    2: "Humidifier",
+    3: "Dehumidifier",
+    4: "Heater",
+    5: "AC",
+    6: "Fan",
+    8: "Water Pump"
+}
+STANDARD_DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in STANDARD_DEVICE_LOAD_TYPE_OPTIONS.items()}
+
+AI_DEVICE_LOAD_TYPE_OPTIONS = {
+    128: "Outlet",
+    129: "Grow Light",
+    130: "Humidifier",
+    131: "Dehumidifier",
+    132: "Heater",
+    133: "AC",
+    134: "Circulation Fan",
+    135: "Ventilation Fan",
+    136: "Peristaltic Pump",
+    137: "Water Pump",
+    138: "CO2 Regulator"
+}
+AI_DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in AI_DEVICE_LOAD_TYPE_OPTIONS.items()}
+
+DEVICE_LOAD_TYPE_OPTIONS = STANDARD_DEVICE_LOAD_TYPE_OPTIONS | AI_DEVICE_LOAD_TYPE_OPTIONS
+DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in DEVICE_LOAD_TYPE_OPTIONS.items()}
+
 
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_setting_exists(
-        controller.device_id, entity.data_key
+    return not controller.is_ai_controller and entity.ac_infinity.get_controller_setting_exists(
+        controller.controller_id, entity.data_key
     )
 
 
-def __suitable_fn_port_control_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_control_exists(
-        port.controller.device_id, port.port_index, entity.data_key
+def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return entity.ac_infinity.get_device_control_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
-def __suitable_fn_port_setting_default(entity: ACInfinityEntity, port: ACInfinityPort):
-    return entity.ac_infinity.get_port_setting_exists(
-        port.controller.device_id, port.port_index, entity.data_key
+def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
+        device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
@@ -104,117 +133,118 @@ def __get_value_fn_outside_climate(
 ):
     return OUTSIDE_CLIMATE_OPTIONS[
         entity.ac_infinity.get_controller_setting(
-            controller.device_id, entity.data_key, 0
+            controller.controller_id, entity.data_key, 0
         )
     ]
 
 
-def __get_value_fn_setting_mode(entity: ACInfinityEntity, port: ACInfinityPort):
-    return SETTINGS_MODE_OPTIONS[
-        entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, entity.data_key, 0
-        )
-    ]
-
-
-def __get_value_fn_active_mode(entity: ACInfinityEntity, port: ACInfinityPort):
+def __get_value_fn_active_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
     return MODE_OPTIONS[
-        # data is 1 based.  Adjust to 0 based enum by subtracting 1
-        entity.ac_infinity.get_port_control(
-            port.controller.device_id, port.port_index, PortControlKey.AT_TYPE, 1
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 1
         )
-        - 1
     ]
 
 
 def __get_value_fn_dynamic_response_type(
-    entity: ACInfinityEntity, port: ACInfinityPort
+    entity: ACInfinityEntity, device: ACInfinityDevice
 ):
     return DYNAMIC_RESPONSE_OPTIONS[
-        entity.ac_infinity.get_port_setting(
-            port.controller.device_id,
-            port.port_index,
+        entity.ac_infinity.get_device_setting(
+            device.controller.controller_id,
+            device.device_port,
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
             0,
         )
     ]
 
 
-def __get_value_fn_device_load_type(entity: ACInfinityEntity, port: ACInfinityPort):
-    value = entity.ac_infinity.get_port_setting(
-        port.controller.device_id,
-        port.port_index,
-        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        1,
-    )
-
-    return DEVICE_LOAD_TYPE_OPTIONS.get(value, "Unknown Device Type")
+def __get_value_fn_device_load_type(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return DEVICE_LOAD_TYPE_OPTIONS[
+        entity.ac_infinity.get_device_setting(
+            device.controller.controller_id,
+            device.device_port,
+            AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+            1,
+        )
+    ]
 
 
 def __set_value_fn_outside_climate(
     entity: ACInfinityEntity, controller: ACInfinityController, value: str
 ):
+    if value not in OUTSIDE_CLIMATE_OPTIONS.values():
+        raise ValueError(f"Invalid outside climate: {value}")
+
     return entity.ac_infinity.update_controller_setting(
-        controller.device_id,
+        controller,
         entity.data_key,
-        OUTSIDE_CLIMATE_OPTIONS.index(value),
+        OUTSIDE_CLIMATE_OPTIONS_REVERSE[value],
     )
 
 
-def __set_value_fn_setting_mode(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+def __set_value_fn_active_mode(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
-    return entity.ac_infinity.update_port_control(
-        port.controller.device_id,
-        port.port_index,
+    if value not in MODE_OPTIONS.values():
+        raise ValueError(f"Invalid mode: {value}")
+
+    return entity.ac_infinity.update_device_control(
+        device,
+        DeviceControlKey.AT_TYPE,
+        MODE_OPTIONS_REVERSE[value],
+    )
+
+
+def __get_value_fn_setting_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return SETTINGS_MODE_OPTIONS[
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id, device.device_port, entity.data_key, 0
+        )
+    ]
+
+
+def __set_value_fn_setting_mode(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
+):
+    return entity.ac_infinity.update_device_control(
+        device,
         entity.data_key,
         SETTINGS_MODE_OPTIONS.index(value),
     )
 
 
-def __set_value_fn_active_mode(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: str
-):
-    return entity.ac_infinity.update_port_control(
-        port.controller.device_id,
-        port.port_index,
-        PortControlKey.AT_TYPE,
-        # data is 1 based.  Adjust from 0 based enum by adding 1
-        MODE_OPTIONS.index(value) + 1,
-    )
-
-
 def __set_value_fn_dynamic_response_type(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
-    return entity.ac_infinity.update_port_setting(
-        port.controller.device_id,
-        port.port_index,
+    if value not in DYNAMIC_RESPONSE_OPTIONS.values():
+        raise ValueError(f"Invalid dynamic response type: {value}")
+
+    return entity.ac_infinity.update_device_setting(
+        device,
         AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
-        DYNAMIC_RESPONSE_OPTIONS.index(value),
+        DYNAMIC_RESPONSE_OPTIONS_REVERSE[value],
     )
 
 
 def __set_value_fn_device_load_type(
-    entity: ACInfinityEntity, port: ACInfinityPort, value: str
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
 ):
-    for key, val in DEVICE_LOAD_TYPE_OPTIONS.items():
-        if val == value:
-            return entity.ac_infinity.update_port_setting(
-                port.controller.device_id,
-                port.port_index,
-                AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-                key,
-            )
+    if value not in DEVICE_LOAD_TYPE_OPTIONS.values():
+        raise ValueError(f"Invalid device load type: {value}")
 
-    raise ValueError(f"Unknown Device Type: {value}")
+    return entity.ac_infinity.update_device_setting(
+        device,
+        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
+        STANDARD_DEVICE_LOAD_TYPE_OPTIONS_REVERSE[value]
+    )
 
 
 CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(
         key=AdvancedSettingsKey.OUTSIDE_TEMP_COMPARE,
         translation_key="outside_climate_temperature",
-        options=OUTSIDE_CLIMATE_OPTIONS,
+        options=list(OUTSIDE_CLIMATE_OPTIONS.values()),
         suitable_fn=__suitable_fn_controller_setting_default,
         enabled_fn=enabled_fn_setting,
         get_value_fn=__get_value_fn_outside_climate,
@@ -223,7 +253,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ACInfinityControllerSelectEntityDescription(
         key=AdvancedSettingsKey.OUTSIDE_HUMIDITY_COMPARE,
         translation_key="outside_climate_humidity",
-        options=OUTSIDE_CLIMATE_OPTIONS,
+        options=list(OUTSIDE_CLIMATE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_controller_setting_default,
         get_value_fn=__get_value_fn_outside_climate,
@@ -231,51 +261,56 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSelectEntityDescription] = [
     ),
 ]
 
-PORT_DESCRIPTIONS: list[ACInfinityPortSelectEntityDescription] = [
-    ACInfinityPortSelectEntityDescription(
-        key=PortControlKey.AT_TYPE,
+DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.AT_TYPE,
         translation_key="active_mode",
-        options=MODE_OPTIONS,
+        options=list(MODE_OPTIONS.values()),
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+        at_type=None
     ),
-    ACInfinityPortSelectEntityDescription(
-        key=PortControlKey.AUTO_SETTINGS_MODE,
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.SETTING_MODE,
         translation_key="auto_settings_mode",
         options=SETTINGS_MODE_OPTIONS,
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
+        at_type=AtType.AUTO,
     ),
-    ACInfinityPortSelectEntityDescription(
-        key=PortControlKey.VPD_SETTINGS_MODE,
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.VPD_SETTING_MODE,
         translation_key="vpd_settings_mode",
         options=SETTINGS_MODE_OPTIONS,
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_port_control_default,
+        suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
+        at_type=AtType.VPD,
     ),
-    ACInfinityPortSelectEntityDescription(
+    ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         translation_key="device_load_type",
-        options=list(DEVICE_LOAD_TYPE_OPTIONS.values()),
+        options=list(STANDARD_DEVICE_LOAD_TYPE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_port_setting_default,
+        suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_device_load_type,
         set_value_fn=__set_value_fn_device_load_type,
+        at_type=None
     ),
-    ACInfinityPortSelectEntityDescription(
+    ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         translation_key="dynamic_response_type",
-        options=DYNAMIC_RESPONSE_OPTIONS,
+        options=list(DYNAMIC_RESPONSE_OPTIONS.values()),
         enabled_fn=enabled_fn_setting,
-        suitable_fn=__suitable_fn_port_setting_default,
+        suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
+        at_type=None
     ),
 ]
 
@@ -313,21 +348,21 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
         await self.coordinator.async_request_refresh()
 
 
-class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
-    entity_description: ACInfinityPortSelectEntityDescription
+class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
+    entity_description: ACInfinityDeviceSelectEntityDescription
 
     def __init__(
         self,
         coordinator: ACInfinityDataUpdateCoordinator,
-        description: ACInfinityPortSelectEntityDescription,
-        port: ACInfinityPort,
+        description: ACInfinityDeviceSelectEntityDescription,
+        device: ACInfinityDevice,
     ) -> None:
-        super().__init__(coordinator, port, description.enabled_fn, description.suitable_fn, description.key, Platform.SELECT)
+        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property
     def current_option(self) -> str | None:
-        return self.entity_description.get_value_fn(self, self.port)
+        return self.entity_description.get_value_fn(self, self.device_port)
 
     async def async_select_option(self, option: str) -> None:
         _LOGGER.info(
@@ -335,7 +370,7 @@ class ACInfinityPortSelectEntity(ACInfinityPortEntity, SelectEntity):
             self.unique_id,
             option,
         )
-        await self.entity_description.set_value_fn(self, self.port, option)
+        await self.entity_description.set_value_fn(self, self.device_port, option)
         await self.coordinator.async_request_refresh()
 
 
@@ -350,9 +385,6 @@ async def async_setup_entry(
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
-        if controller.device_type == ControllerType.UIS_89_AI_PLUS:
-            # controls and settings not yet supported for the AI controller
-            continue
 
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerSelectEntity(
@@ -360,11 +392,11 @@ async def async_setup_entry(
             )
             entities.append_if_suitable(controller_entity)
 
-        for port in controller.ports:
-            for port_description in PORT_DESCRIPTIONS:
-                port_entity = ACInfinityPortSelectEntity(
-                    coordinator, port_description, port
+        for device in controller.devices:
+            for device_description in DEVICE_DESCRIPTIONS:
+                device_entity = ACInfinityDeviceSelectEntity(
+                    coordinator, device_description, device
                 )
-                entities.append_if_suitable(port_entity)
+                entities.append_if_suitable(device_entity)
 
     add_entities_callback(entities)

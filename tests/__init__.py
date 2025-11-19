@@ -20,7 +20,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
     ACInfinityDataUpdateCoordinator,
     ACInfinityEntity,
-    ACInfinityPortEntity,
+    ACInfinityDeviceEntity,
     ACInfinitySensorEntity,
     ACInfinityService,
 )
@@ -33,8 +33,8 @@ from tests.data_models import (
     HOST,
     MAC_ADDR,
     PASSWORD,
-    PORT_CONTROLS_DATA,
-    PORT_PROPERTIES_DATA,
+    DEVICE_CONTROLS_DATA,
+    DEVICE_PROPERTIES_DATA,
     SENSOR_PROPERTIES_DATA, DEVICE_ID, AI_DEVICE_ID, CONFIG_ENTRY_DATA,
 )
 
@@ -88,7 +88,7 @@ async def execute_and_get_controller_entity(
 
 async def execute_and_get_device_entity(
     setup_fixture, async_setup_entry, port: int, data_key: str, mac_addr: str = MAC_ADDR
-) -> ACInfinityPortEntity:
+) -> ACInfinityDeviceEntity:
     test_objects: ACTestObjects = setup_fixture
 
     await async_setup_entry(
@@ -107,7 +107,7 @@ async def execute_and_get_device_entity(
     assert len(found) == 1
     entity = found[0]
 
-    assert isinstance(entity, ACInfinityPortEntity)
+    assert isinstance(entity, ACInfinityDeviceEntity)
     return entity
 
 
@@ -156,8 +156,8 @@ def setup_entity_mocks(mocker: MockFixture):
     ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
     ac_infinity._device_settings = DEVICE_SETTINGS_DATA
     ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
-    ac_infinity._port_properties = PORT_PROPERTIES_DATA
-    ac_infinity._port_controls = PORT_CONTROLS_DATA
+    ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+    ac_infinity._device_controls = DEVICE_CONTROLS_DATA
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
@@ -176,10 +176,10 @@ def setup_entity_mocks(mocker: MockFixture):
     coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
 
     port_control_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_control", return_value=future
+        ac_infinity, "update_device_control", return_value=future
     )
     port_control_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_controls", return_value=future
+        ac_infinity, "update_device_controls", return_value=future
     )
     controller_setting_set_mock = mocker.patch.object(
         ac_infinity, "update_controller_setting", return_value=future
@@ -188,10 +188,10 @@ def setup_entity_mocks(mocker: MockFixture):
         ac_infinity, "update_controller_settings", return_value=future
     )
     port_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_port_setting", return_value=future
+        ac_infinity, "update_device_setting", return_value=future
     )
     port_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_port_settings", return_value=future
+        ac_infinity, "update_device_settings", return_value=future
     )
     refresh_mock = mocker.patch.object(
         coordinator, "async_request_refresh", return_value=future

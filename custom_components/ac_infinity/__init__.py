@@ -146,20 +146,19 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                     device_name, device_id
                 )
 
+            new_data[ConfigurationKey.MODIFIED_AT] = datetime.now().isoformat()
+
+            hass.config_entries.async_update_entry(
+                config_entry,
+                data=new_data,
+                version=2
+            )
         except Exception as ex:
             _LOGGER.error("Failed to migrate config entry from v1 to v2: %s", ex)
             return False
         finally:
             await ac_infinity.close()
 
-        new_data[ConfigurationKey.MODIFIED_AT] = datetime.now().isoformat()
-
-        hass.config_entries.async_update_entry(
-            config_entry, 
-            data=new_data, 
-            version=2
-        )
-        
         _LOGGER.info("Successfully migrated config entry from version 1 to version 2")
 
     return True

@@ -8,11 +8,11 @@ from pytest_mock import MockFixture
 from custom_components.ac_infinity.const import (
     DOMAIN,
     AdvancedSettingsKey,
-    PortControlKey,
+    DeviceControlKey,
 )
 from custom_components.ac_infinity.number import (
     ACInfinityControllerNumberEntity,
-    ACInfinityPortNumberEntity,
+    ACInfinityDeviceNumberEntity,
     async_setup_entry,
 )
 from tests import (
@@ -44,7 +44,7 @@ class TestNumbers:
         assert len(test_objects.entities._added_entities) == 91
 
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
+        "setting", [DeviceControlKey.OFF_SPEED, DeviceControlKey.ON_SPEED]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_entry_current_speed_created_for_each_port(
@@ -56,7 +56,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         assert entity.entity_description.device_class == NumberDeviceClass.POWER_FACTOR
         assert entity.entity_description.native_min_value == 0
@@ -66,7 +66,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED],
+        [DeviceControlKey.OFF_SPEED, DeviceControlKey.ON_SPEED],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     @pytest.mark.parametrize("value,expected", [(None, 0), (0, 0), (7, 7)])
@@ -79,15 +79,15 @@ class TestNumbers:
         entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.OFF_SPEED, PortControlKey.ON_SPEED]
+        "setting", [DeviceControlKey.OFF_SPEED, DeviceControlKey.ON_SPEED]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value(self, setup, setting, port):
@@ -100,17 +100,17 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(4)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, 4
+            entity._device, setting, 4
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key",
-        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
+        [DeviceControlKey.TIMER_DURATION_TO_ON, DeviceControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_timer_created_for_each_port(self, setup, key, port):
@@ -125,7 +125,7 @@ class TestNumbers:
 
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
+        [DeviceControlKey.TIMER_DURATION_TO_ON, DeviceControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize(
         "value,expected",
@@ -147,10 +147,10 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -160,7 +160,7 @@ class TestNumbers:
     )
     @pytest.mark.parametrize(
         "setting",
-        [PortControlKey.TIMER_DURATION_TO_ON, PortControlKey.TIMER_DURATION_TO_OFF],
+        [DeviceControlKey.TIMER_DURATION_TO_ON, DeviceControlKey.TIMER_DURATION_TO_OFF],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_timer(
@@ -176,20 +176,20 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(field_value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "key",
         [
-            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
-            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            PortControlKey.AUTO_TARGET_HUMIDITY,
+            DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -208,9 +208,9 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "key",
         [
-            PortControlKey.VPD_HIGH_TRIGGER,
-            PortControlKey.VPD_LOW_TRIGGER,
-            PortControlKey.VPD_TARGET,
+            DeviceControlKey.VPD_HIGH_TRIGGER,
+            DeviceControlKey.VPD_LOW_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -227,9 +227,9 @@ class TestNumbers:
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
-            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            PortControlKey.AUTO_TARGET_HUMIDITY,
+            DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize(
@@ -247,19 +247,19 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.VPD_LOW_TRIGGER,
-            PortControlKey.VPD_HIGH_TRIGGER,
-            PortControlKey.VPD_TARGET,
+            DeviceControlKey.VPD_LOW_TRIGGER,
+            DeviceControlKey.VPD_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize(
@@ -275,19 +275,19 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
-            PortControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
-            PortControlKey.AUTO_TARGET_HUMIDITY,
+            DeviceControlKey.AUTO_HUMIDITY_LOW_TRIGGER,
+            DeviceControlKey.AUTO_HUMIDITY_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_HUMI,
         ],
     )
     @pytest.mark.parametrize(
@@ -304,27 +304,27 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
         entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.VPD_LOW_TRIGGER,
-            PortControlKey.VPD_HIGH_TRIGGER,
-            PortControlKey.VPD_TARGET,
+            DeviceControlKey.VPD_LOW_TRIGGER,
+            DeviceControlKey.VPD_HIGH_TRIGGER,
+            DeviceControlKey.TARGET_VPD,
         ],
     )
     @pytest.mark.parametrize(
@@ -341,23 +341,23 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
         entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
-        "key", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
+        "key", [DeviceControlKey.CYCLE_DURATION_ON, DeviceControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_cycle_timer_created_for_each_port(
@@ -373,7 +373,7 @@ class TestNumbers:
         assert entity.device_info is not None
 
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
+        "setting", [DeviceControlKey.CYCLE_DURATION_ON, DeviceControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize(
         "value,expected",
@@ -395,10 +395,10 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -407,7 +407,7 @@ class TestNumbers:
         [(86400, 1440), (1440, 24), (0, 0)],  # minutes to seconds
     )
     @pytest.mark.parametrize(
-        "setting", [PortControlKey.CYCLE_DURATION_ON, PortControlKey.CYCLE_DURATION_OFF]
+        "setting", [DeviceControlKey.CYCLE_DURATION_ON, DeviceControlKey.CYCLE_DURATION_OFF]
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_cycle_timer(
@@ -423,20 +423,20 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(field_value)
 
         test_objects.port_control_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_called()
 
     @pytest.mark.parametrize(
         "setting",
         [
-            PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
-            PortControlKey.AUTO_TEMP_LOW_TRIGGER,
-            PortControlKey.AUTO_TARGET_TEMP,
+            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
+            DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
+            DeviceControlKey.TARGET_TEMP,
         ],
     )
     @pytest.mark.parametrize(
@@ -459,10 +459,10 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._port_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -474,14 +474,14 @@ class TestNumbers:
         "setting, f_setting",
         [
             (
-                PortControlKey.AUTO_TEMP_HIGH_TRIGGER,
-                PortControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
+                DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER,
+                DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
             ),
             (
-                PortControlKey.AUTO_TEMP_LOW_TRIGGER,
-                PortControlKey.AUTO_TEMP_LOW_TRIGGER_F,
+                DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,
+                DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
             ),
-            (PortControlKey.AUTO_TARGET_TEMP, PortControlKey.AUTO_TARGET_TEMP_F),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
         ],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -498,11 +498,11 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(c)
 
         test_objects.port_control_sets_mock.assert_called_with(
-            str(DEVICE_ID), port, [(setting, c), (f_setting, f)]
+            entity._device, {setting: c, f_setting: f}
         )
         test_objects.refresh_mock.assert_called()
 
@@ -620,19 +620,19 @@ class TestNumbers:
 
         if temp_unit > 0:
             test_objects.controller_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                [
-                    (AdvancedSettingsKey.CALIBRATE_TEMP, expected),
-                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, 0),
-                ],
+                entity._controller,
+                {
+                    AdvancedSettingsKey.CALIBRATE_TEMP: expected,
+                    AdvancedSettingsKey.CALIBRATE_TEMP_F: 0,
+                },
             )
         else:
             test_objects.controller_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                [
-                    (AdvancedSettingsKey.CALIBRATE_TEMP, 0),
-                    (AdvancedSettingsKey.CALIBRATE_TEMP_F, expected),
-                ],
+                entity._controller,
+                {
+                    AdvancedSettingsKey.CALIBRATE_TEMP: 0,
+                    AdvancedSettingsKey.CALIBRATE_TEMP_F: expected,
+                },
             )
         test_objects.refresh_mock.assert_called()
 
@@ -669,7 +669,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.controller_set_mock.assert_called_with(
-            str(DEVICE_ID),
+            entity._controller,
             (
                 AdvancedSettingsKey.VPD_LEAF_TEMP_OFFSET
                 if temp_unit > 0
@@ -700,7 +700,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.controller_set_mock.assert_called_with(
-            str(DEVICE_ID), AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
+            entity._controller, AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
         )
 
         test_objects.refresh_mock.assert_called()
@@ -729,7 +729,7 @@ class TestNumbers:
 
         assert entity.device_info is not None
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         assert entity.entity_description.device_class is None
         assert entity.entity_description.native_min_value == 0
@@ -757,7 +757,7 @@ class TestNumbers:
 
         assert entity.device_info is not None
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_port_{port}_{setting}"
         assert entity.entity_description.device_class is None
         assert entity.entity_description.native_step == step
@@ -799,7 +799,7 @@ class TestNumbers:
         ] = value
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == expected
         test_objects.write_ha_mock.assert_called()
 
@@ -849,26 +849,24 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         if temp_unit > 0:
             test_objects.port_setting_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                port,
-                [
-                    (setting, expected),
-                    (f_setting, f_expected),
-                ],
+                entity._device,
+                {
+                    setting: expected,
+                    f_setting: f_expected,
+                },
             )
         else:
             test_objects.port_setting_sets_mock.assert_called_with(
-                str(DEVICE_ID),
-                port,
-                [
-                    (setting, expected),
-                    (f_setting, f_expected),
-                ],
+                entity._device,
+                {
+                    setting: expected,
+                    f_setting: f_expected,
+                },
             )
         test_objects.refresh_mock.assert_called()
 
@@ -894,11 +892,11 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()
@@ -925,11 +923,11 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, setting, expected
+            entity._device, setting, expected
         )
 
         test_objects.refresh_mock.assert_called()
@@ -968,7 +966,7 @@ class TestNumbers:
         ] = 154
         entity._handle_coordinator_update()
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         assert entity.native_value == 154
         test_objects.write_ha_mock.assert_called()
 
@@ -984,10 +982,10 @@ class TestNumbers:
             setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         )
 
-        assert isinstance(entity, ACInfinityPortNumberEntity)
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(156)
 
         test_objects.port_setting_set_mock.assert_called_with(
-            str(DEVICE_ID), port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
+            entity._device, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
         )
         test_objects.refresh_mock.assert_called()

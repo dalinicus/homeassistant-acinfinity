@@ -74,10 +74,3 @@ You can enable or disable these entities as needed.  The following options are a
 New controllers added to the AC Infinity app will be added with `Sensors Only` by default during the next home assistant restart.
 
 Entities disabled after initial setup will no longer be provided by this integration, but will not be automatically removed from home assistant.  They can be cleaned up manually via `https://<your-ha-instance>/config/entities`.
-
-# Entities
-
-For more information on what entities are made available by this integration, please visit the appropriate page below for your controller.
-
-- [Smart Controllers (69 Series)](docs/SmartControllers.md)
-- [AI Controllers (89 Series)](docs/AIControllers.md)

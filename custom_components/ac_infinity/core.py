@@ -1021,7 +1021,7 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
         device: ACInfinityDevice,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityDevice], bool],
-        at_type: int | None,
+        at_type_fn: Callable[[int], bool] | None,
         data_key: str,
         platform: str,
     ):
@@ -1029,7 +1029,7 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
         self._device = device
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
-        self._at_type = at_type
+        self._at_type_fn = at_type_fn
 
     @property
     def unique_id(self) -> str:
@@ -1055,15 +1055,16 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def available(self) -> bool:
         """Returns true if the device is online and, if provided, the active mode matches the at_type filter"""
+        active_at_type = self.ac_infinity.get_device_control(
+            self._device.controller.controller_id,
+            self.device_port.device_port,
+            DeviceControlKey.AT_TYPE
+        )
         return super().available and self.ac_infinity.get_device_property(
             self._device.controller.controller_id,
             self.device_port.device_port,
             DevicePropertyKey.ONLINE
-        ) == 1 and (self._at_type is None or self.ac_infinity.get_device_control(
-            self._device.controller.controller_id,
-            self.device_port.device_port,
-            DeviceControlKey.AT_TYPE
-        ) == self._at_type)
+        ) == 1 and (self._at_type_fn is None or self._at_type_fn(active_at_type))
 
 
 @dataclass(frozen=True)
@@ -1111,10 +1112,10 @@ class ACInfinityDeviceReadOnlyMixin[T](ACInfinityBaseMixin):
 @dataclass(frozen=True)
 class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
     """Mixin for retrieving and updating values for port device level settings"""
-    at_type: int | None
-    """List of modes that the control is applicable for"""
     set_value_fn: Callable[[ACInfinityEntity, ACInfinityDevice, T], Awaitable[None]]
     """Input data object, device id, port number, and desired value."""
+    at_type_fn: Callable[[int], bool] | None
+    """Function that accepts the active at_type and returns True if the entity should be available for that mode"""
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):

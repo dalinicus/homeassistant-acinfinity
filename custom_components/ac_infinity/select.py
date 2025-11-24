@@ -270,7 +270,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
-        at_type=None
+        at_type_fn=lambda at_type: True
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=DeviceControlKey.SETTING_MODE,
@@ -280,7 +280,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
-        at_type=AtType.AUTO,
+        at_type_fn=lambda at_type: at_type == AtType.AUTO,
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=DeviceControlKey.VPD_SETTING_MODE,
@@ -290,7 +290,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_control_default,
         get_value_fn=__get_value_fn_setting_mode,
         set_value_fn=__set_value_fn_setting_mode,
-        at_type=AtType.VPD,
+        at_type_fn=lambda at_type: at_type == AtType.VPD,
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DEVICE_LOAD_TYPE,
@@ -300,7 +300,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_device_load_type,
         set_value_fn=__set_value_fn_device_load_type,
-        at_type=None
+        at_type_fn=lambda at_type: True
     ),
     ACInfinityDeviceSelectEntityDescription(
         key=AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
@@ -310,7 +310,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
-        at_type=None
+        at_type_fn=lambda at_type: True
     ),
 ]
 
@@ -357,7 +357,7 @@ class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
         description: ACInfinityDeviceSelectEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
-        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type, description.key, Platform.SELECT)
+        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SELECT)
         self.entity_description = description
 
     @property

@@ -1406,7 +1406,7 @@ class TestACInfinity:
     ):
         """Device entity availability should depend on both online status and at_type filter
 
-        Logic: available = super().available AND device_online AND (at_type is None OR at_type matches)
+        Logic: available = super().available AND device_online AND (at_type_fn is None OR at_type_fn(current_at_type) returns True)
         """
         from custom_components.ac_infinity.const import DevicePropertyKey, DeviceControlKey
         from custom_components.ac_infinity.sensor import ACInfinityDeviceSensorEntity, ACInfinityDeviceSensorEntityDescription
@@ -1430,6 +1430,12 @@ class TestACInfinity:
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         device = controller.devices[port - 1]
 
+        # Convert at_type_filter integer to lambda function
+        if at_type_filter is None:
+            at_type_fn = None
+        else:
+            at_type_fn = lambda at_type, filter_value=at_type_filter: at_type == filter_value
+
         # Create entity with at_type filter
         from custom_components.ac_infinity.core import ACInfinityDeviceEntity
         entity = ACInfinityDeviceEntity(
@@ -1437,7 +1443,7 @@ class TestACInfinity:
             device,
             lambda entry, device_id, entity_config_key: True,
             lambda e, d: True,
-            at_type_filter,
+            at_type_fn,
             DevicePropertyKey.SPEAK,
             "sensor",
         )

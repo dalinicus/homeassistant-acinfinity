@@ -1,0 +1,29 @@
+meta {
+  name: Timer To Off Mode
+  type: http
+}
+
+put {
+  url: http://www.acinfinityserver.com/api/dev/modeAndSetting?atType=5&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[16,20,21]&acitveTimerOn=0&acitveTimerOff=7200&surplus=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 5
+  devId: {{AI_DEVICE_ID}}
+  port: 1
+  modeAndSettingIdStr: [16,20,21]
+  acitveTimerOn: 0
+  acitveTimerOff: 7200
+  surplus: 0
+}
+
+headers {
+  minversion: 3.5
+  User-Agent: {{USER_AGENT}}
+}
+
+settings {
+  encodeUrl: true
+}

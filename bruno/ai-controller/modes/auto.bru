@@ -1,0 +1,36 @@
+meta {
+  name: Auto Mode
+  type: http
+}
+
+put {
+  url: http://www.acinfinityserver.com/api/dev/modeAndSetting?atType=3&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[112,16,19,32,98,99]&activeHh=1&activeHt=1&activeLh=1&activeLt=1&devHh=98&devHt=64&devHtf=147&devLh=7&devLt=6&devLtf=42
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 3
+  devId: {{AI_DEVICE_ID}}
+  port: 1
+  modeAndSettingIdStr: [112,16,19,32,98,99]
+  activeHh: 1
+  activeHt: 1
+  activeLh: 1
+  activeLt: 1
+  devHh: 98
+  devHt: 64
+  devHtf: 147
+  devLh: 7
+  devLt: 6
+  devLtf: 42
+}
+
+headers {
+  minversion: 3.5
+  User-Agent: {{USER_AGENT}}
+}
+
+settings {
+  encodeUrl: true
+}

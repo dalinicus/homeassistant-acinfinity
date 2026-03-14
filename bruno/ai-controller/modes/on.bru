@@ -1,0 +1,27 @@
+meta {
+  name: On Mode
+  type: http
+}
+
+put {
+  url: http://www.acinfinityserver.com/api/dev/modeAndSetting?atType=2&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[16,18]&onSpeed=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 2
+  devId: {{AI_DEVICE_ID}}
+  port: 1
+  modeAndSettingIdStr: [16,18]
+  onSpeed: 10
+}
+
+headers {
+  minversion: 3.5
+  User-Agent: {{USER_AGENT}}
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Cycle Mode
+  type: http
+}
+
+put {
+  url: http://www.acinfinityserver.com/api/dev/modeAndSetting?atType=6&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[16,22,23,40]&activeCycleOff=7200&activeCycleOn=7200&surplus=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 6
+  devId: {{AI_DEVICE_ID}}
+  port: 1
+  modeAndSettingIdStr: [16,22,23,40]
+  activeCycleOff: 7200
+  activeCycleOn: 7200
+  surplus: 0
+}
+
+headers {
+  minversion: 3.5
+  User-Agent: {{USER_AGENT}}
+}
+
+settings {
+  encodeUrl: true
+}

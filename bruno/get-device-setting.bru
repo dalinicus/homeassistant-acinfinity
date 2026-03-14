@@ -1,0 +1,19 @@
+meta {
+  name: Get Device Setting
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/dev/getDevSetting
+  body: formUrlEncoded
+  auth: inherit
+}
+
+body:form-urlencoded {
+  devId: {{DEVICE_ID}}
+  port: 1
+}
+
+settings {
+  encodeUrl: true
+}

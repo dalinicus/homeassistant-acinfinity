@@ -1,0 +1,18 @@
+meta {
+  name: Get Devices List
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/user/devInfoListAll
+  body: formUrlEncoded
+  auth: inherit
+}
+
+body:form-urlencoded {
+  userId: {{USER_ID}}
+}
+
+settings {
+  encodeUrl: true
+}

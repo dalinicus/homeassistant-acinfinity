@@ -1,0 +1,30 @@
+meta {
+  name: Cycle Mode
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/dev/addDevMode?atType=6&devId={{DEVICE_ID}}&externalPort=1&activeCycleOff=7200&activeCycleOn=7200&surplus=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 6
+  devId: {{DEVICE_ID}}
+  externalPort: 1
+  activeCycleOff: 7200
+  activeCycleOn: 7200
+  surplus: 0
+}
+
+body:form-urlencoded {
+  atType: 1
+  devId: {{DEVICE_ID}}
+  offSpead: 0
+  port: 1
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,28 @@
+meta {
+  name: VPD Mode
+  type: http
+}
+
+put {
+  url: http://www.acinfinityserver.com/api/dev/modeAndSetting?atType=7&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[16,81,32,98,99]&schedStartTime=120&schedEndtTime=350
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 7
+  devId: {{AI_DEVICE_ID}}
+  port: 1
+  modeAndSettingIdStr: [16,81,32,98,99]
+  schedStartTime: 120
+  schedEndtTime: 350
+}
+
+headers {
+  minversion: 3.5
+  User-Agent: {{USER_AGENT}}
+}
+
+settings {
+  encodeUrl: true
+}

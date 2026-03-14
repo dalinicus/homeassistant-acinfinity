@@ -1,0 +1,19 @@
+meta {
+  name: Login
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/user/appUserLogin
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  appEmail: {{EMAIL}}
+  appPasswordl: {{PASSWORD}}
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Get Device Mode Setting List
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/dev/getdevModeSettingList?port=1&devId={{DEVICE_ID}}
+  body: formUrlEncoded
+  auth: inherit
+}
+
+params:query {
+  port: 1
+  devId: {{DEVICE_ID}}
+}
+
+headers {
+  minversion: 3.5
+}
+
+body:form-urlencoded {
+  userId: {{USER_ID}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

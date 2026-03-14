@@ -1,0 +1,30 @@
+meta {
+  name: Timer To Off Mode
+  type: http
+}
+
+post {
+  url: http://www.acinfinityserver.com/api/dev/addDevMode?atType=5&devId=1424979258063363107&externalPort=1&acitveTimerOn=0&acitveTimerOff=7200&surplus=0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  atType: 5
+  devId: 1424979258063363107
+  externalPort: 1
+  acitveTimerOn: 0
+  acitveTimerOff: 7200
+  surplus: 0
+}
+
+body:form-urlencoded {
+  atType: 1
+  devId: 1424979258063363107
+  offSpead: 0
+  port: 1
+}
+
+settings {
+  encodeUrl: true
+}

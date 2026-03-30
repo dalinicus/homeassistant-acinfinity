@@ -8,8 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-python@v4
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+        - uses: actions/setup-python@v5
           name: Setup Python
           with:
             python-version: 3.13
@@ -18,10 +20,17 @@ jobs:
         - name: install dependencies
           run: pip install --upgrade -r requirements.txt
         - name: Run Unit Tests
-          run: pytest --cov
+          run: pytest --cov=custom_components/ac_infinity --cov-report=xml --cov-report=term
         - name: Run Type Checks
           run: pyright
-        - name: Upload coverage reports to Codecov
-          uses: codecov/codecov-action@v3
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}
+        - name: SonarQube Scan
+          uses: SonarSource/sonarqube-scan-action@v5.2.0
+          env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        - name: SonarQube Quality Gate
+          uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+          timeout-minutes: 5
+          env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

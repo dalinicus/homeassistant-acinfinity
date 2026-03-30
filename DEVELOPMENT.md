@@ -279,8 +279,8 @@ async def test_entity_value(setup):
 ### Running Tests
 
 ```bash
-# Run all tests with coverage
-pytest --cov
+# Run all tests with coverage XML report (used by SonarQube)
+pytest --cov=custom_components/ac_infinity --cov-report=xml --cov-report=term
 
 # Run specific test file
 pytest tests/test_sensor.py -v
@@ -306,9 +306,8 @@ pytest -v
 ### CI/CD
 
 GitHub Actions runs:
-- `pytest --cov` for testing
-- `ruff check` for linting
-- `mypy` for type checking
-- Coverage reporting
+- `pytest --cov=custom_components/ac_infinity --cov-report=xml --cov-report=term` for testing and coverage collection
+- SonarQube scan for static analysis
+- SonarQube quality gate to block PRs when conditions are not met
 
 Access Home Assistant at `http://localhost:8123`

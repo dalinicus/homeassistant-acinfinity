@@ -1,8 +1,8 @@
 # homeassistant-acinfinity
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-
-[![codecov](https://codecov.io/gh/dalinicus/homeassistant-acinfinity/graph/badge.svg?token=C4TMDAU344)](https://codecov.io/gh/dalinicus/homeassistant-acinfinity)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=dalinicus_homeassistant-acinfinity&metric=coverage)](https://sonarcloud.io/summary/new_code?id=dalinicus_homeassistant-acinfinity)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=dalinicus_homeassistant-acinfinity&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=dalinicus_homeassistant-acinfinity)
 [![Tests](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/tests.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/tests.yaml)
 
 [![HACS/HASS](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/validate.yaml/badge.svg)](https://github.com/dalinicus/homeassistant-acinfinity/actions/workflows/validate.yaml)

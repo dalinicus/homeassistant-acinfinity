@@ -151,6 +151,7 @@ PROBE_ACCESS_PORT = 1
 CO2_LIGHT_ACCESS_PORT = 2
 SOIL_SENSOR_PORT = 3
 WATER_SENSOR_PORT = 4
+HYDRO_SENSOR_PORT = 5
 CONTROLLER_ACCESS_PORT = 7
 UNKNOWN_ACCESS_PORT = 22
 
@@ -260,6 +261,69 @@ SENSOR_PROPERTY_WATER = {
     "sensorTrend": 1,
     "accessPort": WATER_SENSOR_PORT,
     "sensorData": 1,
+}
+
+SENSOR_PROPERTY_HYDRO_PH = {
+    "sensorType": SensorType.HYDRO_PH,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 576,
+}
+
+SENSOR_PROPERTY_HYDRO_EC_US = {
+    "sensorType": SensorType.HYDRO_EC_US,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 0,
+}
+
+SENSOR_PROPERTY_HYDRO_EC_MS = {
+    "sensorType": SensorType.HYDRO_EC_MS,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 0,
+}
+
+SENSOR_PROPERTY_HYDRO_TDS_PPM = {
+    "sensorType": SensorType.HYDRO_TDS_PPM,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 0,
+}
+
+SENSOR_PROPERTY_HYDRO_TDS_PPT = {
+    "sensorType": SensorType.HYDRO_TDS_PPT,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 0,
+}
+
+SENSOR_PROPERTY_HYDRO_WATER_TEMP_F = {
+    "sensorType": SensorType.HYDRO_WATER_TEMPERATURE_F,
+    "sensorUnit": 0,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 7394,
+}
+
+SENSOR_PROPERTY_HYDRO_WATER_TEMP_C = {
+    "sensorType": SensorType.HYDRO_WATER_TEMPERATURE_C,
+    "sensorUnit": 1,
+    "sensorPrecision": 3,
+    "sensorTrend": 0,
+    "accessPort": HYDRO_SENSOR_PORT,
+    "sensorData": 2330,
 }
 
 SENSOR_PROPERTY_UNKNOWN = {
@@ -396,6 +460,13 @@ AI_CONTROLLER_PROPERTIES = {
             SENSOR_PROPERTY_LIGHT,
             SENSOR_PROPERTY_SOIL,
             SENSOR_PROPERTY_WATER,
+            SENSOR_PROPERTY_HYDRO_PH,
+            SENSOR_PROPERTY_HYDRO_EC_US,
+            SENSOR_PROPERTY_HYDRO_EC_MS,
+            SENSOR_PROPERTY_HYDRO_TDS_PPM,
+            SENSOR_PROPERTY_HYDRO_TDS_PPT,
+            SENSOR_PROPERTY_HYDRO_WATER_TEMP_F,
+            SENSOR_PROPERTY_HYDRO_WATER_TEMP_C,
             SENSOR_PROPERTY_UNKNOWN,
         ],
         "sensorCalibrationState": [
@@ -790,6 +861,10 @@ SENSOR_PROPERTIES_DATA = {
     (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.LIGHT): SENSOR_PROPERTY_LIGHT,
     (str(AI_DEVICE_ID), SOIL_SENSOR_PORT, SensorType.SOIL): SENSOR_PROPERTY_SOIL,
     (str(AI_DEVICE_ID), WATER_SENSOR_PORT, SensorType.WATER): SENSOR_PROPERTY_WATER,
+    (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_PH): SENSOR_PROPERTY_HYDRO_PH,
+    (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_US): SENSOR_PROPERTY_HYDRO_EC_US,
+    (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPM): SENSOR_PROPERTY_HYDRO_TDS_PPM,
+    (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F): SENSOR_PROPERTY_HYDRO_WATER_TEMP_F,
     (str(AI_DEVICE_ID), UNKNOWN_ACCESS_PORT, 999): SENSOR_PROPERTY_UNKNOWN,
 }
 

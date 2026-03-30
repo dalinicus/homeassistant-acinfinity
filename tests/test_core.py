@@ -460,8 +460,8 @@ class TestACInfinity:
         """controller.sensors property should return all sensors for AI controllers"""
         controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
 
-        # AI controller has 13 sensors in test data (including unknown sensor type)
-        assert len(controller.sensors) == 13
+        # AI controller has 20 sensors in test data (including unknown sensor type)
+        assert len(controller.sensors) == 20
 
         # Verify sensor types are correctly parsed
         sensor_types = [sensor.sensor_type for sensor in controller.sensors]
@@ -477,6 +477,13 @@ class TestACInfinity:
         assert SensorType.LIGHT in sensor_types
         assert SensorType.SOIL in sensor_types
         assert SensorType.WATER in sensor_types
+        assert SensorType.HYDRO_PH in sensor_types
+        assert SensorType.HYDRO_EC_US in sensor_types
+        assert SensorType.HYDRO_EC_MS in sensor_types
+        assert SensorType.HYDRO_TDS_PPM in sensor_types
+        assert SensorType.HYDRO_TDS_PPT in sensor_types
+        assert SensorType.HYDRO_WATER_TEMPERATURE_F in sensor_types
+        assert SensorType.HYDRO_WATER_TEMPERATURE_C in sensor_types
         assert 999 in sensor_types  # Unknown sensor type
 
         # Verify each sensor has the correct controller reference

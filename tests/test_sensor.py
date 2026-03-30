@@ -1,4 +1,5 @@
 from datetime import datetime
+import copy
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -7,6 +8,8 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    Platform,
+    UnitOfConductivity,
     UnitOfPressure,
     UnitOfTemperature,
 )
@@ -40,10 +43,17 @@ from tests.data_models import (
     CO2_LIGHT_ACCESS_PORT,
     CONTROLLER_ACCESS_PORT,
     DEVICE_ID,
+    HYDRO_SENSOR_PORT,
     MAC_ADDR,
     PROBE_ACCESS_PORT,
     SENSOR_PROPERTY_CONTROLLER_TEMP_C,
     SENSOR_PROPERTY_CONTROLLER_TEMP_F,
+    SENSOR_PROPERTY_HYDRO_EC_MS,
+    SENSOR_PROPERTY_HYDRO_EC_US,
+    SENSOR_PROPERTY_HYDRO_TDS_PPM,
+    SENSOR_PROPERTY_HYDRO_TDS_PPT,
+    SENSOR_PROPERTY_HYDRO_WATER_TEMP_C,
+    SENSOR_PROPERTY_HYDRO_WATER_TEMP_F,
     SENSOR_PROPERTY_PROBE_TEMP_C,
     SENSOR_PROPERTY_PROBE_TEMP_F,
     SOIL_SENSOR_PORT,
@@ -68,7 +78,7 @@ class TestSensors:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 28
+        assert len(test_objects.entities._added_entities) == 32
 
     async def test_async_setup_entry_temperature_created(self, setup):
         """Sensor for device reported temperature is created on setup for non-ai controllers"""
@@ -810,6 +820,309 @@ class TestSensors:
 
         test_objects.ac_infinity._sensor_properties[
             (str(AI_DEVICE_ID), SOIL_SENSOR_PORT, SensorType.SOIL)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_hydro_ph_created(self, setup):
+        """Sensor for hydro pH is created on setup"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_PH,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_PH}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.PH
+        assert entity.entity_description.native_unit_of_measurement is None
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (576, 5.76), (None, 0)])
+    async def test_async_update_ai_hydro_ph_value_correct(self, setup, value, expected):
+        """Reported pH value is scaled by precision"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_PH,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_PH)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_hydro_ec_us_created(self, setup):
+        """Sensor for hydro EC (µS/cm) is created when EC_US type is present"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_EC,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_EC}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.CONDUCTIVITY
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfConductivity.MICROSIEMENS_PER_CM
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_hydro_ec_ms_created(self, setup):
+        """Sensor for hydro EC (mS/cm) is created when EC_MS type is present instead of EC_US"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
+        test_objects.ac_infinity._sensor_properties.pop(
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_US), None
+        )
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_MS)
+        ] = SENSOR_PROPERTY_HYDRO_EC_MS
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_EC,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_EC}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.CONDUCTIVITY
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfConductivity.MILLISIEMENS_PER_CM
+        )
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (4460, 44.6), (None, 0)])
+    async def test_async_update_ai_hydro_ec_value_correct(self, setup, value, expected):
+        """Reported EC value is scaled by precision"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_EC,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_US)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_hydro_tds_ppm_created(self, setup):
+        """Sensor for hydro TDS (ppm) is created when TDS_PPM type is present"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_TDS,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_TDS}"
+        )
+        assert entity.entity_description.device_class is None
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == CONCENTRATION_PARTS_PER_MILLION
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_hydro_tds_ppt_created(self, setup):
+        """Sensor for hydro TDS (ppt) is created when TDS_PPT type is present instead of TDS_PPM"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
+        test_objects.ac_infinity._sensor_properties.pop(
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPM), None
+        )
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPT)
+        ] = SENSOR_PROPERTY_HYDRO_TDS_PPT
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_TDS,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_TDS}"
+        )
+        assert entity.entity_description.device_class is None
+        assert entity.entity_description.native_unit_of_measurement == "ppt"
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (148, 1.48), (None, 0)])
+    async def test_async_update_ai_hydro_tds_value_correct(self, setup, value, expected):
+        """Reported TDS value is scaled by precision"""
+
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_TDS,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPM)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    async def test_async_setup_entry_ai_hydro_water_temperature_f_created(self, setup):
+        """Sensor for hydro water temperature (F) is created when HYDRO_WATER_TEMPERATURE_F type is present"""
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_WATER_TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    async def test_async_setup_entry_ai_hydro_water_temperature_c_created(self, setup):
+        """Sensor for hydro water temperature (C) is created when HYDRO_WATER_TEMPERATURE_C type is present instead of F"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
+        test_objects.ac_infinity._sensor_properties.pop(
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F),
+            None,
+        )
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
+        ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_C
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
+        )
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert (
+            entity.unique_id
+            == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{HYDRO_SENSOR_PORT}_{SensorReferenceKey.HYDRO_WATER_TEMPERATURE}"
+        )
+        assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
+        assert (
+            entity.entity_description.native_unit_of_measurement
+            == UnitOfTemperature.CELSIUS
+        )
+        assert entity.device_info is not None
+
+    @pytest.mark.parametrize(
+        "value,expected", [(0, -17.78), (7394, 23.3), (None, -17.78)]
+    )
+    async def test_async_update_ai_hydro_water_temperature_f_value_correct(
+        self, setup, value, expected
+    ):
+        """Fahrenheit hydro water temperature is converted and reported as Celsius"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F)
+        ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_F
+        test_objects.ac_infinity._sensor_properties.pop(
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C),
+            None,
+        )
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F)
+        ][SensorPropertyKey.SENSOR_DATA] = value
+
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinitySensorSensorEntity)
+        assert entity.native_value == expected
+
+    @pytest.mark.parametrize("value,expected", [(0, 0), (2330, 23.3), (None, 0)])
+    async def test_async_update_ai_hydro_water_temperature_c_value_correct(
+        self, setup, value, expected
+    ):
+        """Celsius hydro water temperature is reported as-is"""
+
+        test_objects: ACTestObjects = setup
+        test_objects.ac_infinity._sensor_properties.pop(
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F),
+            None,
+        )
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
+        ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_C
+
+        entity = await execute_and_get_sensor_entity(
+            setup,
+            async_setup_entry,
+            HYDRO_SENSOR_PORT,
+            SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
+        )
+
+        test_objects.ac_infinity._sensor_properties[
+            (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
         entity._handle_coordinator_update()

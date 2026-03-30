@@ -247,6 +247,18 @@
       "soil_sensor": {
         "name": "Soil Moisture"
       },
+      "hydro_ph_sensor": {
+        "name": "pH"
+      },
+      "hydro_ec_sensor": {
+        "name": "EC"
+      },
+      "hydro_tds_sensor": {
+        "name": "TDS"
+      },
+      "hydro_water_temperature_sensor": {
+        "name": "Water Temperature"
+      },
       "current_power": {
         "name": "Current Power"
       },

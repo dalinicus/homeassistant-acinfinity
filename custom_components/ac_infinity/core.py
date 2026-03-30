@@ -210,6 +210,24 @@ class ACInfinitySensor:
                     model="UIS Soil Sensor (AC-SLS3)",
                 )
             case (
+                SensorType.HYDRO_PH
+                | SensorType.HYDRO_EC_US
+                | SensorType.HYDRO_EC_MS
+                | SensorType.HYDRO_TDS_PPM
+                | SensorType.HYDRO_TDS_PPT
+                | SensorType.HYDRO_WATER_TEMPERATURE_F
+                | SensorType.HYDRO_WATER_TEMPERATURE_C
+            ):
+                return DeviceInfo(
+                    identifiers={
+                        (DOMAIN, f"{controller.controller_id}_{sensor_port}_hds3")
+                    },
+                    name=f"{controller.controller_name} Hydro Sensor",
+                    manufacturer=MANUFACTURER,
+                    via_device=controller.identifier,
+                    model="UIS Hydro Sensor (AC-HDS3)",
+                )
+            case (
                 SensorType.CONTROLLER_TEMPERATURE_F
                 | SensorType.CONTROLLER_TEMPERATURE_C
                 | SensorType.CONTROLLER_HUMIDITY

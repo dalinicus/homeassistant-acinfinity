@@ -30,11 +30,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # Individual entity configuration option constants
-OPTION_ALL_ENTITIES = {"value": EntityConfigValue.All, "label": "Sensors, Controls, and Settings"}
-OPTION_SENSORS_AND_SETTINGS = {"value": EntityConfigValue.SensorsAndSettings, "label": "Sensors and Settings"}
-OPTION_SENSORS_AND_CONTROLS = {"value": EntityConfigValue.SensorsAndControls, "label": "Sensors and Controls"}
-OPTION_SENSORS_ONLY = {"value": EntityConfigValue.SensorsOnly, "label": "Sensors Only"}
-OPTION_DISABLE = {"value": EntityConfigValue.Disable, "label": "Disable"}
+OPTION_ALL_ENTITIES = {"value": EntityConfigValue.ALL, "label": "Sensors, Controls, and Settings"}
+OPTION_SENSORS_AND_SETTINGS = {"value": EntityConfigValue.SENSORS_AND_SETTINGS, "label": "Sensors and Settings"}
+OPTION_SENSORS_AND_CONTROLS = {"value": EntityConfigValue.SENSORS_AND_CONTROLS, "label": "Sensors and Controls"}
+OPTION_SENSORS_ONLY = {"value": EntityConfigValue.SENSORS_ONLY, "label": "Sensors Only"}
+OPTION_DISABLE = {"value": EntityConfigValue.DISABLE, "label": "Disable"}
 
 # Entity configuration option arrays
 ENTITY_CONFIG_OPTIONS_CONTROLLER = [
@@ -68,7 +68,7 @@ class ACInfinityFlowBase:
         """Get saved entity configuration value from config entry data."""
         if data is None:
             # ConfigFlow - we are setting the integration up for the first time.  Don't add excessive entities.
-            return EntityConfigValue.SensorsOnly
+            return EntityConfigValue.SENSORS_ONLY
 
         return (
             data[ConfigurationKey.ENTITIES][device_id][entity_config_key]

@@ -29,20 +29,20 @@ CONFIG_ENTRY_DATA = {
     ConfigurationKey.POLLING_INTERVAL: 10,
     ConfigurationKey.ENTITIES: {
         str(DEVICE_ID): {
-            "controller": EntityConfigValue.All,
-            "sensors": EntityConfigValue.All,
-            "port_1": EntityConfigValue.All,
-            "port_2": EntityConfigValue.All,
-            "port_3": EntityConfigValue.All,
-            "port_4": EntityConfigValue.All,
+            "controller": EntityConfigValue.ALL,
+            "sensors": EntityConfigValue.ALL,
+            "port_1": EntityConfigValue.ALL,
+            "port_2": EntityConfigValue.ALL,
+            "port_3": EntityConfigValue.ALL,
+            "port_4": EntityConfigValue.ALL,
         },
         str(AI_DEVICE_ID): {
-            "controller": EntityConfigValue.All,
-            "sensors": EntityConfigValue.All,
-            "port_1": EntityConfigValue.All,
-            "port_2": EntityConfigValue.All,
-            "port_3": EntityConfigValue.All,
-            "port_4": EntityConfigValue.All,
+            "controller": EntityConfigValue.ALL,
+            "sensors": EntityConfigValue.ALL,
+            "port_1": EntityConfigValue.ALL,
+            "port_2": EntityConfigValue.ALL,
+            "port_3": EntityConfigValue.ALL,
+            "port_4": EntityConfigValue.ALL,
         },
     }
 }

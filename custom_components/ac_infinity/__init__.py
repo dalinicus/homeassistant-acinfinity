@@ -75,12 +75,12 @@ async def __initialize_new_devices_if_any(
         port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         device_config = {
-            "controller": EntityConfigValue.SensorsOnly,
-            "sensors": EntityConfigValue.SensorsOnly,
+            "controller": EntityConfigValue.SENSORS_ONLY,
+            "sensors": EntityConfigValue.SENSORS_ONLY,
         }
 
         for i in range(1, port_count + 1):
-            device_config[f"port_{i}"] = EntityConfigValue.SensorsOnly
+            device_config[f"port_{i}"] = EntityConfigValue.SENSORS_ONLY
         
         entities_config[str(device_id)] = device_config
         
@@ -132,12 +132,12 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
 
                 device_config = {
-                    "controller": EntityConfigValue.SensorsAndSettings,
-                    "sensors": EntityConfigValue.SensorsOnly,
+                    "controller": EntityConfigValue.SENSORS_AND_SETTINGS,
+                    "sensors": EntityConfigValue.SENSORS_ONLY,
                 }
 
                 for i in range(1, port_count + 1):
-                    device_config[f"port_{i}"] = EntityConfigValue.All
+                    device_config[f"port_{i}"] = EntityConfigValue.ALL
 
                 new_data[ConfigurationKey.ENTITIES][str(device_id)] = device_config
 

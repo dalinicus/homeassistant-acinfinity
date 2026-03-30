@@ -213,12 +213,12 @@ class TestInit:
         # Verify device configuration structure
         for device_id in [DEVICE_ID, AI_DEVICE_ID]:
             device_config = entities_config[str(device_id)]
-            assert device_config["controller"] == EntityConfigValue.SensorsAndSettings
-            assert device_config["sensors"] == EntityConfigValue.SensorsOnly
-            assert device_config["port_1"] == EntityConfigValue.All
-            assert device_config["port_2"] == EntityConfigValue.All
-            assert device_config["port_3"] == EntityConfigValue.All
-            assert device_config["port_4"] == EntityConfigValue.All
+            assert device_config["controller"] == EntityConfigValue.SENSORS_AND_SETTINGS
+            assert device_config["sensors"] == EntityConfigValue.SENSORS_ONLY
+            assert device_config["port_1"] == EntityConfigValue.ALL
+            assert device_config["port_2"] == EntityConfigValue.ALL
+            assert device_config["port_3"] == EntityConfigValue.ALL
+            assert device_config["port_4"] == EntityConfigValue.ALL
 
         # Verify service methods were called
         mock_ac_infinity.refresh.assert_called_once()
@@ -399,19 +399,19 @@ class TestInit:
 
         # Verify first device (2 ports)
         device1_config = new_data[ConfigurationKey.ENTITIES][str(new_device_id_1)]
-        assert device1_config["controller"] == EntityConfigValue.SensorsOnly
-        assert device1_config["sensors"] == EntityConfigValue.SensorsOnly
-        assert device1_config["port_1"] == EntityConfigValue.SensorsOnly
-        assert device1_config["port_2"] == EntityConfigValue.SensorsOnly
+        assert device1_config["controller"] == EntityConfigValue.SENSORS_ONLY
+        assert device1_config["sensors"] == EntityConfigValue.SENSORS_ONLY
+        assert device1_config["port_1"] == EntityConfigValue.SENSORS_ONLY
+        assert device1_config["port_2"] == EntityConfigValue.SENSORS_ONLY
         assert "port_3" not in device1_config  # Should not have port_3
 
         # Verify second device (6 ports)
         device2_config = new_data[ConfigurationKey.ENTITIES][str(new_device_id_2)]
-        assert device2_config["controller"] == EntityConfigValue.SensorsOnly
-        assert device2_config["sensors"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_1"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_2"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_3"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_4"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_5"] == EntityConfigValue.SensorsOnly
-        assert device2_config["port_6"] == EntityConfigValue.SensorsOnly
+        assert device2_config["controller"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["sensors"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_1"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_2"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_3"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_4"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_5"] == EntityConfigValue.SENSORS_ONLY
+        assert device2_config["port_6"] == EntityConfigValue.SENSORS_ONLY

@@ -26,11 +26,11 @@ class ConfigurationKey:
 
 
 class EntityConfigValue:
-    All = "all"
-    SensorsAndSettings = "sensors_and_settings"
-    SensorsAndControls = "sensors_and_controls"
-    SensorsOnly = "sensors_only"
-    Disable = "disable"
+    ALL = "all"
+    SENSORS_AND_SETTINGS = "sensors_and_settings"
+    SENSORS_AND_CONTROLS = "sensors_and_controls"
+    SENSORS_ONLY = "sensors_only"
+    DISABLE = "disable"
 
 
 class CustomDevicePropertyKey:

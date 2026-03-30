@@ -27,16 +27,24 @@ jobs:
         run: python -m pip install --upgrade pip
       - name: Install dependencies
         run: pip install --upgrade -r requirements.txt
-      - name: Prepare Qodana coverage directory
-        run: mkdir -p .qodana/code-coverage
       - name: Run Unit Tests
-        run: pytest --cov=custom_components/ac_infinity --cov-report=xml:.qodana/code-coverage/coverage.xml --cov-report=term
+        run: |
+          mkdir -p .qodana/code-coverage
+          coverage run -m pytest
+          coverage xml -o .qodana/code-coverage/coverage.xml
       - name: Run Type Checks
         run: pyright
+      - name: Verify coverage report exists
+        run: |
+          test -f .qodana/code-coverage/coverage.xml
+          wc -c .qodana/code-coverage/coverage.xml
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qodana-coverage-data
+          path: .qodana/code-coverage
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.3
-        with:
-          args: --coverage-dir .qodana/code-coverage
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_810067939 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'

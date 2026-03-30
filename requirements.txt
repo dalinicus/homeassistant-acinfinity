@@ -5,8 +5,8 @@ DateTime
 async-timeout
 pytest
 pytest-mock
-pytest-cov
 pytest-asyncio
+coverage
 aioresponses
 aioresponses
 pyright

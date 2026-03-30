@@ -31,6 +31,8 @@ class MdiIcon:
     WAVES = "mdi:waves"
     POWER = "mdi:power"
     PH = "mdi:ph"
+    SINE_WAVE = "mdi:sine-wave"
+    WATER_OPACITY = "mdi:water-opacity"
 
 
 class ConfigurationKey:

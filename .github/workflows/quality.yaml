@@ -1,4 +1,4 @@
-name: Quality Gate
+name: Code Quality
 on:
   workflow_dispatch:
   pull_request:

@@ -4,14 +4,14 @@ meta {
 }
 
 post {
-  url: http://www.acinfinityserver.com/api/dev/addDevMode?atType=6&devId=1424979258063363107&externalPort=1&schedStartTime=120&schedEndtTime=350
+  url: http://www.acinfinityserver.com/api/dev/addDevMode?atType=6&devId={{DEVICE_ID}}&externalPort=1&schedStartTime=120&schedEndtTime=350
   body: none
   auth: inherit
 }
 
 params:query {
   atType: 6
-  devId: 1424979258063363107
+  devId: {{DEVICE_ID}}
   externalPort: 1
   schedStartTime: 120
   schedEndtTime: 350
@@ -19,7 +19,7 @@ params:query {
 
 body:form-urlencoded {
   atType: 1
-  devId: 1424979258063363107
+  devId: {{DEVICE_ID}}
   offSpead: 0
   port: 1
 }

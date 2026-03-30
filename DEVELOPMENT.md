@@ -50,8 +50,7 @@ The integration polls the AC Infinity cloud API and exposes device state, enviro
 ### IDE Configuration
 
 - Use VS Code with Python extension
-- Configure mypy for strict type checking
-- Enable ruff and black formatters
+- Configure pyright for type checking
 - Set up pytest for test running
 
 ### Bruno API Collection Setup
@@ -223,11 +222,9 @@ Note: Callback signatures vary by entity scope:
 
 ### Style Guidelines
 
-- **Quotes**: Single quotes preferred (`ruff Q000`)
-- **Linting**: `ruff` as primary linter with custom rules in `pyproject.toml`
-- **Formatting**: `black` for consistent formatting
-- **Type Hints**: Strict mypy checking with Python 3.13 type annotations
-- **Imports**: Organized and linted automatically
+- **Formatting**: Follow the existing code style in the repository
+- **Type Hints**: `pyright` checking with Python 3.13 type annotations
+- **Imports**: Keep imports organized and readable
 
 ### Naming Conventions
 

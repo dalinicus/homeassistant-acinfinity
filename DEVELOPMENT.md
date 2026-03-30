@@ -307,7 +307,7 @@ pytest -v
 
 GitHub Actions runs:
 - `pytest --cov=custom_components/ac_infinity --cov-report=xml --cov-report=term` for testing and coverage collection
-- SonarQube scan for static analysis
-- SonarQube quality gate to block PRs when conditions are not met
+- `pyright` for type checking
+- Qodana scan and quality gate to block PRs when conditions are not met
 
 Access Home Assistant at `http://localhost:8123`

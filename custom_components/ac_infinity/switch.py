@@ -47,9 +47,9 @@ class ACInfinitySwitchEntityDescription(SwitchEntityDescription):
     """Describes ACInfinity Switch Entities."""
 
     key: str
-    device_class: SwitchDeviceClass | None
-    icon: str | None
-    translation_key: str | None
+    device_class: SwitchDeviceClass | None = None
+    icon: str | None = None
+    translation_key: str | None = None
 
 
 @dataclass(frozen=True)

@@ -54,12 +54,16 @@ class ACInfinityClient:
         """returns true if the user id is set, false otherwise"""
         return True if self._user_id else False
 
+    def __ensure_logged_in(self) -> None:
+        """Raise when a request requires an authenticated client."""
+        if not self.is_logged_in():
+            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+
     async def get_account_controllers(self):
         """Obtains a list of controllers, including metadata and some sensor values.
         Does not include information related to settings.
         """
-        if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+        self.__ensure_logged_in()
 
         headers = self.__create_headers(use_auth_token=True)
         body = await self.__post(
@@ -75,8 +79,7 @@ class ACInfinityClient:
             controller_id: The parent controller id of the port
             device_port: The port on the controller of the settings list to grab
         """
-        if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+        self.__ensure_logged_in()
 
         headers = self.__create_headers(use_auth_token=True)
         body = await self.__post(
@@ -110,8 +113,7 @@ class ACInfinityClient:
             device_port: The port on the controller the device is plugged into
             key_values: The key value pairs of settings to set
         """
-        if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+        self.__ensure_logged_in()
 
         headers = self.__create_headers(use_auth_token=True)
         body = await self.__post(
@@ -139,8 +141,7 @@ class ACInfinityClient:
             device_name: The name of the device
             key_values: The key value pairs of settings to set
         """
-        if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+        self.__ensure_logged_in()
 
         headers = self.__create_headers(use_auth_token=True)
         body = await self.__post(
@@ -169,8 +170,7 @@ class ACInfinityClient:
             device_port: port of the device
             key_values: The key value pairs of settings to set
         """
-        if not self.is_logged_in():
-            raise ACInfinityClientCannotConnect("AC Infinity client is not logged in.")
+        self.__ensure_logged_in()
 
         headers = self.__create_headers(use_auth_token=True, use_min_version=True)
         body = await self.__post(

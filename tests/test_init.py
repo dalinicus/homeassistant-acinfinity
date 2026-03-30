@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import Future
+from copy import deepcopy
 from types import MappingProxyType
 from unittest.mock import AsyncMock, MagicMock
 
@@ -56,7 +57,7 @@ def setup(mocker: MockFixture):
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
-        data=CONFIG_ENTRY_DATA,
+        data=deepcopy(CONFIG_ENTRY_DATA),
         domain=DOMAIN,
         minor_version=0,
         source="",
@@ -279,7 +280,7 @@ class TestInit:
         # Create a version 2 config entry (current version)
         v2_config_entry = ConfigEntry(
             entry_id=ENTRY_ID,
-            data=CONFIG_ENTRY_DATA,  # Already has entity configuration
+            data=deepcopy(CONFIG_ENTRY_DATA),  # Already has entity configuration
             domain=DOMAIN,
             minor_version=0,
             source="",
@@ -310,7 +311,7 @@ class TestInit:
     async def test_initialize_new_devices_multiple_new_devices(self, mocker: MockFixture):
         """Test adding multiple new devices with different port counts during setup"""
         # Create a config entry with no existing devices
-        empty_data = CONFIG_ENTRY_DATA.copy()
+        empty_data = deepcopy(CONFIG_ENTRY_DATA)
         empty_data[ConfigurationKey.ENTITIES] = {}
 
         config_entry = ConfigEntry(

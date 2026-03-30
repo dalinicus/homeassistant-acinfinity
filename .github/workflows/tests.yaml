@@ -19,6 +19,8 @@ jobs:
           run: pip install --upgrade -r requirements.txt
         - name: Run Unit Tests
           run: pytest --cov
+        - name: Run Type Checks
+          run: pyright
         - name: Upload coverage reports to Codecov
           uses: codecov/codecov-action@v3
           with:

@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -14,6 +15,7 @@ from custom_components.ac_infinity.const import (
     DOMAIN,
     ControllerPropertyKey,
     DevicePropertyKey,
+    MdiIcon,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType,
@@ -42,9 +44,9 @@ class ACInfinityBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes ACInfinity Binary Sensor Entities."""
 
     key: str
-    device_class: BinarySensorDeviceClass | None
-    icon: str | None
-    translation_key: str | None
+    device_class: BinarySensorDeviceClass | None = None
+    icon: str | None = None
+    translation_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -92,7 +94,7 @@ def __get_value_fn_controller_property_default(
 
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
-):
+) -> Any:
     return entity.ac_infinity.get_device_property(
         device.controller.controller_id, device.device_port, entity.data_key, False
     )
@@ -130,7 +132,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerBinarySensorEntityDescription]
     ACInfinityControllerBinarySensorEntityDescription(
         key=ControllerPropertyKey.ONLINE,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        icon="mdi:power-plug",
+        icon=MdiIcon.POWER_PLUG,
         translation_key="controller_online",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
@@ -142,7 +144,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorBinarySensorEntityDescription] = 
     SensorType.WATER: ACInfinitySensorBinarySensorEntityDescription(
         key=SensorReferenceKey.WATER,
         device_class=BinarySensorDeviceClass.MOISTURE,
-        icon="mdi:waves",
+        icon=MdiIcon.WAVES,
         translation_key="water_sensor",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
@@ -154,7 +156,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceBinarySensorEntityDescription] = [
     ACInfinityDeviceBinarySensorEntityDescription(
         key=DevicePropertyKey.ONLINE,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        icon="mdi:power-plug",
+        icon=MdiIcon.POWER_PLUG,
         translation_key="port_online",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_device_property_default,
@@ -163,7 +165,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceBinarySensorEntityDescription] = [
     ACInfinityDeviceBinarySensorEntityDescription(
         key=DevicePropertyKey.STATE,
         device_class=BinarySensorDeviceClass.POWER,
-        icon="mdi:power",
+        icon=MdiIcon.POWER,
         translation_key="port_state",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_device_property_default,

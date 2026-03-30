@@ -49,8 +49,8 @@ class ACInfinityTimeEntityDescription(TimeEntityDescription):
     """Describes ACInfinity Time Entities."""
 
     key: str
-    icon: str | None
-    translation_key: str | None
+    icon: str | None = None
+    translation_key: str | None = None
 
 
 @dataclass(frozen=True)

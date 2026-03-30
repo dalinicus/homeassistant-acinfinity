@@ -13,7 +13,11 @@ from homeassistant.const import Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
+    AtType,
+    DOMAIN,
+    AdvancedSettingsKey,
+    DeviceControlKey,
+    MdiIcon,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -35,14 +39,14 @@ class ACInfinityNumberEntityDescription(NumberEntityDescription):
     """Describes ACInfinity Number Entities"""
 
     key: str
-    icon: str | None
-    translation_key: str | None
-    device_class: NumberDeviceClass | None
-    mode: NumberMode | None
-    native_max_value: float | None
-    native_min_value: float | None
-    native_step: float | None
-    native_unit_of_measurement: str | None
+    icon: str | None = None
+    translation_key: str | None = None
+    device_class: NumberDeviceClass | None = None
+    mode: NumberMode | None = None
+    native_max_value: float | None = None
+    native_min_value: float | None = None
+    native_step: float | None = None
+    native_unit_of_measurement: str | None = None
 
 
 @dataclass(frozen=True)
@@ -458,7 +462,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         native_min_value=-20,
         native_max_value=20,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="temperature_calibration",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -474,7 +478,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         native_min_value=-10,
         native_max_value=10,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="temperature_calibration",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -489,7 +493,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         native_min_value=-10,
         native_max_value=10,
         native_step=1,
-        icon="mdi:cloud-percent-outline",
+        icon=MdiIcon.CLOUD_PERCENT_OUTLINE,
         translation_key="humidity_calibration",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -505,7 +509,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         native_min_value=-20,
         native_max_value=20,
         native_step=1,
-        icon="mdi:leaf",
+        icon=MdiIcon.LEAF,
         translation_key="vpd_leaf_temperature_offset",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -521,7 +525,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerNumberEntityDescription] = [
         native_min_value=-10,
         native_max_value=10,
         native_step=1,
-        icon="mdi:leaf",
+        icon=MdiIcon.LEAF,
         translation_key="vpd_leaf_temperature_offset",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -539,7 +543,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:knob",
+        icon=MdiIcon.KNOB,
         translation_key="on_power",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -555,7 +559,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:knob",
+        icon=MdiIcon.KNOB,
         translation_key="off_power",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -571,7 +575,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:knob",
+        icon=MdiIcon.KNOB,
         translation_key="on_power",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -651,7 +655,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=9.9,
         native_step=0.1,
-        icon="mdi:water-thermometer-outline",
+        icon=MdiIcon.WATER_THERMOMETER_OUTLINE,
         translation_key="vpd_mode_low_trigger",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -667,7 +671,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=9.9,
         native_step=0.1,
-        icon="mdi:water-thermometer-outline",
+        icon=MdiIcon.WATER_THERMOMETER_OUTLINE,
         translation_key="vpd_mode_high_trigger",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -683,7 +687,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=9.9,
         native_step=0.1,
-        icon="mdi:water-thermometer-outline",
+        icon=MdiIcon.WATER_THERMOMETER_OUTLINE,
         translation_key="target_vpd",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -699,7 +703,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=100,
         native_step=1,
-        icon="mdi:water-percent",
+        icon=MdiIcon.WATER_PERCENT,
         translation_key="auto_mode_humidity_low_trigger",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -715,7 +719,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=100,
         native_step=1,
-        icon="mdi:water-percent",
+        icon=MdiIcon.WATER_PERCENT,
         translation_key="auto_mode_humidity_high_trigger",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -731,7 +735,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=100,
         native_step=1,
-        icon="mdi:water-percent",
+        icon=MdiIcon.WATER_PERCENT,
         translation_key="target_humidity",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_control,
@@ -796,7 +800,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=20,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="dynamic_transition_temp",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -813,7 +817,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="dynamic_transition_temp",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -829,7 +833,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:cloud-percent-outline",
+        icon=MdiIcon.CLOUD_PERCENT_OUTLINE,
         translation_key="dynamic_transition_humidity",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -845,7 +849,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=1,
         native_step=0.1,
-        icon="mdi:leaf",
+        icon=MdiIcon.LEAF,
         translation_key="dynamic_transition_vpd",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -862,7 +866,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=20,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="dynamic_buffer_temp",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -879,7 +883,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:thermometer-plus",
+        icon=MdiIcon.THERMOMETER_PLUS,
         translation_key="dynamic_buffer_temp",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -895,7 +899,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=10,
         native_step=1,
-        icon="mdi:cloud-percent-outline",
+        icon=MdiIcon.CLOUD_PERCENT_OUTLINE,
         translation_key="dynamic_buffer_humidity",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,
@@ -911,7 +915,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_min_value=0,
         native_max_value=1,
         native_step=0.1,
-        icon="mdi:leaf",
+        icon=MdiIcon.LEAF,
         translation_key="dynamic_buffer_vpd",
         native_unit_of_measurement=None,
         enabled_fn=enabled_fn_setting,

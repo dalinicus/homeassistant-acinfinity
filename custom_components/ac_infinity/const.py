@@ -17,6 +17,20 @@ HOST = "http://www.acinfinityserver.com"
 DEFAULT_POLLING_INTERVAL = 10
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
 
+class MdiIcon:
+    THERMOMETER_PLUS = "mdi:thermometer-plus"
+    CLOUD_PERCENT_OUTLINE = "mdi:cloud-percent-outline"
+    LEAF = "mdi:leaf"
+    KNOB = "mdi:knob"
+    WATER_THERMOMETER_OUTLINE = "mdi:water-thermometer-outline"
+    WATER_PERCENT = "mdi:water-percent"
+    WATER_THERMOMETER = "mdi:water-thermometer"
+    LIGHTBULB_ON_OUTLINE = "mdi:lightbulb-on-outline"
+    WATERING_CAN_OUTLINE = "mdi:watering-can-outline"
+    POWER_PLUG = "mdi:power-plug"
+    WAVES = "mdi:waves"
+    POWER = "mdi:power"
+
 
 class ConfigurationKey:
     POLLING_INTERVAL = "polling_interval"

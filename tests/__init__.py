@@ -2,9 +2,10 @@
 
 import asyncio
 from asyncio import Future
+from copy import deepcopy
 from types import MappingProxyType
 from typing import Union
-from unittest.mock import AsyncMock, MagicMock, NonCallableMagicMock
+from unittest.mock import AsyncMock, MagicMock, NonCallableMagicMock, PropertyMock
 
 from homeassistant.config_entries import ConfigEntries, ConfigEntry
 from homeassistant.const import CONF_EMAIL
@@ -161,7 +162,7 @@ def setup_entity_mocks(mocker: MockFixture):
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
-        data=CONFIG_ENTRY_DATA,
+        data=deepcopy(CONFIG_ENTRY_DATA),
         domain=DOMAIN,
         minor_version=0,
         source="",
@@ -214,9 +215,13 @@ def setup_entity_mocks(mocker: MockFixture):
     config_flow.hass = hass
 
     options_flow = OptionsFlow()
-    mocker.patch.object(OptionsFlow, "config_entry")
+    mocker.patch.object(
+        OptionsFlow,
+        "config_entry",
+        new_callable=PropertyMock,
+        return_value=config_entry,
+    )
     options_flow.hass = hass
-    options_flow.config_entry = config_entry
 
     return ACTestObjects(
         hass,

@@ -29,8 +29,8 @@ class ACInfinitySelectEntityDescription(SelectEntityDescription):
     """Describes ACInfinity Select Entities."""
 
     key: str
-    translation_key: str | None
-    options: list[str] | None
+    translation_key: str | None = None
+    options: list[str] | None = None
 
 
 @dataclass(frozen=True)

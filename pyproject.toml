@@ -96,9 +96,7 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.codespell]
 skip = "custom_components/ac_infinity/translations/*"
 
-[tool.mypy]
-python_version = "3.13"
-explicit_package_bases = true
-ignore_missing_imports = true
-check_untyped_defs = true
-files = "custom_components,tests"
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+include = ["custom_components", "tests"]

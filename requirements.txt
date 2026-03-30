@@ -12,6 +12,6 @@ black
 codespell
 ruff
 aioresponses
-mypy
+pyright
 python-dateutil
 freezegun

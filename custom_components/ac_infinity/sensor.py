@@ -39,6 +39,7 @@ from custom_components.ac_infinity.core import (
 
 from .const import (
     DOMAIN,
+    MdiIcon,
     ISSUE_URL,
     ControllerPropertyKey,
     CustomDevicePropertyKey,
@@ -56,12 +57,12 @@ class ACInfinitySensorEntityDescription(SensorEntityDescription):
     """Describes ACInfinity Number Sensor Entities."""
 
     key: str
-    icon: str | None
-    translation_key: str | None
-    device_class: SensorDeviceClass | None
-    native_unit_of_measurement: str | None
-    state_class: SensorStateClass | str | None
-    suggested_unit_of_measurement: str | None
+    icon: str | None = None
+    translation_key: str | None = None
+    device_class: SensorDeviceClass | None = None
+    native_unit_of_measurement: str | None = None
+    state_class: SensorStateClass | str | None = None
+    suggested_unit_of_measurement: str | None = None
 
 
 @dataclass(frozen=True)
@@ -264,7 +265,7 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPressure.KPA,
         suggested_unit_of_measurement=None,
-        icon="mdi:water-thermometer",
+        icon=MdiIcon.WATER_THERMOMETER,
         translation_key="vapor_pressure_deficit",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_controller_property_default,
@@ -315,7 +316,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPressure.KPA,
         suggested_unit_of_measurement=None,
-        icon="mdi:water-thermometer",
+        icon=MdiIcon.WATER_THERMOMETER,
         translation_key="probe_vapor_pressure_deficit",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
@@ -363,7 +364,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPressure.KPA,
         suggested_unit_of_measurement=None,
-        icon="mdi:water-thermometer",
+        icon=MdiIcon.WATER_THERMOMETER,
         translation_key="controller_vapor_pressure_deficit",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
@@ -387,7 +388,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         suggested_unit_of_measurement=None,
-        icon="mdi:lightbulb-on-outline",
+        icon=MdiIcon.LIGHTBULB_ON_OUTLINE,
         translation_key="light_sensor",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,
@@ -399,7 +400,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         suggested_unit_of_measurement=None,
-        icon="mdi:watering-can-outline",
+        icon=MdiIcon.WATERING_CAN_OUTLINE,
         translation_key="soil_sensor",
         enabled_fn=enabled_fn_sensor,
         suitable_fn=__suitable_fn_sensor_default,

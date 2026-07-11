@@ -1,3 +1,4 @@
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -26,10 +27,14 @@ from custom_components.ac_infinity.core import (
     ACInfinityEntity,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
-    ACInfinityDeviceReadWriteMixin, enabled_fn_control, enabled_fn_setting,
+    ACInfinityDeviceReadWriteMixin,
+    enabled_fn_control,
+    enabled_fn_setting,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+DYNAMIC_WIND_INDEX = 8
 
 
 @dataclass(frozen=True)
@@ -61,10 +66,36 @@ class ACInfinityDeviceSwitchEntityDescription(
     """Describes ACInfinity Switch Entities."""
 
 
+def _parse_port_param_data(value: Any) -> list[Any] | None:
+    """Parse the JSON-encoded port parameter list returned by the API."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (TypeError, json.JSONDecodeError):
+            return None
+
+    if not isinstance(value, list) or len(value) <= DYNAMIC_WIND_INDEX:
+        return None
+
+    return value
+
+
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
     return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
+
+
+def __suitable_fn_dynamic_wind(entity: ACInfinityEntity, device: ACInfinityDevice):
+    if device.controller.is_ai_controller:
+        return False
+
+    value = entity.ac_infinity.get_device_setting(
+        device.controller.controller_id,
+        device.device_port,
+        AdvancedSettingsKey.PORT_PARAM_DATA,
+    )
+    return _parse_port_param_data(value) is not None
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
@@ -83,6 +114,21 @@ def __get_value_fn_device_setting_default(entity: ACInfinityEntity, device: ACIn
     return entity.ac_infinity.get_device_setting(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
+
+
+def __get_value_fn_dynamic_wind(
+    entity: ACInfinityEntity, device: ACInfinityDevice
+) -> bool | None:
+    value = entity.ac_infinity.get_device_setting(
+        device.controller.controller_id,
+        device.device_port,
+        AdvancedSettingsKey.PORT_PARAM_DATA,
+    )
+    port_params = _parse_port_param_data(value)
+    if port_params is None:
+        return None
+
+    return port_params[DYNAMIC_WIND_INDEX] == 1
 
 
 def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinityDevice):
@@ -110,6 +156,34 @@ def __set_value_fn_device_setting_default(
 ):
     return entity.ac_infinity.update_device_setting(
         device, entity.data_key, value
+    )
+
+
+def __set_value_fn_dynamic_wind(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: int
+):
+    if value not in (0, 1):
+        raise ValueError(f"Invalid Dynamic Wind value: {value}")
+
+    raw_value = entity.ac_infinity.get_device_setting(
+        device.controller.controller_id,
+        device.device_port,
+        AdvancedSettingsKey.PORT_PARAM_DATA,
+    )
+    port_params = _parse_port_param_data(raw_value)
+    if port_params is None:
+        raise ValueError(f"Invalid portParamData: {raw_value!r}")
+
+    updated_params = list(port_params)
+    updated_params[DYNAMIC_WIND_INDEX] = value
+
+    # The API expects portParamData to remain a JSON-encoded string. Passing a
+    # raw list breaks the urlencoded updateAdvSetting request.
+    serialized_params: Any = json.dumps(updated_params, separators=(",", ":"))
+    return entity.ac_infinity.update_device_setting(
+        device,
+        AdvancedSettingsKey.PORT_PARAM_DATA,
+        serialized_params,
     )
 
 
@@ -269,6 +343,19 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
         at_type_fn=lambda at_type: True
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
+        key=AdvancedSettingsKey.PORT_PARAM_DATA,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon="mdi:weather-windy",
+        translation_key="dynamic_wind",
+        enabled_fn=enabled_fn_setting,
+        suitable_fn=__suitable_fn_dynamic_wind,
+        get_value_fn=__get_value_fn_dynamic_wind,
+        set_value_fn=__set_value_fn_dynamic_wind,
+        at_type_fn=lambda at_type: True,
     ),
 ]
 

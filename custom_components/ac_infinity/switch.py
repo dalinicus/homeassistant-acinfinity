@@ -74,7 +74,7 @@ def _parse_port_param_data(value: Any) -> list[Any] | None:
         except (TypeError, json.JSONDecodeError):
             return None
 
-    if not isinstance(value, list) or len(value) <= DYNAMIC_WIND_INDEX:
+    if not isinstance(value, list) or len(value) != DYNAMIC_WIND_INDEX + 1:
         return None
 
     return value
@@ -88,15 +88,6 @@ def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInf
 
 def __suitable_fn_dynamic_wind(entity: ACInfinityEntity, device: ACInfinityDevice):
     if device.controller.is_ai_controller:
-        return False
-
-    device_load_type = entity.ac_infinity.get_device_setting(
-        device.controller.controller_id,
-        device.device_port,
-        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        0,
-    )
-    if device_load_type != 6:
         return False
 
     value = entity.ac_infinity.get_device_setting(

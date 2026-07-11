@@ -14,7 +14,6 @@ PORT_PARAM_DATA_ON = "[0, 2, 1, 2, 19, 136, 2, 1, 1]"
 def _create_test_objects(
     port_param_data=PORT_PARAM_DATA_OFF,
     *,
-    load_type=6,
     is_ai_controller=False,
 ):
     controller = SimpleNamespace(
@@ -26,8 +25,6 @@ def _create_test_objects(
     service = Mock()
 
     def get_device_setting(_controller_id, _device_port, setting_key, default=None):
-        if setting_key == AdvancedSettingsKey.DEVICE_LOAD_TYPE:
-            return load_type
         if setting_key == AdvancedSettingsKey.PORT_PARAM_DATA:
             return port_param_data
         return default
@@ -43,13 +40,14 @@ def test_parse_port_param_data():
     assert switch_module._parse_port_param_data([0, 2, 1, 2, 19, 136, 2, 1, 0])[8] == 0
     assert switch_module._parse_port_param_data("not-json") is None
     assert switch_module._parse_port_param_data("[0, 1]") is None
+    assert switch_module._parse_port_param_data("[0,1,2,3,4,5,6,7,8,9]") is None
 
 
-def test_dynamic_wind_suitability():
+def test_dynamic_wind_suitability_uses_port_param_data():
     entity, device, _service = _create_test_objects()
     assert switch_module.__suitable_fn_dynamic_wind(entity, device)
 
-    entity, device, _service = _create_test_objects(load_type=1)
+    entity, device, _service = _create_test_objects("invalid")
     assert not switch_module.__suitable_fn_dynamic_wind(entity, device)
 
     entity, device, _service = _create_test_objects(is_ai_controller=True)

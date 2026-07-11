@@ -90,15 +90,6 @@ def __suitable_fn_dynamic_wind(entity: ACInfinityEntity, device: ACInfinityDevic
     if device.controller.is_ai_controller:
         return False
 
-    device_load_type = entity.ac_infinity.get_device_setting(
-        device.controller.controller_id,
-        device.device_port,
-        AdvancedSettingsKey.DEVICE_LOAD_TYPE,
-        0,
-    )
-    if device_load_type != 6:
-        return False
-
     value = entity.ac_infinity.get_device_setting(
         device.controller.controller_id,
         device.device_port,
@@ -202,7 +193,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="vpd_mode_high_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -215,7 +206,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="vpd_mode_low_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -228,7 +219,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="target_vpd_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -241,7 +232,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="auto_mode_temp_high_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -254,7 +245,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="auto_mode_temp_low_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -267,7 +258,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="target_temp_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -280,7 +271,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="auto_mode_humidity_high_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -293,7 +284,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="auto_mode_humidity_low_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -306,7 +297,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="target_humidity_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -319,7 +310,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_MIDNIGHT_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
-        icon=None,  # default
+        icon=None,
         translation_key="schedule_mode_on_time_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -332,7 +323,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=SCHEDULE_EOD_VALUE,
         off_value=SCHEDULE_DISABLED_VALUE,
-        icon=None,  # default
+        icon=None,
         translation_key="schedule_mode_off_time_enabled",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
@@ -345,13 +336,13 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         device_class=SwitchDeviceClass.SWITCH,
         on_value=1,
         off_value=0,
-        icon=None,  # default
+        icon=None,
         translation_key="sunrise_timer_enabled",
         enabled_fn=enabled_fn_setting,
         suitable_fn=__suitable_fn_device_setting_default,
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
-        at_type_fn=lambda at_type: True
+        at_type_fn=lambda at_type: True,
     ),
     ACInfinityDeviceSwitchEntityDescription(
         key=AdvancedSettingsKey.PORT_PARAM_DATA,

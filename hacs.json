@@ -1,5 +1,6 @@
 {
     "name": "AC Infinity",
+    "homeassistant": "2026.7.0",
     "render_readme": true,
     "zip_release": true,
     "filename": "ac_infinity.zip"

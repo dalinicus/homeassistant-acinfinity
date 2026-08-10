@@ -22,7 +22,10 @@ jobs:
       - uses: actions/setup-python@v5
         name: Setup Python
         with:
-          python-version: 3.13
+          # Home Assistant 2026.7+ requires Python >= 3.14.2, and requirements.txt
+          # installs `homeassistant` unpinned. On 3.13 pip resolves the newest HA
+          # that still supports 3.13 (2026.2.x), which predates UnitOfRatio.
+          python-version: "3.14"
       - name: Update pip
         run: python -m pip install --upgrade pip
       - name: Install dependencies

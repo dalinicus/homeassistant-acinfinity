@@ -124,6 +124,34 @@ class TestACInfinity:
             == "Grow Tent AI"
         )
 
+    async def test_refresh_fetches_each_port_only_once(self, mock_client):
+        """Port controls and port settings come from the same API response.  Fetching each
+        port twice doubles the refresh duration, which for accounts with many controllers
+        makes the refresh permanently exceed the coordinator update window."""
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_account_controllers.return_value = DEVICE_INFO_LIST_ALL
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        ac_infinity = ACInfinityService(mock_client)
+        await ac_infinity.refresh()
+
+        expected_calls = 0
+        for controller in DEVICE_INFO_LIST_ALL:
+            expected_calls += 1  # controller settings via port 0
+            expected_calls += len(
+                controller[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
+            )
+
+        assert mock_client.get_device_mode_settings.call_count == expected_calls
+
+        # both controls and settings are populated from the single fetch
+        for controller in DEVICE_INFO_LIST_ALL:
+            controller_id = controller[ControllerPropertyKey.DEVICE_ID]
+            for port in controller[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []:
+                device_port = port[DevicePropertyKey.PORT]
+                assert (controller_id, device_port) in ac_infinity._device_controls
+                assert (controller_id, device_port) in ac_infinity._device_settings
+
     async def test_update_retried_on_failure(self, mocker: MockFixture, mock_client):
         """update should be tried 5 times before raising an exception"""
         future: Future = asyncio.Future()

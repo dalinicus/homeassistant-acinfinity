@@ -8,7 +8,6 @@ from datetime import timedelta
 from typing import Any, Callable
 
 import aiohttp
-import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
@@ -625,13 +624,12 @@ class ACInfinityService:
                         # set port properties; current power and remaining time until a mode switch
                         self._device_properties[(controller_id, device_port)] = device_properties_json
 
-                        # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
+                        # retrieve and set port controls (current mode, temperature triggers, on/off speed, etc...)
+                        # and port settings (Dynamic Response, Transition values, Buffer values, etc..).
+                        # both come from the same response; fetching it twice doubles the refresh time.
                         device_controls_json = await self._client.get_device_mode_settings(controller_id, device_port)
                         self._device_controls[(controller_id, device_port)] = device_controls_json
-
-                        # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
-                        device_settings_json = await self._client.get_device_mode_settings(controller_id, device_port)
-                        self._device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
+                        self._device_settings[(controller_id, device_port)] = device_controls_json[DeviceControlKey.DEV_SETTING]
 
                 return  # update successful.  eject from the infinite while loop.
 
@@ -898,9 +896,13 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
         """Fetch data from the AC Infinity API"""
         _LOGGER.debug("Refreshing data from data update coordinator")
         try:
-            async with async_timeout.timeout(10):
-                await self._ac_infinity.refresh()
-                return self._ac_infinity
+            # No overall timeout here: refresh makes one request per controller plus one per
+            # port, each with its own 10 second timeout in the client.  A fixed overall
+            # timeout puts a hard ceiling on account size; accounts with more than a few
+            # controllers could never complete a refresh, permanently marking every
+            # entity unavailable.
+            await self._ac_infinity.refresh()
+            return self._ac_infinity
         except Exception as e:
             raise UpdateFailed from e
 

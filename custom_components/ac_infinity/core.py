@@ -321,21 +321,6 @@ class ACInfinityService:
 
     MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
-    # api/user/devInfoListAll json organized by controller device id
-    _controller_properties: dict[str, Any] = {}
-
-    # api/user/devInfoListAll json organized by controller device id, sensor access port index, and sensor type.
-    _sensor_properties: dict[tuple[str, int, int], Any] = {}
-
-    # api/user/devInfoListAll json organized by controller device id and port index
-    _device_properties: dict[tuple[str, int], Any] = {}
-
-    # api/dev/getDevModeSettingList json organized by controller device id and port index
-    _device_controls: dict[tuple[str, int], Any] = {}
-
-    # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
-    _device_settings: dict[tuple[str, int], Any] = {}
-
     def __init__(
         self, client: ACInfinityClient
     ) -> None:
@@ -344,6 +329,24 @@ class ACInfinityService:
             client: The http client to use to make requests to the AC Infinity API
         """
         self._client = client
+
+        # These caches are instance state on purpose; as class attributes they would be
+        # shared between config entries, bleeding data across accounts.
+
+        # api/user/devInfoListAll json organized by controller device id
+        self._controller_properties: dict[str, Any] = {}
+
+        # api/user/devInfoListAll json organized by controller device id, sensor access port index, and sensor type.
+        self._sensor_properties: dict[tuple[str, int, int], Any] = {}
+
+        # api/user/devInfoListAll json organized by controller device id and port index
+        self._device_properties: dict[tuple[str, int], Any] = {}
+
+        # api/dev/getDevModeSettingList json organized by controller device id and port index
+        self._device_controls: dict[tuple[str, int], Any] = {}
+
+        # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
+        self._device_settings: dict[tuple[str, int], Any] = {}
 
     def get_device_ids(self) -> list[str]:
         """
@@ -600,38 +603,52 @@ class ACInfinityService:
 
                 all_devices_json = await self._client.get_account_controllers()
                 for controller_properties_json in all_devices_json:
-                    controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
+                    controller_id = controller_properties_json.get(ControllerPropertyKey.DEVICE_ID)
+                    if controller_id is None:
+                        _LOGGER.warning("Skipping a controller with no device id in the devInfoListAll payload")
+                        continue
 
-                    # set controller properties; readings for temp, vpd, humidity, etc...
-                    self._controller_properties[str(controller_id)] = controller_properties_json
+                    # A single controller returning unexpected data must not fail the whole
+                    # refresh; e.g. devType 11 standalone fans report ports as null (#138).
+                    try:
+                        # set controller properties; readings for temp, vpd, humidity, etc...
+                        self._controller_properties[str(controller_id)] = controller_properties_json
 
-                    # retrieve and set controller settings; temperature, humidity, and vpd offsets
-                    controller_settings_json = await self._client.get_device_mode_settings(controller_id, 0)
-                    self._device_settings[(controller_id, 0)] = controller_settings_json[DeviceControlKey.DEV_SETTING]
+                        # retrieve and set controller settings; temperature, humidity, and vpd offsets
+                        controller_settings_json = await self._client.get_device_mode_settings(controller_id, 0)
+                        self._device_settings[(controller_id, 0)] = controller_settings_json[DeviceControlKey.DEV_SETTING]
 
-                    # controller AI will have a sensor array.
-                    if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
-                        sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
-                        for sensor_properties_json in sensors:
-                            access_port_index = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
-                            sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
+                        # controller AI will have a sensor array.
+                        if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
+                            sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
+                            for sensor_properties_json in sensors:
+                                access_port_index = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
+                                sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
 
-                            # set sensor properties; sensor value, unit, and display precision
-                            self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
+                                # set sensor properties; sensor value, unit, and display precision
+                                self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
-                    for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
-                        device_port = device_properties_json[DevicePropertyKey.PORT]
+                        ports = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
+                        for device_properties_json in ports:
+                            device_port = device_properties_json[DevicePropertyKey.PORT]
 
-                        # set port properties; current power and remaining time until a mode switch
-                        self._device_properties[(controller_id, device_port)] = device_properties_json
+                            # set port properties; current power and remaining time until a mode switch
+                            self._device_properties[(controller_id, device_port)] = device_properties_json
 
-                        # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
-                        device_controls_json = await self._client.get_device_mode_settings(controller_id, device_port)
-                        self._device_controls[(controller_id, device_port)] = device_controls_json
+                            # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
+                            device_controls_json = await self._client.get_device_mode_settings(controller_id, device_port)
+                            self._device_controls[(controller_id, device_port)] = device_controls_json
 
-                        # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
-                        device_settings_json = await self._client.get_device_mode_settings(controller_id, device_port)
-                        self._device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
+                            # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
+                            device_settings_json = await self._client.get_device_mode_settings(controller_id, device_port)
+                            self._device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
+                    except (ACInfinityClientRequestFailed, KeyError, TypeError, ValueError) as ex:
+                        _LOGGER.warning(
+                            "Skipping controller %s for this refresh; it returned unexpected data. Other controllers are unaffected.",
+                            controller_id,
+                            exc_info=ex,
+                        )
+                        continue
 
                 return  # update successful.  eject from the infinite while loop.
 

@@ -1,4 +1,5 @@
 import asyncio
+import copy
 from asyncio import Future
 
 import aiohttp
@@ -207,6 +208,55 @@ class TestACInfinity:
 
         # Should NOT retry on unexpected exceptions
         assert mock_client.get_account_controllers.call_count == 1
+
+    async def test_refresh_tolerates_controller_with_null_ports(self, mock_client):
+        """A controller reporting ports as null (#138) must not fail the whole refresh
+        and blank out every other controller."""
+        devices = copy.deepcopy(DEVICE_INFO_LIST_ALL)
+        devices[0][ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] = None
+        null_ports_id = devices[0][ControllerPropertyKey.DEVICE_ID]
+        healthy_id = devices[1][ControllerPropertyKey.DEVICE_ID]
+
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_account_controllers.return_value = devices
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        ac_infinity = ACInfinityService(mock_client)
+        await ac_infinity.refresh()
+
+        # both controllers keep their controller level data
+        assert str(null_ports_id) in ac_infinity._controller_properties
+        assert str(healthy_id) in ac_infinity._controller_properties
+
+        # the healthy controller still gets its port data
+        assert any(key[0] == healthy_id for key in ac_infinity._device_properties)
+        assert not any(key[0] == null_ports_id for key in ac_infinity._device_properties)
+
+    async def test_refresh_skips_controller_when_its_settings_call_fails(self, mock_client):
+        """A controller whose settings fetch fails must not fail the whole refresh
+        and blank out every other controller."""
+        mock_client.is_logged_in.return_value = True
+        mock_client.get_account_controllers.return_value = DEVICE_INFO_LIST_ALL
+
+        def get_device_mode_settings(controller_id, port):
+            if str(controller_id) == str(DEVICE_ID):
+                raise ACInfinityClientRequestFailed({"msg": "Operation failed", "code": 999999})
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = get_device_mode_settings
+
+        ac_infinity = ACInfinityService(mock_client)
+        await ac_infinity.refresh()
+
+        # the failing controller is skipped without retrying the whole refresh
+        assert mock_client.get_account_controllers.call_count == 1
+
+        # the healthy controller is fully refreshed
+        ai_id = DEVICE_INFO_LIST_ALL[1][ControllerPropertyKey.DEVICE_ID]
+        assert str(ai_id) in ac_infinity._controller_properties
+        assert (ai_id, 0) in ac_infinity._device_settings
+        assert not any(key[0] == DEVICE_INFO_LIST_ALL[0][ControllerPropertyKey.DEVICE_ID]
+                       for key in ac_infinity._device_settings)
 
     @pytest.mark.parametrize(
         "property_key, value",

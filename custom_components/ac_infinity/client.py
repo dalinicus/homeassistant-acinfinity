@@ -6,7 +6,7 @@ import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.ac_infinity.const import AdvancedSettingsKey, AtType, DeviceControlKey, ModeAndSettingKeys
+from custom_components.ac_infinity.const import AIRTAP_AT_TYPES, AdvancedSettingsKey, AtType, DeviceControlKey, ModeAndSettingKeys
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,6 +85,13 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
+        if body.get("data") is None:
+            # Some devices (e.g. Controller 69 Pro on older firmware) only return settings when the
+            # newer API version header is sent.  Retry with it rather than failing the whole refresh.
+            headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+            body = await self.__post(
+                API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
+            )
         return body["data"]
 
     @staticmethod
@@ -208,6 +215,54 @@ class ACInfinityClient:
 
         url = f"{API_URL_MODE_AND_SETTINGS}?{urlencode(updated)}"
         _ = await self.__put(url, headers)
+
+    async def update_airtap_controls(
+        self, controller_id: str | int, key_values: dict[str, int]
+    ):
+        """Sets the mode and/or speeds of an AIRTAP register fan.
+
+        AIRTAP fans reject the full payloads used by controllers (addDevMode answers 100001, the
+        AI-controller modeAndSetting payload answers 999999).  They accept the minimal PUT the mobile
+        app sends: the target mode, the speed being changed, and modeAndSettingIdStr listing the ids
+        of the fields being written (16 = atType, 17 = offSpeed, 18 = onSpeed).
+
+        Args:
+            controller_id: id of the fan (it is its own controller, with the fan on port 0)
+            key_values: subset of atType / onSpead / offSpead to change
+        """
+        self.__ensure_logged_in()
+
+        unsupported = set(key_values) - {
+            DeviceControlKey.AT_TYPE, DeviceControlKey.ON_SPEED, DeviceControlKey.OFF_SPEED
+        }
+        if unsupported:
+            raise ValueError(f"AIRTAP fans do not support updating {sorted(unsupported)}")
+
+        headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+        body = await self.__post(
+            API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": 0}, headers
+        )
+        existing_values = body["data"]
+
+        at_type = key_values.get(DeviceControlKey.AT_TYPE, existing_values.get(DeviceControlKey.AT_TYPE))
+        if at_type not in AIRTAP_AT_TYPES:
+            raise ValueError(f"AIRTAP fans cannot be switched to atType {at_type} from Home Assistant")
+
+        params: dict[str, str | int] = {
+            DeviceControlKey.AT_TYPE: at_type,
+            DeviceControlKey.DEV_ID: controller_id,
+            "port": 0,
+        }
+        field_ids = [16]
+        if at_type == AtType.OFF or DeviceControlKey.OFF_SPEED in key_values:
+            params["offSpeed"] = key_values.get(DeviceControlKey.OFF_SPEED, existing_values.get(DeviceControlKey.OFF_SPEED) or 0)
+            field_ids.append(17)
+        if at_type == AtType.ON or DeviceControlKey.ON_SPEED in key_values:
+            params["onSpeed"] = key_values.get(DeviceControlKey.ON_SPEED, existing_values.get(DeviceControlKey.ON_SPEED) or 0)
+            field_ids.append(18)
+        params[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = json.dumps(field_ids, separators=(",", ":"))
+
+        _ = await self.__put(f"{API_URL_MODE_AND_SETTINGS}?{urlencode(params)}", headers)
 
     async def close(self) -> None:
         """Close the session when done"""

@@ -59,6 +59,14 @@ MODE_OPTIONS = {
 }
 MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 
+# AIRTAP register fans: AI follows the HVAC system on its own; Off / On are the modes Home Assistant can drive.
+AIRTAP_MODE_OPTIONS = {
+    AtType.AI: "AI",
+    AtType.OFF: "Off",
+    AtType.ON: "On",
+}
+AIRTAP_MODE_OPTIONS_REVERSE = {v: k for k, v in AIRTAP_MODE_OPTIONS.items()}
+
 SETTINGS_MODE_OPTIONS = [
     "Auto",
     "Target",
@@ -122,6 +130,14 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
     )
 
 
+def __suitable_fn_device_control_non_airtap(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return not device.controller.is_airtap and __suitable_fn_device_control_default(entity, device)
+
+
+def __suitable_fn_device_control_airtap(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return device.controller.is_airtap and __suitable_fn_device_control_default(entity, device)
+
+
 def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
     return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
@@ -144,6 +160,15 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, device: ACInfinityDevic
             device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 1
         )
     ]
+
+
+def __get_value_fn_active_mode_airtap(entity: ACInfinityEntity, device: ACInfinityDevice):
+    # modes set from the app that Home Assistant cannot drive (timers, schedules, ...) show as unknown
+    return AIRTAP_MODE_OPTIONS.get(
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, AtType.AI
+        )
+    )
 
 
 def __get_value_fn_dynamic_response_type(
@@ -193,6 +218,18 @@ def __set_value_fn_active_mode(
         device,
         DeviceControlKey.AT_TYPE,
         MODE_OPTIONS_REVERSE[value],
+    )
+
+
+def __set_value_fn_active_mode_airtap(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
+):
+    if value not in AIRTAP_MODE_OPTIONS.values():
+        raise ValueError(f"Invalid mode: {value}")
+    return entity.ac_infinity.update_device_control(
+        device,
+        DeviceControlKey.AT_TYPE,
+        AIRTAP_MODE_OPTIONS_REVERSE[value],
     )
 
 
@@ -267,9 +304,19 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         translation_key="active_mode",
         options=list(MODE_OPTIONS.values()),
         enabled_fn=enabled_fn_control,
-        suitable_fn=__suitable_fn_device_control_default,
+        suitable_fn=__suitable_fn_device_control_non_airtap,
         get_value_fn=__get_value_fn_active_mode,
         set_value_fn=__set_value_fn_active_mode,
+        at_type_fn=lambda at_type: True
+    ),
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.AT_TYPE,
+        translation_key="active_mode",
+        options=list(AIRTAP_MODE_OPTIONS.values()),
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_airtap,
+        get_value_fn=__get_value_fn_active_mode_airtap,
+        set_value_fn=__set_value_fn_active_mode_airtap,
         at_type_fn=lambda at_type: True
     ),
     ACInfinityDeviceSelectEntityDescription(

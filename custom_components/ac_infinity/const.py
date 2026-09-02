@@ -56,6 +56,7 @@ class CustomDevicePropertyKey:
 
 
 class AtType:
+    AI = 0  # AIRTAP register fans only: follow the HVAC system automatically
     OFF = 1
     ON = 2
     AUTO = 3
@@ -85,6 +86,7 @@ class ControllerPropertyKey:
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
     PORT_COUNT = "devPortCount"
+    IS_AIRTAP = "airTap"
 
 
 class ControllerType:
@@ -93,12 +95,24 @@ class ControllerType:
     UIS_89_AI_PLUS = 20
     UIS_OUTLET_AI = 21
     UIS_OUTLET_AI_PLUS = 22
+    AIRTAP_AI = 48
 
 
 AI_CONTROLLER_TYPES = frozenset({
     ControllerType.UIS_89_AI_PLUS,
     ControllerType.UIS_OUTLET_AI,
     ControllerType.UIS_OUTLET_AI_PLUS
+})
+
+AIRTAP_CONTROLLER_TYPES = frozenset({
+    ControllerType.AIRTAP_AI
+})
+
+# Modes an AIRTAP fan can be switched to from Home Assistant.  Each has been verified against the cloud API.
+AIRTAP_AT_TYPES = frozenset({
+    AtType.AI,
+    AtType.OFF,
+    AtType.ON
 })
 
 
@@ -556,3 +570,21 @@ class ModeAndSettingKeys:
 SCHEDULE_DISABLED_VALUE = 65535  # Disabled
 SCHEDULE_MIDNIGHT_VALUE = 0  # 12:00am, default for start time
 SCHEDULE_EOD_VALUE = 1439  # 11:59pm, default for end time
+
+
+# AIRTAP register fans have no ports; the fan is modeled as port 0 of its own device.  Only the fields verified
+# against the cloud API are exposed as entities, everything else in the (controller-shaped) payload is ignored.
+# Online status is reported once, by the controller level binary sensor, since port 0 is the same device.
+AIRTAP_DEVICE_KEYS = frozenset({
+    DeviceControlKey.AT_TYPE,
+    DeviceControlKey.ON_SPEED,
+    DeviceControlKey.OFF_SPEED,
+    DevicePropertyKey.SPEAK,
+    DevicePropertyKey.REMAINING_TIME,
+    CustomDevicePropertyKey.NEXT_STATE_CHANGE,
+})
+
+AIRTAP_CONTROLLER_KEYS = frozenset({
+    ControllerPropertyKey.TEMPERATURE,
+    ControllerPropertyKey.ONLINE,
+})

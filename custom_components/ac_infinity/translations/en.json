@@ -24,6 +24,7 @@
         "data": {
           "controller": "{controller} (Controller)",
           "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
           "port_1": "{port_1} (Port 1)",
           "port_2": "{port_2} (Port 2)",
           "port_3": "{port_3} (Port 3)",
@@ -69,6 +70,7 @@
         "data": {
           "controller": "{controller} (Controller)",
           "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
           "port_1": "{port_1} (Port 1)",
           "port_2": "{port_2} (Port 2)",
           "port_3": "{port_3} (Port 3)",

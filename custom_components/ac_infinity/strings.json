@@ -267,6 +267,12 @@
       },
       "next_state_change": {
         "name": "Next State Change"
+      },
+      "inside_temperature": {
+        "name": "Inside Temperature"
+      },
+      "outside_temperature": {
+        "name": "Outside Temperature"
       }
     },
     "switch": {

@@ -85,6 +85,9 @@ class ControllerPropertyKey:
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
     PORT_COUNT = "devPortCount"
+    # Room-to-room/through-wall fans (e.g. AC-TWT6) report these instead of TEMPERATURE.
+    INSIDE_TEMP = "insideTemp"
+    OUTSIDE_TEMP = "outsideTemp"
 
 
 class ControllerType:
@@ -93,12 +96,22 @@ class ControllerType:
     UIS_89_AI_PLUS = 20
     UIS_OUTLET_AI = 21
     UIS_OUTLET_AI_PLUS = 22
+    # Standalone WiFi room-to-room / through-wall fan (e.g. AC-TWT6). Unlike the
+    # UIS tent controllers, it has no ports and reports two independent zone
+    # readings (insideTemp/outsideTemp) instead of one top-level "temperature".
+    UIS_ROOM_TO_ROOM_FAN = 33
 
 
 AI_CONTROLLER_TYPES = frozenset({
     ControllerType.UIS_89_AI_PLUS,
     ControllerType.UIS_OUTLET_AI,
     ControllerType.UIS_OUTLET_AI_PLUS
+})
+
+# Devices whose top-level "temperature"/"humidity" fields are stale/unused, and
+# whose real readings live under insideTemp/outsideTemp instead.
+ROOM_TO_ROOM_FAN_CONTROLLER_TYPES = frozenset({
+    ControllerType.UIS_ROOM_TO_ROOM_FAN
 })
 
 

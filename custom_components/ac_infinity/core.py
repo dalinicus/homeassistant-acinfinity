@@ -21,6 +21,7 @@ from custom_components.ac_infinity.client import ACInfinityClient, ACInfinityCli
     ACInfinityClientCannotConnect, ACInfinityClientRequestFailed
 from .const import (
     AI_CONTROLLER_TYPES,
+    ROOM_TO_ROOM_FAN_CONTROLLER_TYPES,
     DOMAIN,
     MANUFACTURER,
     ControllerPropertyKey,
@@ -95,6 +96,11 @@ class ACInfinityController:
         return self._controller_type in AI_CONTROLLER_TYPES
 
     @property
+    def is_room_to_room_fan(self) -> bool:
+        """Returns true if this is a standalone room-to-room/through-wall fan (e.g. AC-TWT6)"""
+        return self._controller_type in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
+
+    @property
     def mac_addr(self) -> str:
         """The unique mac address of the UIS controller's WI-FI network interface"""
         return self._mac_addr
@@ -132,6 +138,8 @@ class ACInfinityController:
                 return "UIS Controller Outlet AI (AC-ADA4)"
             case ControllerType.UIS_OUTLET_AI_PLUS:
                 return "UIS Controller Outlet AI+ (AC-ADA8)"
+            case ControllerType.UIS_ROOM_TO_ROOM_FAN:
+                return "Room to Room Fan (AC-TWT6)"
             case _:
                 return f"UIS Controller Type {device_type}"
 

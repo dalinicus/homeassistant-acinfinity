@@ -99,6 +99,26 @@ def __suitable_fn_controller_property_default(
     )
 
 
+def __suitable_fn_controller_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    # Standalone room-to-room/through-wall fans (e.g. AC-TWT6) populate the top-level
+    # "temperature" field with a stale/unused value that doesn't match either zone's
+    # actual reading. Their real temperatures live in insideTemp/outsideTemp instead,
+    # exposed via the dedicated descriptions below.
+    if controller.is_room_to_room_fan:
+        return False
+    return __suitable_fn_controller_property_default(entity, controller)
+
+
+def __suitable_fn_room_to_room_zone_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return controller.is_room_to_room_fan and entity.ac_infinity.get_controller_property_exists(
+        controller.controller_id, entity.data_key
+    )
+
+
 def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
     return entity.ac_infinity.get_sensor_property_exists(
         sensor.controller.controller_id,
@@ -245,7 +265,31 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="temperature",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.INSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="inside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.OUTSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="outside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(

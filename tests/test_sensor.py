@@ -1030,7 +1030,7 @@ class TestSensors:
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
             entity.entity_description.native_unit_of_measurement
-            == UnitOfTemperature.CELSIUS
+            == UnitOfTemperature.FAHRENHEIT
         )
         assert entity.device_info is not None
 

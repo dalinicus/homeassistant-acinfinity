@@ -203,8 +203,8 @@ class ACInfinityClient:
                 updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = "[16,22,23,40]"
             case AtType.VPD:
                 updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = "[16,81,32,98,99]"
-            case _:
-                raise ValueError(f"Unable to find setting id string - Unknown atType {at_type}")
+            case _: # AtTypes from plugable AI Controller Sensors
+                updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = "[16,97,32,98,99]"
 
         url = f"{API_URL_MODE_AND_SETTINGS}?{urlencode(updated)}"
         _ = await self.__put(url, headers)

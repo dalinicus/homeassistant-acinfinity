@@ -8,6 +8,6 @@ filterwarnings = [
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.pyright]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 typeCheckingMode = "basic"
 include = ["custom_components", "tests"]

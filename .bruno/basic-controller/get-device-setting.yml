@@ -1,0 +1,23 @@
+info:
+  name: Get Device Setting
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/getDevSetting"
+  body:
+    type: form-urlencoded
+    data:
+      - name: devId
+        value: "{{DEVICE_ID}}"
+      - name: port
+        value: "1"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

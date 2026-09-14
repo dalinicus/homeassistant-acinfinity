@@ -1,0 +1,32 @@
+info:
+  name: VPD Mode
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/addDevMode?atType=7&devId={{DEVICE_ID}}&externalPort=1&schedStartTime=7200&schedEndtTime=7200"
+  params:
+    - name: atType
+      value: "7"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: schedStartTime
+      value: "7200"
+      type: query
+    - name: schedEndtTime
+      value: "7200"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

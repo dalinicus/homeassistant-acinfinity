@@ -1,0 +1,31 @@
+info:
+  name: Get Device Mode Setting List
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/getdevModeSettingList?port=4&devId={{AI_DEVICE_ID}}"
+  headers:
+    - name: minversion
+      value: "3.5"
+  params:
+    - name: port
+      value: "4"
+      type: query
+    - name: devId
+      value: "{{AI_DEVICE_ID}}"
+      type: query
+  body:
+    type: form-urlencoded
+    data:
+      - name: userId
+        value: "{{USER_ID}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

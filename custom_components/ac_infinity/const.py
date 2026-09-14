@@ -12,7 +12,7 @@ PLATFORMS = [
     Platform.TIME,
     Platform.SWITCH,
 ]
-HOST = "http://www.acinfinityserver.com"
+HOST = "https://www.acinfinityserver.com"
 
 DEFAULT_POLLING_INTERVAL = 10
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"

@@ -6,12 +6,12 @@ import pytest
 from freezegun import freeze_time
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     Platform,
     UnitOfConductivity,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfRatio,
 )
 from pytest_mock import MockFixture
 
@@ -701,7 +701,7 @@ class TestSensors:
         assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement
-            == CONCENTRATION_PARTS_PER_MILLION
+            == UnitOfRatio.PARTS_PER_MILLION
         )
         assert entity.device_info is not None
 
@@ -959,7 +959,7 @@ class TestSensors:
         assert entity.entity_description.device_class is None
         assert (
             entity.entity_description.native_unit_of_measurement
-            == CONCENTRATION_PARTS_PER_MILLION
+            == UnitOfRatio.PARTS_PER_MILLION
         )
         assert entity.device_info is not None
 

@@ -1,0 +1,518 @@
+info:
+  name: Mode And Settings
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/dev/modeAndSetting?phLowValue=0&targetTemp=0&trend=0&subDeviceId=0&zoneSensorType=0&ecTdsSettingMode=0&secFucDevEffect=0&portParamData=%5B0%2C4%2C1%2C2%2C0%2C0%2C2%2C1%2C0%2C3%2C1%2C1%2C4%2C1%2C0%5D&isOpenAutomation=0&powerState=0&humidity=5680&atType=1&waterTempHighValueF=32&ecTdsHighValueEcMs=0&moistureLowSwitch=0&ecTdsHighValueEcUs=0&onTimeSwitch=0&co2Accuracy=0&co2FanTargetSwitch=0&moistureLowValue=0&toward=0&waterLevelTargetSwitch=0&ecTdsAccuracy=0&waterLevelHighValue=0&co2FanLowValue=0&keytoneSwitch=1&temperatureF=0&sensorOneType=0&moistureHighValue=0&co2FanTargetValue=0&loadType=0&waterLevelTargetValue=0&abnormalState=0&devHh=0&activeHtVpdNums=0&ecTdsLowValueTdsPpt=1&moistureHighSwitch=0&tTrend=0&moistureAccuracy=0&offDoseTime=1&phHighSwitch=0&sensorTransBuffStr=%5B%7B%22buff%22%3A3%2C%22precision%22%3A1%2C%22sensorType%22%3A0%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%2C%7B%22buff%22%3A4%2C%22precision%22%3A1%2C%22sensorType%22%3A2%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%2C%7B%22buff%22%3A0%2C%22precision%22%3A2%2C%22sensorType%22%3A3%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%5D&tdsUnit=0&waterTempTargetValue=0&phHighValue=0&ecTdsLowValueTdsPpm=0&hasBacklightSwitch=1&activeLtVpdNums=0&hTrend=1&temperature=2656&moistureTargetValue=0&speak=0&power=0&isUpdateVpdNums=false&onDoseTime=1&phSettingMode=0&loadState=0&targetHumi=0&onSpead=10&targetHumiSwitch=0&waterLevelAccuracy=0&activeCycleOff=0&acitveTimerOff=0&surplus=0&vpdnums=0&activeLt=0&moistureSettingMode=0&phTargetValue=0&activeLh=0&waterTempHighValue=0&ecTdsHighSwitch=0&waterTempLowValueF=32&co2FanSettingMode=0&onMinTime=60&masterPort=0&ecOrTds=0&modeType=0&ecTdsTargetValueTdsPpm=0&onSelfSpead=6&waterTempSettingMode=0&isOnMinMaxTime=1&waterTempHighSwitch=0&ecTdsTargetValueTdsPpt=0&moistureTargetSwitch=0&secFucStatus=0&co2FanHighValue=0&onMaxTime=0&co2FanLowSwitch=0&devLight=3&insideTemp=0&waterLevelSettingMode=0&co2SettingMode=0&sensorTwoType=0&co2LowSwitch=0&onlyUpdateSpeed=0&otaUpdating=0&externalPort=1&insideTrend=0&isOpenDoseTime=0&ecTdsHighValueTdsPpm=0&activeLtVpd=0&secFucParamNums=0&vpdstatus=0&ecTdsLowValueEcMs=1&co2HighValue=0&ecTdsHighValueTdsPpt=0&acitveTimerOn=0&photocellSwitch=1&devId={{DEVICE_ID}}&ecTdsLowValueEcUs=0&waterTempAccuracy=0&activeCycleOn=0&supportOta=0&settingMode=0&phAccuracy=0&co2LowValue=0&phLowSwitch=0&offSpead=0&sensorSettingStr=%5B%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A0%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A2%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A3%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A4%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A6%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A7%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%5D&waterLevelHighSwitch=0&devHt=0&schedStartTime=0&unit=0&outsideTemp=0&ecTdsLowSwitchTds=0&port=1&ecUnit=0&ecTdsTargetValueEcUs=0&targetVpdSwitch=0&waterTempTargetValueF=32&ecTdsTargetValueEcMs=0&devLh=0&phTargetSwitch=0&co2FanHighSwitch=0&co2HighSwitch=0&schedEndtTime=0&activeHtVpd=0&waterLevelLowValue=0&waterTempLowValue=0&waterLevelLowSwitch=0&devLt=0&co2FanAccuracy=0&co2TargetValue=0&onTime=0&waterTempLowSwitch=0&vpdSettingMode=0&ecTdsLowSwitchEc=0&subDeviceVersion=&co2TargetSwitch=0&devLtf=32&restore=false&secFucDevtype=65535&backlightSwitch=1&hasKeytoneSwitch=1&subDeviceType=65535&waterTempTargetSwitch=0&activeHh=0&ecTdsTargetSwitch=0&secFucParams=&devHtf=32&targetTSwitch=0&outsideTrend=0&devCompany=0&activeHt=0&targetVpd=0&targetTempF=32&modeAndSettingIdStr=%5B16%2C17%5D"
+  params:
+    - name: phLowValue
+      value: "0"
+      type: query
+    - name: targetTemp
+      value: "0"
+      type: query
+    - name: trend
+      value: "0"
+      type: query
+    - name: subDeviceId
+      value: "0"
+      type: query
+    - name: zoneSensorType
+      value: "0"
+      type: query
+    - name: ecTdsSettingMode
+      value: "0"
+      type: query
+    - name: secFucDevEffect
+      value: "0"
+      type: query
+    - name: portParamData
+      value: "%5B0%2C4%2C1%2C2%2C0%2C0%2C2%2C1%2C0%2C3%2C1%2C1%2C4%2C1%2C0%5D"
+      type: query
+    - name: isOpenAutomation
+      value: "0"
+      type: query
+    - name: powerState
+      value: "0"
+      type: query
+    - name: humidity
+      value: "5680"
+      type: query
+    - name: atType
+      value: "1"
+      type: query
+    - name: waterTempHighValueF
+      value: "32"
+      type: query
+    - name: ecTdsHighValueEcMs
+      value: "0"
+      type: query
+    - name: moistureLowSwitch
+      value: "0"
+      type: query
+    - name: ecTdsHighValueEcUs
+      value: "0"
+      type: query
+    - name: onTimeSwitch
+      value: "0"
+      type: query
+    - name: co2Accuracy
+      value: "0"
+      type: query
+    - name: co2FanTargetSwitch
+      value: "0"
+      type: query
+    - name: moistureLowValue
+      value: "0"
+      type: query
+    - name: toward
+      value: "0"
+      type: query
+    - name: waterLevelTargetSwitch
+      value: "0"
+      type: query
+    - name: ecTdsAccuracy
+      value: "0"
+      type: query
+    - name: waterLevelHighValue
+      value: "0"
+      type: query
+    - name: co2FanLowValue
+      value: "0"
+      type: query
+    - name: keytoneSwitch
+      value: "1"
+      type: query
+    - name: temperatureF
+      value: "0"
+      type: query
+    - name: sensorOneType
+      value: "0"
+      type: query
+    - name: moistureHighValue
+      value: "0"
+      type: query
+    - name: co2FanTargetValue
+      value: "0"
+      type: query
+    - name: loadType
+      value: "0"
+      type: query
+    - name: waterLevelTargetValue
+      value: "0"
+      type: query
+    - name: abnormalState
+      value: "0"
+      type: query
+    - name: devHh
+      value: "0"
+      type: query
+    - name: activeHtVpdNums
+      value: "0"
+      type: query
+    - name: ecTdsLowValueTdsPpt
+      value: "1"
+      type: query
+    - name: moistureHighSwitch
+      value: "0"
+      type: query
+    - name: tTrend
+      value: "0"
+      type: query
+    - name: moistureAccuracy
+      value: "0"
+      type: query
+    - name: offDoseTime
+      value: "1"
+      type: query
+    - name: phHighSwitch
+      value: "0"
+      type: query
+    - name: sensorTransBuffStr
+      value: "%5B%7B%22buff%22%3A3%2C%22precision%22%3A1%2C%22sensorType%22%3A0%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%2C%7B%22buff%22%3A4%2C%22precision%22%3A1%2C%22sensorType%22%3A2%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%2C%7B%22buff%22%3A0%2C%22precision%22%3A2%2C%22sensorType%22%3A3%2C%22trans%22%3A0%2C%22transOrBuff%22%3A1%7D%5D"
+      type: query
+    - name: tdsUnit
+      value: "0"
+      type: query
+    - name: waterTempTargetValue
+      value: "0"
+      type: query
+    - name: phHighValue
+      value: "0"
+      type: query
+    - name: ecTdsLowValueTdsPpm
+      value: "0"
+      type: query
+    - name: hasBacklightSwitch
+      value: "1"
+      type: query
+    - name: activeLtVpdNums
+      value: "0"
+      type: query
+    - name: hTrend
+      value: "1"
+      type: query
+    - name: temperature
+      value: "2656"
+      type: query
+    - name: moistureTargetValue
+      value: "0"
+      type: query
+    - name: speak
+      value: "0"
+      type: query
+    - name: power
+      value: "0"
+      type: query
+    - name: isUpdateVpdNums
+      value: "false"
+      type: query
+    - name: onDoseTime
+      value: "1"
+      type: query
+    - name: phSettingMode
+      value: "0"
+      type: query
+    - name: loadState
+      value: "0"
+      type: query
+    - name: targetHumi
+      value: "0"
+      type: query
+    - name: onSpead
+      value: "10"
+      type: query
+    - name: targetHumiSwitch
+      value: "0"
+      type: query
+    - name: waterLevelAccuracy
+      value: "0"
+      type: query
+    - name: activeCycleOff
+      value: "0"
+      type: query
+    - name: acitveTimerOff
+      value: "0"
+      type: query
+    - name: surplus
+      value: "0"
+      type: query
+    - name: vpdnums
+      value: "0"
+      type: query
+    - name: activeLt
+      value: "0"
+      type: query
+    - name: moistureSettingMode
+      value: "0"
+      type: query
+    - name: phTargetValue
+      value: "0"
+      type: query
+    - name: activeLh
+      value: "0"
+      type: query
+    - name: waterTempHighValue
+      value: "0"
+      type: query
+    - name: ecTdsHighSwitch
+      value: "0"
+      type: query
+    - name: waterTempLowValueF
+      value: "32"
+      type: query
+    - name: co2FanSettingMode
+      value: "0"
+      type: query
+    - name: onMinTime
+      value: "60"
+      type: query
+    - name: masterPort
+      value: "0"
+      type: query
+    - name: ecOrTds
+      value: "0"
+      type: query
+    - name: modeType
+      value: "0"
+      type: query
+    - name: ecTdsTargetValueTdsPpm
+      value: "0"
+      type: query
+    - name: onSelfSpead
+      value: "6"
+      type: query
+    - name: waterTempSettingMode
+      value: "0"
+      type: query
+    - name: isOnMinMaxTime
+      value: "1"
+      type: query
+    - name: waterTempHighSwitch
+      value: "0"
+      type: query
+    - name: ecTdsTargetValueTdsPpt
+      value: "0"
+      type: query
+    - name: moistureTargetSwitch
+      value: "0"
+      type: query
+    - name: secFucStatus
+      value: "0"
+      type: query
+    - name: co2FanHighValue
+      value: "0"
+      type: query
+    - name: onMaxTime
+      value: "0"
+      type: query
+    - name: co2FanLowSwitch
+      value: "0"
+      type: query
+    - name: devLight
+      value: "3"
+      type: query
+    - name: insideTemp
+      value: "0"
+      type: query
+    - name: waterLevelSettingMode
+      value: "0"
+      type: query
+    - name: co2SettingMode
+      value: "0"
+      type: query
+    - name: sensorTwoType
+      value: "0"
+      type: query
+    - name: co2LowSwitch
+      value: "0"
+      type: query
+    - name: onlyUpdateSpeed
+      value: "0"
+      type: query
+    - name: otaUpdating
+      value: "0"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: insideTrend
+      value: "0"
+      type: query
+    - name: isOpenDoseTime
+      value: "0"
+      type: query
+    - name: ecTdsHighValueTdsPpm
+      value: "0"
+      type: query
+    - name: activeLtVpd
+      value: "0"
+      type: query
+    - name: secFucParamNums
+      value: "0"
+      type: query
+    - name: vpdstatus
+      value: "0"
+      type: query
+    - name: ecTdsLowValueEcMs
+      value: "1"
+      type: query
+    - name: co2HighValue
+      value: "0"
+      type: query
+    - name: ecTdsHighValueTdsPpt
+      value: "0"
+      type: query
+    - name: acitveTimerOn
+      value: "0"
+      type: query
+    - name: photocellSwitch
+      value: "1"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: ecTdsLowValueEcUs
+      value: "0"
+      type: query
+    - name: waterTempAccuracy
+      value: "0"
+      type: query
+    - name: activeCycleOn
+      value: "0"
+      type: query
+    - name: supportOta
+      value: "0"
+      type: query
+    - name: settingMode
+      value: "0"
+      type: query
+    - name: phAccuracy
+      value: "0"
+      type: query
+    - name: co2LowValue
+      value: "0"
+      type: query
+    - name: phLowSwitch
+      value: "0"
+      type: query
+    - name: offSpead
+      value: "0"
+      type: query
+    - name: sensorSettingStr
+      value: "%5B%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A0%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A2%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A1%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A3%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A4%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A6%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%2C%7B%22accessPort%22%3A7%2C%22calibration%22%3A0%2C%22precision%22%3A1%2C%22sensorType%22%3A7%2C%22sensorUnit%22%3A0%2C%22trend%22%3A0%7D%5D"
+      type: query
+    - name: waterLevelHighSwitch
+      value: "0"
+      type: query
+    - name: devHt
+      value: "0"
+      type: query
+    - name: schedStartTime
+      value: "0"
+      type: query
+    - name: unit
+      value: "0"
+      type: query
+    - name: outsideTemp
+      value: "0"
+      type: query
+    - name: ecTdsLowSwitchTds
+      value: "0"
+      type: query
+    - name: port
+      value: "1"
+      type: query
+    - name: ecUnit
+      value: "0"
+      type: query
+    - name: ecTdsTargetValueEcUs
+      value: "0"
+      type: query
+    - name: targetVpdSwitch
+      value: "0"
+      type: query
+    - name: waterTempTargetValueF
+      value: "32"
+      type: query
+    - name: ecTdsTargetValueEcMs
+      value: "0"
+      type: query
+    - name: devLh
+      value: "0"
+      type: query
+    - name: phTargetSwitch
+      value: "0"
+      type: query
+    - name: co2FanHighSwitch
+      value: "0"
+      type: query
+    - name: co2HighSwitch
+      value: "0"
+      type: query
+    - name: schedEndtTime
+      value: "0"
+      type: query
+    - name: activeHtVpd
+      value: "0"
+      type: query
+    - name: waterLevelLowValue
+      value: "0"
+      type: query
+    - name: waterTempLowValue
+      value: "0"
+      type: query
+    - name: waterLevelLowSwitch
+      value: "0"
+      type: query
+    - name: devLt
+      value: "0"
+      type: query
+    - name: co2FanAccuracy
+      value: "0"
+      type: query
+    - name: co2TargetValue
+      value: "0"
+      type: query
+    - name: onTime
+      value: "0"
+      type: query
+    - name: waterTempLowSwitch
+      value: "0"
+      type: query
+    - name: vpdSettingMode
+      value: "0"
+      type: query
+    - name: ecTdsLowSwitchEc
+      value: "0"
+      type: query
+    - name: subDeviceVersion
+      value: ""
+      type: query
+    - name: co2TargetSwitch
+      value: "0"
+      type: query
+    - name: devLtf
+      value: "32"
+      type: query
+    - name: restore
+      value: "false"
+      type: query
+    - name: secFucDevtype
+      value: "65535"
+      type: query
+    - name: backlightSwitch
+      value: "1"
+      type: query
+    - name: hasKeytoneSwitch
+      value: "1"
+      type: query
+    - name: subDeviceType
+      value: "65535"
+      type: query
+    - name: waterTempTargetSwitch
+      value: "0"
+      type: query
+    - name: activeHh
+      value: "0"
+      type: query
+    - name: ecTdsTargetSwitch
+      value: "0"
+      type: query
+    - name: secFucParams
+      value: ""
+      type: query
+    - name: devHtf
+      value: "32"
+      type: query
+    - name: targetTSwitch
+      value: "0"
+      type: query
+    - name: outsideTrend
+      value: "0"
+      type: query
+    - name: devCompany
+      value: "0"
+      type: query
+    - name: activeHt
+      value: "0"
+      type: query
+    - name: targetVpd
+      value: "0"
+      type: query
+    - name: targetTempF
+      value: "32"
+      type: query
+    - name: modeAndSettingIdStr
+      value: "%5B16%2C17%5D"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

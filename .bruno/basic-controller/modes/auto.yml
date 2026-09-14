@@ -1,0 +1,56 @@
+info:
+  name: Auto Mode
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/addDevMode?atType=3&devId={{DEVICE_ID}}&externalPort=1&activeHh=1&activeHt=1&activeLh=1&activeLt=1&devHh=98&devHt=64&devHtf=147&devLh=7&devLt=6&devLtf=42"
+  params:
+    - name: atType
+      value: "3"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: activeHh
+      value: "1"
+      type: query
+    - name: activeHt
+      value: "1"
+      type: query
+    - name: activeLh
+      value: "1"
+      type: query
+    - name: activeLt
+      value: "1"
+      type: query
+    - name: devHh
+      value: "98"
+      type: query
+    - name: devHt
+      value: "64"
+      type: query
+    - name: devHtf
+      value: "147"
+      type: query
+    - name: devLh
+      value: "7"
+      type: query
+    - name: devLt
+      value: "6"
+      type: query
+    - name: devLtf
+      value: "42"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

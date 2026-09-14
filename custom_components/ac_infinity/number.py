@@ -10,11 +10,12 @@ from homeassistant.components.number import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     Platform,
     UnitOfConductivity,
     UnitOfTemperature,
+    UnitOfRatio,
 )
+
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
@@ -823,7 +824,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="co2_low_trigger",
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_ai_controller,
         get_value_fn=__get_value_fn_device_control_default,
@@ -839,7 +840,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         native_step=1,
         icon=None,
         translation_key="co2_fan_high_trigger",
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_ai_controller,
         get_value_fn=__get_value_fn_device_control_default,

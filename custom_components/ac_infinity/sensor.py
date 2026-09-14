@@ -12,13 +12,13 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     Platform,
     UnitOfConductivity,
     UnitOfPressure,
     UnitOfTemperature,
     UnitOfTime,
+    UnitOfRatio,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import StateType
@@ -375,7 +375,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         key=SensorReferenceKey.CO2_SENSOR,
         device_class=SensorDeviceClass.CO2,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         suggested_unit_of_measurement=None,
         icon=None,  # default
         translation_key="co2_sensor",
@@ -447,7 +447,7 @@ SENSOR_DESCRIPTIONS: dict[int, ACInfinitySensorSensorEntityDescription] = {
         key=SensorReferenceKey.HYDRO_TDS,
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         suggested_unit_of_measurement=None,
         icon=MdiIcon.WATER_OPACITY,
         translation_key="hydro_tds_sensor",

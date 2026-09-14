@@ -336,6 +336,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
         result = ConfigFlow.async_get_options_flow(config_entry)
 
@@ -363,6 +364,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
@@ -399,6 +401,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
@@ -438,6 +441,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
 
         mocker.patch.object(OptionsFlow, "config_entry", return_value=entry)
@@ -546,6 +550,7 @@ class TestConfigFlow:
             unique_id=None,
             discovery_keys=MappingProxyType({}),
             state=ConfigEntryState.SETUP_IN_PROGRESS,
+            subentries_data=None,
         )
 
         flow.config_entry = entry
@@ -679,6 +684,7 @@ class TestConfigFlow:
             options=None,
             unique_id=None,
             discovery_keys=MappingProxyType({}),
+            subentries_data=None,
         )
         flow.config_entry = entry_without_entities
 

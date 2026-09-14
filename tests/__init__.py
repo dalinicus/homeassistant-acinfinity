@@ -166,6 +166,7 @@ def setup_entity_mocks(mocker: MockFixture):
         unique_id=None,
         options=None,
         discovery_keys=MappingProxyType({}),
+        subentries_data=None,
     )
 
     coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)

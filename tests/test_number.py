@@ -153,6 +153,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_LOW_VALUE] = value
         entity._handle_coordinator_update()
 
@@ -178,6 +179,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
@@ -230,6 +232,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_FAN_HIGH_VALUE] = value
         entity._handle_coordinator_update()
 
@@ -255,6 +258,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
@@ -307,6 +311,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.MOISTURE_LOW_VALUE] = value
         entity._handle_coordinator_update()
 
@@ -332,6 +337,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
@@ -384,6 +390,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.EC_TDS_LOW_VALUE_EC_MS] = value
         entity._handle_coordinator_update()
 
@@ -409,6 +416,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
@@ -464,6 +472,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
@@ -490,6 +499,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_set_mock.assert_called_with(
@@ -559,6 +569,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
@@ -622,6 +633,7 @@ class TestNumbers:
             AI_MAC_ADDR,
         )
 
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(value)
 
         test_objects.port_control_sets_mock.assert_called_with(entity._device, expected_payload)

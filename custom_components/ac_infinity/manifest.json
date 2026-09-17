@@ -7,7 +7,6 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/dalinicus/homeassistant-acinfinity",
-  "homeassistant": "2026.8.3",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/dalinicus/homeassistant-acinfinity",
   "requirements": [],

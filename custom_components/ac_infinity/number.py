@@ -9,7 +9,13 @@ from homeassistant.components.number import (
     NumberMode,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform, UnitOfTemperature
+from homeassistant.const import (
+    Platform,
+    UnitOfConductivity,
+    UnitOfTemperature,
+    UnitOfRatio,
+)
+
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
@@ -347,6 +353,23 @@ def __set_value_fn_vpd_control(
     return entity.ac_infinity.update_device_control(device, entity.data_key, int((value or 0) * 10))
 
 
+def __get_value_fn_ph_control(entity: ACInfinityEntity, device: ACInfinityDevice):
+    # value configured as pH (6.5) but stored as tenths (65)
+    return (
+        entity.ac_infinity.get_device_control(
+            device.controller.controller_id, device.device_port, entity.data_key, 0
+        )
+        / 10
+    )
+
+
+def __set_value_fn_ph_control(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    # value configured as pH (6.5) but stored as tenths (65)
+    return entity.ac_infinity.update_device_control(device, entity.data_key, int((value or 0) * 10))
+
+
 def __set_value_fn_vpd_setting(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
@@ -392,6 +415,54 @@ def __set_value_fn_target_temp(
             DeviceControlKey.TARGET_TEMP: int(value or 0),
             # degrees F must be calculated and set in addition to C
             DeviceControlKey.TARGET_TEMP_F: int(round((value * 1.8) + 32, 0)),
+        },
+    )
+
+
+def __set_value_fn_water_temp_high_c(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    return entity.ac_infinity.update_device_controls(
+        device,
+        {
+            DeviceControlKey.WATER_TEMP_HIGH_VALUE: int(value or 0),
+            DeviceControlKey.WATER_TEMP_HIGH_VALUE_F: int(round((value * 1.8) + 32, 0)),
+        },
+    )
+
+
+def __set_value_fn_water_temp_low_c(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    return entity.ac_infinity.update_device_controls(
+        device,
+        {
+            DeviceControlKey.WATER_TEMP_LOW_VALUE: int(value or 0),
+            DeviceControlKey.WATER_TEMP_LOW_VALUE_F: int(round((value * 1.8) + 32, 0)),
+        },
+    )
+
+
+def __set_value_fn_water_temp_high_f(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    return entity.ac_infinity.update_device_controls(
+        device,
+        {
+            DeviceControlKey.WATER_TEMP_HIGH_VALUE_F: int(value or 0),
+            DeviceControlKey.WATER_TEMP_HIGH_VALUE: int(round(((value - 32) / 1.8), 0)),
+        },
+    )
+
+
+def __set_value_fn_water_temp_low_f(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    return entity.ac_infinity.update_device_controls(
+        device,
+        {
+            DeviceControlKey.WATER_TEMP_LOW_VALUE_F: int(value or 0),
+            DeviceControlKey.WATER_TEMP_LOW_VALUE: int(round(((value - 32) / 1.8), 0)),
         },
     )
 
@@ -743,6 +814,166 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         get_value_fn=__get_value_fn_device_control_default,
         set_value_fn=__set_value_fn_device_control_default,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.CO2_LOW_VALUE,
+        device_class=None,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=9999,
+        native_step=1,
+        icon=None,
+        translation_key="co2_low_trigger",
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type == AtType.CO2,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.CO2_FAN_HIGH_VALUE,
+        device_class=None,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=9999,
+        native_step=1,
+        icon=None,
+        translation_key="co2_fan_high_trigger",
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type == AtType.CO2_FAN,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.MOISTURE_LOW_VALUE,
+        device_class=NumberDeviceClass.MOISTURE,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon=MdiIcon.WATER_PERCENT,
+        translation_key="moisture_low_trigger",
+        native_unit_of_measurement=None,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type == AtType.MOISTURE,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.EC_TDS_LOW_VALUE_EC_MS,
+        device_class=None,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon=MdiIcon.SINE_WAVE,
+        translation_key="ec_tds_low_trigger",
+        native_unit_of_measurement=UnitOfConductivity.MILLISIEMENS_PER_CM,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type == AtType.EC,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.PH_HIGH_VALUE,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=14,
+        native_step=0.1,
+        icon=MdiIcon.PH,
+        translation_key="ph_high_trigger",
+        native_unit_of_measurement=None,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_ph_control,
+        set_value_fn=__set_value_fn_ph_control,
+        at_type_fn=lambda at_type: at_type == AtType.PH,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.PH_LOW_VALUE,
+        device_class=None,
+        mode=NumberMode.AUTO,
+        native_min_value=0,
+        native_max_value=14,
+        native_step=0.1,
+        icon=MdiIcon.PH,
+        translation_key="ph_low_trigger",
+        native_unit_of_measurement=None,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_ph_control,
+        set_value_fn=__set_value_fn_ph_control,
+        at_type_fn=lambda at_type: at_type == AtType.PH,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.WATER_TEMP_HIGH_VALUE,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon=None,
+        translation_key="water_temp_high_trigger",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_water_temp_high_c,
+        at_type_fn=lambda at_type: at_type == AtType.WATER_TEMP,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.WATER_TEMP_LOW_VALUE,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        mode=NumberMode.BOX,
+        native_min_value=0,
+        native_max_value=100,
+        native_step=1,
+        icon=None,
+        translation_key="water_temp_low_trigger",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_water_temp_low_c,
+        at_type_fn=lambda at_type: at_type == AtType.WATER_TEMP,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.WATER_TEMP_HIGH_VALUE_F,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
+        mode=NumberMode.BOX,
+        native_min_value=32,
+        native_max_value=212,
+        native_step=1,
+        icon=None,
+        translation_key="water_temp_high_trigger",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_water_temp_high_f,
+        at_type_fn=lambda at_type: at_type == AtType.WATER_TEMP,
+    ),
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.WATER_TEMP_LOW_VALUE_F,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
+        mode=NumberMode.BOX,
+        native_min_value=32,
+        native_max_value=212,
+        native_step=1,
+        icon=None,
+        translation_key="water_temp_low_trigger",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_device_control_ai_controller,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_water_temp_low_f,
+        at_type_fn=lambda at_type: at_type == AtType.WATER_TEMP,
     ),
     ACInfinityDeviceNumberEntityDescription(
         key=DeviceControlKey.AUTO_TEMP_LOW_TRIGGER,

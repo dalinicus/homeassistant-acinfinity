@@ -6,12 +6,12 @@ import pytest
 from freezegun import freeze_time
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     Platform,
     UnitOfConductivity,
     UnitOfPressure,
     UnitOfTemperature,
+    UnitOfRatio,
 )
 from pytest_mock import MockFixture
 
@@ -577,12 +577,12 @@ class TestSensors:
 
         test_objects: ACTestObjects = setup
         test_objects.ac_infinity._sensor_properties.pop(
-            (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_F),
+            (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F),
             None,
         )
         test_objects.ac_infinity._sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_C)
-        ] = SENSOR_PROPERTY_CONTROLLER_TEMP_C
+        ] = SENSOR_PROPERTY_PROBE_TEMP_C
 
         entity = await execute_and_get_sensor_entity(
             setup,
@@ -701,7 +701,7 @@ class TestSensors:
         assert entity.entity_description.suggested_unit_of_measurement is None
         assert (
             entity.entity_description.native_unit_of_measurement
-            == CONCENTRATION_PARTS_PER_MILLION
+            == UnitOfRatio.PARTS_PER_MILLION
         )
         assert entity.device_info is not None
 
@@ -959,7 +959,7 @@ class TestSensors:
         assert entity.entity_description.device_class is None
         assert (
             entity.entity_description.native_unit_of_measurement
-            == CONCENTRATION_PARTS_PER_MILLION
+            == UnitOfRatio.PARTS_PER_MILLION
         )
         assert entity.device_info is not None
 
@@ -1030,7 +1030,7 @@ class TestSensors:
         assert entity.entity_description.device_class == SensorDeviceClass.TEMPERATURE
         assert (
             entity.entity_description.native_unit_of_measurement
-            == UnitOfTemperature.CELSIUS
+            == UnitOfTemperature.FAHRENHEIT
         )
         assert entity.device_info is not None
 

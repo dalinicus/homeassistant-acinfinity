@@ -12,7 +12,7 @@ PLATFORMS = [
     Platform.TIME,
     Platform.SWITCH,
 ]
-HOST = "http://www.acinfinityserver.com"
+HOST = "https://www.acinfinityserver.com"
 
 DEFAULT_POLLING_INTERVAL = 10
 ISSUE_URL = "https://github.com/dalinicus/homeassistant-acinfinity/issues/new?template=Blank+issue"
@@ -64,6 +64,14 @@ class AtType:
     CYCLE = 6
     SCHEDULE = 7
     VPD = 8
+    CO2 = 9
+    CO2_FAN = 10
+    MOISTURE = 11
+    WATER_TEMP = 12
+    PH = 13
+    EC = 14
+    WATER_DETECT = 15
+
 
 
 # noinspection SpellCheckingInspection
@@ -220,6 +228,7 @@ class DeviceControlKey:
     HUMIDITY = "humidity"
     TARGET_HUMI = "targetHumi"
     TARGET_HUMI_SWITCH = "targetHumiSwitch"
+    PHOTOCELL_SWITCH = "photocellSwitch"
     TREND = "trend"
     T_TREND = "tTrend"
     H_TREND = "hTrend"

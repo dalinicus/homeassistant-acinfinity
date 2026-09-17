@@ -1,0 +1,22 @@
+info:
+  name: Login
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/user/appUserLogin"
+  body:
+    type: form-urlencoded
+    data:
+      - name: appEmail
+        value: "{{EMAIL}}"
+      - name: appPasswordl
+        value: "{{PASSWORD}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

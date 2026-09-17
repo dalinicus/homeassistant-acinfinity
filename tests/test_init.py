@@ -1,5 +1,4 @@
 import asyncio
-from asyncio import Future
 from copy import deepcopy
 from types import MappingProxyType
 from unittest.mock import AsyncMock, MagicMock
@@ -37,22 +36,16 @@ ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 @pytest.fixture
 def setup(mocker: MockFixture):
-    future: Future = asyncio.Future()
-    future.set_result(None)
-
-    bool_future: Future = asyncio.Future()
-    bool_future.set_result(True)
-
-    mocker.patch.object(ACInfinityService, "refresh", return_value=future)
+    mocker.patch.object(ACInfinityService, "refresh")
     mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
-    mocker.patch.object(ACInfinityClient, "close", return_value=future)
+    mocker.patch.object(ACInfinityClient, "close")
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     mocker.patch.object(ConfigEntries, "__init__", return_value=None)
     mocker.patch.object(
-        ConfigEntries, "async_forward_entry_setups", return_value=future
+        ConfigEntries, "async_forward_entry_setups"
     )
     mocker.patch.object(
-        ConfigEntries, "async_unload_platforms", return_value=bool_future
+        ConfigEntries, "async_unload_platforms", new_callable=AsyncMock, return_value=True
     )
 
     config_entry = ConfigEntry(
@@ -154,7 +147,7 @@ class TestInit:
         hass.config_entries = ConfigEntries(hass, {})
 
         # Mock the AC Infinity service and client
-        future: Future = asyncio.Future()
+        future: asyncio.Future = asyncio.Future()
         future.set_result(None)
 
         # Create a real ACInfinityService instance with mocked client
@@ -334,7 +327,7 @@ class TestInit:
         hass.data = HassDict({})
 
         # Mock the setup dependencies
-        future: Future = asyncio.Future()
+        future: asyncio.Future = asyncio.Future()
         future.set_result(None)
 
         mocker.patch.object(ACInfinityService, "refresh", return_value=future)

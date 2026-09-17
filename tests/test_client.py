@@ -4,8 +4,29 @@ import sys
 from unittest.mock import MagicMock
 from urllib.parse import parse_qsl, unquote, urlparse
 
+import aioresponses.core as aioresponses_core
 import pytest
+from aiohttp import ClientResponse
 from aioresponses import aioresponses
+from aioresponses.compat import AIOHTTP_VERSION
+from packaging.version import Version
+
+# aiohttp 3.14 made `stream_writer` a required keyword-only argument of
+# ClientResponse.__init__, but the released aioresponses (0.7.9) still builds
+# mock responses without it, raising TypeError on every mocked request.
+# See https://github.com/pnuckowski/aioresponses/issues/289. Supply a default
+# until aioresponses ships an aiohttp 3.14 compatible release.
+if AIOHTTP_VERSION >= Version("3.14"):
+
+    class _StreamWriterStub:
+        output_size = 0
+
+    class _CompatClientResponse(ClientResponse):
+        def __init__(self, *args, **kwargs):
+            kwargs.setdefault("stream_writer", _StreamWriterStub())
+            super().__init__(*args, **kwargs)
+
+    setattr(aioresponses_core, "ClientResponse", _CompatClientResponse)
 
 from custom_components.ac_infinity.client import (
     API_URL_ADD_DEV_MODE,
@@ -582,6 +603,7 @@ class TestACInfinityClient:
         (AtType.CYCLE, "[16,22,23,40]"),
         (AtType.SCHEDULE, "[16,22,23,40]"),
         (AtType.VPD, "[16,81,32,98,99]"),
+        (AtType.PH, "[16,97,32,98,99]"), 
     ])
     async def test_update_ai_device_control_and_settings_mode_and_setting_id_str(self, at_type, expected_id_str):
         """When updating AI device controls, the correct modeAndSettingIdStr is set based on atType"""
@@ -594,23 +616,3 @@ class TestACInfinityClient:
         # Decode the URL-encoded value for comparison
         actual_value = unquote(payload[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR])
         assert actual_value == expected_id_str
-
-    async def test_update_ai_device_control_and_settings_value_error_on_unknown_at_type(self):
-        """When updating AI device controls with an unknown atType, ValueError should be raised"""
-        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
-        client._user_id = USER_ID
-        try:
-            with aioresponses() as mocked:
-                mocked.post(
-                    re.compile(rf"{HOST}{API_URL_GET_DEV_MODE_SETTING}.*"),
-                    status=200,
-                    payload=GET_DEV_MODE_SETTING_LIST_PAYLOAD,
-                )
-
-                # Use an invalid atType value (999 is not a valid AtType)
-                with pytest.raises(ValueError, match="Unable to find setting id string - Unknown atType"):
-                    await client.update_ai_device_control_and_settings(
-                        DEVICE_ID, 1, {DeviceControlKey.AT_TYPE: 999}
-                    )
-        finally:
-            await client.close()

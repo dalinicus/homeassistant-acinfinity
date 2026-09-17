@@ -1,0 +1,221 @@
+info:
+  name: update-advanced-settings
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/updateAdvSetting?onMaxTime=0&devLight=163&subDeviceId=0&zoneSensorType=0&secFucDevEffect=0&paramSensors=&devBh=1&sensorTwoType=0&otaUpdating=0&externalPort=1&portParamData=[0,2,1,2,3,232,2,1,0]&isOpenDoseTime=0&powerState=0&isFlag=0&secFucParamNums=0&devBvpd=1&atType=1&photocellSwitch=1&devId={{DEVICE_ID}}&supportOta=0&settingMode=0&devCth=0&devName=Light&onTimeSwitch=1&offSpead=0&interchangeSensor=0&sensorSettingStr=&toward=0&port=1&ecUnit=0&targetVpdSwitch=0&isShare=0&keytoneSwitch=1&sensorOneType=0&loadType=0&devTt=0&vpdCt=0&tempCompare=2&offDoseTime=0&sensorTransBuffStr=&onTime=60&tdsUnit=0&devCt=0&hasBacklightSwitch=1&devCth2=0&devTh=1&vpdSettingMode=0&onDoseTime=0&vpdTransition=1&onSpead=10&secFucDevtype=0&devCt2=0&backlightSwitch=1&hasKeytoneSwitch=0&devCh=0&subDeviceType=0&devBth=1&humiCompare=1&secFucParams=&onMinTime=0&ecOrTds=0&devCompany=0&isOnMinMaxTime=2&onSelfSpead=0&devBt=0&devTth=1&vpdCth=0&secFucStatus=0"
+  params:
+    - name: onMaxTime
+      value: "0"
+      type: query
+    - name: devLight
+      value: "163"
+      type: query
+    - name: subDeviceId
+      value: "0"
+      type: query
+    - name: zoneSensorType
+      value: "0"
+      type: query
+    - name: secFucDevEffect
+      value: "0"
+      type: query
+    - name: paramSensors
+      value: ""
+      type: query
+    - name: devBh
+      value: "1"
+      type: query
+    - name: sensorTwoType
+      value: "0"
+      type: query
+    - name: otaUpdating
+      value: "0"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: portParamData
+      value: "[0,2,1,2,3,232,2,1,0]"
+      type: query
+    - name: isOpenDoseTime
+      value: "0"
+      type: query
+    - name: powerState
+      value: "0"
+      type: query
+    - name: isFlag
+      value: "0"
+      type: query
+    - name: secFucParamNums
+      value: "0"
+      type: query
+    - name: devBvpd
+      value: "1"
+      type: query
+    - name: atType
+      value: "1"
+      type: query
+    - name: photocellSwitch
+      value: "1"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: supportOta
+      value: "0"
+      type: query
+    - name: settingMode
+      value: "0"
+      type: query
+    - name: devCth
+      value: "0"
+      type: query
+    - name: devName
+      value: Light
+      type: query
+    - name: onTimeSwitch
+      value: "1"
+      type: query
+    - name: offSpead
+      value: "0"
+      type: query
+    - name: interchangeSensor
+      value: "0"
+      type: query
+    - name: sensorSettingStr
+      value: ""
+      type: query
+    - name: toward
+      value: "0"
+      type: query
+    - name: port
+      value: "1"
+      type: query
+    - name: ecUnit
+      value: "0"
+      type: query
+    - name: targetVpdSwitch
+      value: "0"
+      type: query
+    - name: isShare
+      value: "0"
+      type: query
+    - name: keytoneSwitch
+      value: "1"
+      type: query
+    - name: sensorOneType
+      value: "0"
+      type: query
+    - name: loadType
+      value: "0"
+      type: query
+    - name: devTt
+      value: "0"
+      type: query
+    - name: vpdCt
+      value: "0"
+      type: query
+    - name: tempCompare
+      value: "2"
+      type: query
+    - name: offDoseTime
+      value: "0"
+      type: query
+    - name: sensorTransBuffStr
+      value: ""
+      type: query
+    - name: onTime
+      value: "60"
+      type: query
+    - name: tdsUnit
+      value: "0"
+      type: query
+    - name: devCt
+      value: "0"
+      type: query
+    - name: hasBacklightSwitch
+      value: "1"
+      type: query
+    - name: devCth2
+      value: "0"
+      type: query
+    - name: devTh
+      value: "1"
+      type: query
+    - name: vpdSettingMode
+      value: "0"
+      type: query
+    - name: onDoseTime
+      value: "0"
+      type: query
+    - name: vpdTransition
+      value: "1"
+      type: query
+    - name: onSpead
+      value: "10"
+      type: query
+    - name: secFucDevtype
+      value: "0"
+      type: query
+    - name: devCt2
+      value: "0"
+      type: query
+    - name: backlightSwitch
+      value: "1"
+      type: query
+    - name: hasKeytoneSwitch
+      value: "0"
+      type: query
+    - name: devCh
+      value: "0"
+      type: query
+    - name: subDeviceType
+      value: "0"
+      type: query
+    - name: devBth
+      value: "1"
+      type: query
+    - name: humiCompare
+      value: "1"
+      type: query
+    - name: secFucParams
+      value: ""
+      type: query
+    - name: onMinTime
+      value: "0"
+      type: query
+    - name: ecOrTds
+      value: "0"
+      type: query
+    - name: devCompany
+      value: "0"
+      type: query
+    - name: isOnMinMaxTime
+      value: "2"
+      type: query
+    - name: onSelfSpead
+      value: "0"
+      type: query
+    - name: devBt
+      value: "0"
+      type: query
+    - name: devTth
+      value: "1"
+      type: query
+    - name: vpdCth
+      value: "0"
+      type: query
+    - name: secFucStatus
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

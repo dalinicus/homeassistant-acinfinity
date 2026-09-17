@@ -147,6 +147,30 @@
       "target_humidity": {
         "name": "Target Humidity"
       },
+      "co2_low_trigger": {
+        "name": "CO2 Low Trigger"
+      },
+      "co2_fan_high_trigger": {
+        "name": "CO2 Fan High Trigger"
+      },
+      "moisture_low_trigger": {
+        "name": "Moisture Low Trigger"
+      },
+      "ec_tds_low_trigger": {
+        "name": "EC Low Trigger"
+      },
+      "ph_high_trigger": {
+        "name": "pH High Trigger"
+      },
+      "ph_low_trigger": {
+        "name": "pH Low Trigger"
+      },
+      "water_temp_high_trigger": {
+        "name": "Water Temp High Trigger"
+      },
+      "water_temp_low_trigger": {
+        "name": "Water Temp Low Trigger"
+      },
       "auto_mode_temp_low_trigger": {
         "name": "Temperature Low Trigger"
       },
@@ -305,6 +329,36 @@
       },
       "sunrise_timer_enabled": {
         "name": "Sunrise/Sunset Enabled"
+      },
+      "photocell_enabled": {
+        "name": "Photocell Enabled"
+      },
+      "co2_low_enabled": {
+        "name": "CO2 Low Trigger Enabled"
+      },
+      "co2_fan_high_enabled": {
+        "name": "CO2 Fan High Trigger Enabled"
+      },
+      "moisture_low_enabled": {
+        "name": "Moisture Low Trigger Enabled"
+      },
+      "ec_tds_low_enabled": {
+        "name": "EC Low Trigger Enabled"
+      },
+      "ph_high_enabled": {
+        "name": "pH High Trigger Enabled"
+      },
+      "ph_low_enabled": {
+        "name": "pH Low Trigger Enabled"
+      },
+      "water_temp_high_enabled": {
+        "name": "Water Temp High Trigger Enabled"
+      },
+      "water_temp_low_enabled": {
+        "name": "Water Temp Low Trigger Enabled"
+      },
+      "water_detection_enabled": {
+        "name": "Water Detection Enabled"
       }
     },
     "time": {

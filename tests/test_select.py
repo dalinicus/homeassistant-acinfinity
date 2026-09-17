@@ -69,7 +69,7 @@ class TestSelectors:
 
     @pytest.mark.parametrize(
         "setting,option_count",
-        [(DeviceControlKey.AT_TYPE, 8), (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, 2)],
+        [(DeviceControlKey.AT_TYPE, 15), (AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, 2)],
     )
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_mode_created_for_each_port(

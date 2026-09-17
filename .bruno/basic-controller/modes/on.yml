@@ -1,0 +1,29 @@
+info:
+  name: On Mode
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/addDevMode?atType=2&devId={{DEVICE_ID}}&externalPort=1&onSpeed=10"
+  params:
+    - name: atType
+      value: "2"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: onSpeed
+      value: "10"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

@@ -1,0 +1,35 @@
+info:
+  name: Cycle Mode
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/addDevMode?atType=6&devId={{DEVICE_ID}}&externalPort=1&activeCycleOff=7200&activeCycleOn=7200&surplus=0"
+  params:
+    - name: atType
+      value: "6"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: activeCycleOff
+      value: "7200"
+      type: query
+    - name: activeCycleOn
+      value: "7200"
+      type: query
+    - name: surplus
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

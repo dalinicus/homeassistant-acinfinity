@@ -1,0 +1,35 @@
+info:
+  name: Timer To Off Mode
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/dev/addDevMode?atType=5&devId={{DEVICE_ID}}&externalPort=1&acitveTimerOn=0&acitveTimerOff=7200&surplus=0"
+  params:
+    - name: atType
+      value: "5"
+      type: query
+    - name: devId
+      value: "{{DEVICE_ID}}"
+      type: query
+    - name: externalPort
+      value: "1"
+      type: query
+    - name: acitveTimerOn
+      value: "0"
+      type: query
+    - name: acitveTimerOff
+      value: "7200"
+      type: query
+    - name: surplus
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

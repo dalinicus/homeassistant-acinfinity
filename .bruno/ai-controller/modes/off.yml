@@ -1,0 +1,37 @@
+info:
+  name: Off Mode
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/api/dev/modeAndSetting?atType=1&devId={{AI_DEVICE_ID}}&port=1&modeAndSettingIdStr=[16,17]&offSpeed=0"
+  headers:
+    - name: minversion
+      value: "3.5"
+    - name: User-Agent
+      value: "{{USER_AGENT}}"
+  params:
+    - name: atType
+      value: "1"
+      type: query
+    - name: devId
+      value: "{{AI_DEVICE_ID}}"
+      type: query
+    - name: port
+      value: "1"
+      type: query
+    - name: modeAndSettingIdStr
+      value: "[16,17]"
+      type: query
+    - name: offSpeed
+      value: "0"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

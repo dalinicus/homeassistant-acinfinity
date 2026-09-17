@@ -1,0 +1,13 @@
+variables:
+  - name: USER_AGENT
+    value: okhttp/4.12.0
+  - secret: true
+    name: EMAIL
+  - secret: true
+    name: DEVICE_ID
+  - secret: true
+    name: AI_DEVICE_ID
+  - secret: true
+    name: PASSWORD
+  - secret: true
+    name: USER_ID

@@ -6,7 +6,7 @@ async-timeout
 pytest
 pytest-mock
 pytest-asyncio
-coverage
+pytest-cov
 aioresponses
 aioresponses
 pyright

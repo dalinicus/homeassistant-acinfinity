@@ -1,0 +1,21 @@
+info:
+  name: Get Devices List
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/user/devInfoListAll"
+  body:
+    type: form-urlencoded
+    data:
+      - name: userId
+        value: "{{USER_ID}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

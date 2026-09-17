@@ -10,6 +10,7 @@ from typing import Any, Callable
 import aiohttp
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -176,7 +177,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Probe Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Controller Sensor Probe (AC-SPC24)",
                 )
             case SensorType.CO2 | SensorType.LIGHT:
@@ -186,7 +186,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} CO2 + Light Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
             case SensorType.WATER:
@@ -196,7 +195,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Water Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Water Sensor (AC-WDS3)",
                 )
             case SensorType.SOIL:
@@ -206,7 +204,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Soil Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Soil Sensor (AC-SLS3)",
                 )
             case (
@@ -224,7 +221,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Hydro Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Hydro Sensor (AC-HDS3)",
                 )
             case (
@@ -241,7 +237,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Unknown Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model=f"UIS Sensor Type {sensor_type}",
                 )
 
@@ -291,7 +286,6 @@ class ACInfinityDevice:
             identifiers={(DOMAIN, f"{controller.controller_id}_{self._device_port}")},
             name=f"{controller.controller_name} {self.device_name}",
             manufacturer=MANUFACTURER,
-            via_device=controller.identifier,
             model="UIS Enabled Device",
         )
 
@@ -344,6 +338,7 @@ class ACInfinityService:
             client: The http client to use to make requests to the AC Infinity API
         """
         self._client = client
+        self._update_lock = asyncio.Lock()
 
     def get_device_ids(self) -> list[str]:
         """
@@ -592,6 +587,9 @@ class ACInfinityService:
 
     async def refresh(self) -> None:
         """refreshes the values of properties and settings from the AC infinity API"""
+        if self._update_lock.locked():
+            async with self._update_lock:
+                pass  # wait for any in-progress update to complete
         try_count = 0
         while True:
             try:
@@ -760,32 +758,33 @@ class ACInfinityService:
             device_port: the index of the port on the controller
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        try_count = 0
-        while True:
-            try:
-                await self._client.update_device_controls(controller_id, device_port, key_values)
-                return
+        async with self._update_lock:
+            try_count = 0
+            while True:
+                try:
+                    await self._client.update_device_controls(controller_id, device_port, key_values)
+                    return
 
-            except (
-                ACInfinityClientCannotConnect,
-                ACInfinityClientRequestFailed,
-                aiohttp.ClientError,
-                asyncio.TimeoutError
-            ) as ex:
+                except (
+                    ACInfinityClientCannotConnect,
+                    ACInfinityClientRequestFailed,
+                    aiohttp.ClientError,
+                    asyncio.TimeoutError
+                ) as ex:
 
-                if try_count < 4:
-                    try_count += 1
-                    _LOGGER.warning("Unable to update device controls. Retry attempt %s/4", str(try_count))
-                    await asyncio.sleep(1)
-                else:
-                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                    if try_count < 4:
+                        try_count += 1
+                        _LOGGER.warning("Unable to update device controls. Retry attempt %s/4", str(try_count))
+                        await asyncio.sleep(1)
+                    else:
+                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                        raise
+                except ACInfinityClientInvalidAuth as ex:
+                    _LOGGER.error("Unable to update device controls: Authentication failed", exc_info=ex)
                     raise
-            except ACInfinityClientInvalidAuth as ex:
-                _LOGGER.error("Unable to update device controls: Authentication failed", exc_info=ex)
-                raise
-            except Exception as ex:
-                _LOGGER.error("Unable to update device controls: Unexpected error", exc_info=ex)
-                raise
+                except Exception as ex:
+                    _LOGGER.error("Unable to update device controls: Unexpected error", exc_info=ex)
+                    raise
 
     async def __update_advanced_settings(
         self,
@@ -801,31 +800,32 @@ class ACInfinityService:
             device_port: 0 for controller settings, or the port number for port settings
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        try_count = 0
-        while True:
-            try:
-                await self._client.update_device_settings(controller_id, device_port, device_name, key_values)
-                return
+        async with self._update_lock:
+            try_count = 0
+            while True:
+                try:
+                    await self._client.update_device_settings(controller_id, device_port, device_name, key_values)
+                    return
 
-            except (
-                ACInfinityClientCannotConnect,
-                ACInfinityClientRequestFailed,
-                aiohttp.ClientError,
-                asyncio.TimeoutError
-            ) as ex:
-                if try_count < 4:
-                    try_count += 1
-                    _LOGGER.warning("Unable to update advanced controller settings. Retry attempt %s/4", str(try_count))
-                    await asyncio.sleep(1)
-                else:
-                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                except (
+                    ACInfinityClientCannotConnect,
+                    ACInfinityClientRequestFailed,
+                    aiohttp.ClientError,
+                    asyncio.TimeoutError
+                ) as ex:
+                    if try_count < 4:
+                        try_count += 1
+                        _LOGGER.warning("Unable to update advanced controller settings. Retry attempt %s/4", str(try_count))
+                        await asyncio.sleep(1)
+                    else:
+                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                        raise
+                except ACInfinityClientInvalidAuth as ex:
+                    _LOGGER.error("Unable to update advanced controller settings: Authentication failed", exc_info=ex)
                     raise
-            except ACInfinityClientInvalidAuth as ex:
-                _LOGGER.error("Unable to update advanced controller settings: Authentication failed", exc_info=ex)
-                raise
-            except Exception as ex:
-                _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
-                raise
+                except Exception as ex:
+                    _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
+                    raise
 
     async def __update_ai_control_and_settings(
         self,
@@ -840,32 +840,33 @@ class ACInfinityService:
             device_port: the index of the port on the controller
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        try_count = 0
-        while True:
-            try:
-                await self._client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
-                return
+        async with self._update_lock:
+            try_count = 0
+            while True:
+                try:
+                    await self._client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
+                    return
 
-            except (
-                ACInfinityClientCannotConnect,
-                ACInfinityClientRequestFailed,
-                aiohttp.ClientError,
-                asyncio.TimeoutError
-            ) as ex:
+                except (
+                    ACInfinityClientCannotConnect,
+                    ACInfinityClientRequestFailed,
+                    aiohttp.ClientError,
+                    asyncio.TimeoutError
+                ) as ex:
 
-                if try_count < 4:
-                    try_count += 1
-                    _LOGGER.warning("Unable to update ai device controls and settings. Retry attempt %s/4", str(try_count))
-                    await asyncio.sleep(1)
-                else:
-                    _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                    if try_count < 4:
+                        try_count += 1
+                        _LOGGER.warning("Unable to update ai device controls and settings. Retry attempt %s/4", str(try_count))
+                        await asyncio.sleep(1)
+                    else:
+                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
+                        raise
+                except ACInfinityClientInvalidAuth as ex:
+                    _LOGGER.error("Unable to update ai device controls and settings: Authentication failed", exc_info=ex)
                     raise
-            except ACInfinityClientInvalidAuth as ex:
-                _LOGGER.error("Unable to update ai device controls and settings: Authentication failed", exc_info=ex)
-                raise
-            except Exception as ex:
-                _LOGGER.error("Unable to update ai device controls and settings: Unexpected error", exc_info=ex)
-                raise
+                except Exception as ex:
+                    _LOGGER.error("Unable to update ai device controls and settings: Unexpected error", exc_info=ex)
+                    raise
 
     async def close(self) -> None:
         """Close the client session when done"""
@@ -957,6 +958,16 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     def platform_name(self) -> str:
         return self._platform_name
 
+    def _resolve_via_device_id(self, identifier: tuple[str, str]) -> str | None:
+        """Resolves the HA device registry id for a via_device identifier, if already registered"""
+        if self.hass is None or self.coordinator.config_entry is None:
+            return None
+
+        device = dr.async_get(self.hass).async_get_device_by_identifier(
+            identifier, self.coordinator.config_entry.entry_id
+        )
+        return device.id if device is not None else None
+
 
 class ACInfinityControllerEntity(ACInfinityEntity):
     def __init__(
@@ -1018,7 +1029,13 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
-        return self._sensor.device_info
+        device_info = self._sensor.device_info
+        # controller-level sensors reuse the controller's own device_info; no via_device needed
+        if device_info is not self._sensor.controller.device_info:
+            via_device_id = self._resolve_via_device_id(self._sensor.controller.identifier)
+            if via_device_id is not None:
+                device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+        return device_info
 
     @property
     def sensor(self) -> ACInfinitySensor:
@@ -1057,7 +1074,11 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
-        return self._device.device_info
+        device_info = self._device.device_info
+        via_device_id = self._resolve_via_device_id(self._device.controller.identifier)
+        if via_device_id is not None:
+            device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+        return device_info
 
     @property
     def device_port(self) -> ACInfinityDevice:

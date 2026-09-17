@@ -55,7 +55,14 @@ MODE_OPTIONS = {
     AtType.TIMER_TO_OFF: "Timer to Off",
     AtType.CYCLE: "Cycle",
     AtType.SCHEDULE: "Schedule",
-    AtType.VPD: "VPD"
+    AtType.VPD: "VPD",
+    AtType.CO2: "CO2",
+    AtType.CO2_FAN: "CO2 Fan",
+    AtType.MOISTURE: "Moisture",
+    AtType.WATER_TEMP: "Water Temp",
+    AtType.PH: "pH",
+    AtType.EC: "EC",
+    AtType.WATER_DETECT: "Water Detect",
 }
 MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 

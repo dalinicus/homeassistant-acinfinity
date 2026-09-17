@@ -1,0 +1,6 @@
+info:
+  name: modes
+  type: folder
+
+request:
+  auth: inherit

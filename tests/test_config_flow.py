@@ -1,5 +1,3 @@
-import asyncio
-from asyncio import Future
 from datetime import timedelta
 from types import MappingProxyType
 from unittest.mock import ANY
@@ -42,33 +40,27 @@ OPTION_FLOW_USER_INPUT = {ConfigurationKey.POLLING_INTERVAL: POLLING_INTERVAL}
 
 @pytest.fixture(scope="function")
 def setup_config_flow(mocker: MockFixture):
-    future: Future = asyncio.Future()
-    future.set_result(None)
-
     test_objects: ACTestObjects = setup_entity_mocks(mocker)
 
     mocker.patch.object(config_entries.ConfigFlow, "async_show_form")
     mocker.patch.object(config_entries.ConfigFlow, "async_create_entry")
     mocker.patch.object(config_entries.ConfigFlow, "async_set_unique_id")
     mocker.patch.object(config_entries.ConfigFlow, "_abort_if_unique_id_configured")
-    mocker.patch.object(ACInfinityClient, "login", return_value=future)
-    mocker.patch.object(ACInfinityClient, "get_account_controllers", return_value=future)
+    mocker.patch.object(ACInfinityClient, "login")
+    mocker.patch.object(ACInfinityClient, "get_account_controllers")
 
     return mocker, test_objects
 
 
 @pytest.fixture(scope="function")
 def setup_options_flow(mocker: MockFixture):
-    future: Future = asyncio.Future()
-    future.set_result(None)
-
     test_objects: ACTestObjects = setup_entity_mocks(mocker)
 
     mocker.patch.object(config_entries.OptionsFlow, "async_show_form")
     mocker.patch.object(config_entries.OptionsFlow, "async_show_menu")
     mocker.patch.object(config_entries.OptionsFlow, "async_create_entry")
-    mocker.patch.object(ACInfinityClient, "login", return_value=future)
-    mocker.patch.object(ACInfinityClient, "get_account_controllers", return_value=future)
+    mocker.patch.object(ACInfinityClient, "login")
+    mocker.patch.object(ACInfinityClient, "get_account_controllers")
 
     return mocker, test_objects
 

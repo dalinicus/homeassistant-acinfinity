@@ -1,7 +1,5 @@
 """File required by PyTest to discover tests"""
 
-import asyncio
-from asyncio import Future
 from copy import deepcopy
 from types import MappingProxyType
 from typing import Union
@@ -142,9 +140,6 @@ async def execute_and_get_sensor_entity(
 
 
 def setup_entity_mocks(mocker: MockFixture):
-    future: Future = asyncio.Future()
-    future.set_result(None)
-
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     write_ha_mock = mocker.patch.object(
         Entity, "async_write_ha_state", return_value=None
@@ -154,11 +149,11 @@ def setup_entity_mocks(mocker: MockFixture):
     client = ACInfinityClient(HOST, EMAIL, PASSWORD)
     ac_infinity = ACInfinityService(client)
 
-    ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-    ac_infinity._device_settings = DEVICE_SETTINGS_DATA
-    ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
-    ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
-    ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+    ac_infinity._controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
+    ac_infinity._device_settings = deepcopy(DEVICE_SETTINGS_DATA)
+    ac_infinity._sensor_properties = deepcopy(SENSOR_PROPERTIES_DATA)
+    ac_infinity._device_properties = deepcopy(DEVICE_PROPERTIES_DATA)
+    ac_infinity._device_controls = deepcopy(DEVICE_CONTROLS_DATA)
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
@@ -177,25 +172,25 @@ def setup_entity_mocks(mocker: MockFixture):
     coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
 
     port_control_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_control", return_value=future
+        ac_infinity, "update_device_control"
     )
     port_control_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_controls", return_value=future
+        ac_infinity, "update_device_controls"
     )
     controller_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_controller_setting", return_value=future
+        ac_infinity, "update_controller_setting"
     )
     controller_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_controller_settings", return_value=future
+        ac_infinity, "update_controller_settings"
     )
     port_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_setting", return_value=future
+        ac_infinity, "update_device_setting"
     )
     port_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_settings", return_value=future
+        ac_infinity, "update_device_settings"
     )
     refresh_mock = mocker.patch.object(
-        coordinator, "async_request_refresh", return_value=future
+        coordinator, "async_request_refresh"
     )
 
     hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})

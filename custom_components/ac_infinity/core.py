@@ -10,6 +10,7 @@ from typing import Any, Callable
 import aiohttp
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -176,7 +177,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Probe Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Controller Sensor Probe (AC-SPC24)",
                 )
             case SensorType.CO2 | SensorType.LIGHT:
@@ -186,7 +186,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} CO2 + Light Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS CO2 + Light Sensor (AC-COS3)",
                 )
             case SensorType.WATER:
@@ -196,7 +195,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Water Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Water Sensor (AC-WDS3)",
                 )
             case SensorType.SOIL:
@@ -206,7 +204,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Soil Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Soil Sensor (AC-SLS3)",
                 )
             case (
@@ -224,7 +221,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Hydro Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model="UIS Hydro Sensor (AC-HDS3)",
                 )
             case (
@@ -241,7 +237,6 @@ class ACInfinitySensor:
                     },
                     name=f"{controller.controller_name} Unknown Sensor",
                     manufacturer=MANUFACTURER,
-                    via_device=controller.identifier,
                     model=f"UIS Sensor Type {sensor_type}",
                 )
 
@@ -291,7 +286,6 @@ class ACInfinityDevice:
             identifiers={(DOMAIN, f"{controller.controller_id}_{self._device_port}")},
             name=f"{controller.controller_name} {self.device_name}",
             manufacturer=MANUFACTURER,
-            via_device=controller.identifier,
             model="UIS Enabled Device",
         )
 
@@ -964,6 +958,16 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     def platform_name(self) -> str:
         return self._platform_name
 
+    def _resolve_via_device_id(self, identifier: tuple[str, str]) -> str | None:
+        """Resolves the HA device registry id for a via_device identifier, if already registered"""
+        if self.hass is None or self.coordinator.config_entry is None:
+            return None
+
+        device = dr.async_get(self.hass).async_get_device_by_identifier(
+            identifier, self.coordinator.config_entry.entry_id
+        )
+        return device.id if device is not None else None
+
 
 class ACInfinityControllerEntity(ACInfinityEntity):
     def __init__(
@@ -1025,7 +1029,13 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
-        return self._sensor.device_info
+        device_info = self._sensor.device_info
+        # controller-level sensors reuse the controller's own device_info; no via_device needed
+        if device_info is not self._sensor.controller.device_info:
+            via_device_id = self._resolve_via_device_id(self._sensor.controller.identifier)
+            if via_device_id is not None:
+                device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+        return device_info
 
     @property
     def sensor(self) -> ACInfinitySensor:
@@ -1064,7 +1074,11 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
-        return self._device.device_info
+        device_info = self._device.device_info
+        via_device_id = self._resolve_via_device_id(self._device.controller.identifier)
+        if via_device_id is not None:
+            device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+        return device_info
 
     @property
     def device_port(self) -> ACInfinityDevice:

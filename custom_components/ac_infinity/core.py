@@ -315,21 +315,6 @@ class ACInfinityService:
 
     MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
-    # api/user/devInfoListAll json organized by controller device id
-    _controller_properties: dict[str, Any] = {}
-
-    # api/user/devInfoListAll json organized by controller device id, sensor access port index, and sensor type.
-    _sensor_properties: dict[tuple[str, int, int], Any] = {}
-
-    # api/user/devInfoListAll json organized by controller device id and port index
-    _device_properties: dict[tuple[str, int], Any] = {}
-
-    # api/dev/getDevModeSettingList json organized by controller device id and port index
-    _device_controls: dict[tuple[str, int], Any] = {}
-
-    # api/dev/getDevSetting json organized by controller device id and port (index 0 represents controller settings)
-    _device_settings: dict[tuple[str, int], Any] = {}
-
     def __init__(
         self, client: ACInfinityClient
     ) -> None:
@@ -592,6 +577,7 @@ class ACInfinityService:
                 pass  # wait for any in-progress update to complete
         try_count = 0
         while True:
+
             try:
                 if not self._client.is_logged_in():
                     await self._client.login()
@@ -873,6 +859,70 @@ class ACInfinityService:
         if self._client:
             await self._client.close()
 
+
+class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
+    # api/user/devInfoListAll json organized by controller device id
+    _controller_properties: dict[str, Any] = {}
+    _sensor_properties: dict[tuple[str, int, int], Any] = {}
+    _device_properties: dict[tuple[str, int], Any] = {}
+
+    _client: ACInfinityClient
+
+    def __init__(self, client: ACInfinityClient) -> None:
+        self._client = client
+
+    async def _async_update_data(self):
+        """Refresh the device list from the AC Infinity API"""
+        _LOGGER.debug("Refreshing global device list.")
+
+        try:
+            all_devices_json = await self._client.get_account_controllers()
+            for controller_properties_json in all_devices_json:
+                try:
+                    controller_id:str = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
+
+                    # set controller properties; readings for temp, vpd, humidity, etc...
+                    self._controller_properties[str(controller_id)] = controller_properties_json
+
+                    # controller AI will have a sensor array.
+                    if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
+                        sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
+                        for sensor_properties_json in sensors:
+                            access_port_index:int = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
+                            sensor_type:int = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
+
+                            # set sensor properties; sensor value, unit, and display precision
+                            self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
+
+                    for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
+                        device_port = device_properties_json[DevicePropertyKey.PORT]
+
+                        # set port properties; current power and remaining time until a mode switch
+                        self._device_properties[(controller_id, device_port)] = device_properties_json
+                except Exception as e:
+                    _LOGGER.error("Error refreshing controller %s from global coordinator: %s", controller_id, e)
+        except Exception as e:
+            _LOGGER.error("Error refreshing global device list: %s", e)
+            raise UpdateFailed from e
+
+class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
+    # api/dev/getDevSetting for a controller id and port (index 0 represents controller settings)
+    _device_settings: Any = {}
+
+    _controller_id: str
+    _port_index: int
+    _client: ACInfinityClient
+
+    def __init__(self, controller_id: str, port_index: int, client: ACInfinityClient):
+        self._controller_id = controller_id
+        self._port_index = port_index
+        self._client = client
+
+    async def _async_update_data(self):
+        try:
+            self._device_settings = await self._client.get_device_mode_settings(self._controller_id, self._port_index)
+        except Exception as e:
+            _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", self._controller_id, self._port_index, e)
 
 class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
     """Handles updating data for the integration"""

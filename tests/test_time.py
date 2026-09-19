@@ -80,7 +80,7 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceTimeEntity)
@@ -105,7 +105,7 @@ class TestTimes:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceTimeEntity)

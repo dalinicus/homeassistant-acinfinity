@@ -1,10 +1,12 @@
 import asyncio
 from asyncio import Future
+from unittest.mock import AsyncMock
 
 import aiohttp
 import pytest
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfTemperature
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.client import (
@@ -26,6 +28,7 @@ from custom_components.ac_infinity.const import (
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
+    ACInfinityData,
     ACInfinityEntities,
     ACInfinityService,
 )
@@ -68,7 +71,7 @@ class TestACInfinity:
     async def test_close_client_closed(self, mock_client):
         """when a client has not been logged in, is_logged_in should return false"""
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
         await ac_infinity.close()
 
         assert mock_client.close.called
@@ -82,7 +85,7 @@ class TestACInfinity:
         mock_client.get_account_controllers.return_value = DEVICE_INFO_LIST_ALL
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
         await ac_infinity.refresh_controllers()
 
         assert mock_client.login.called
@@ -96,7 +99,7 @@ class TestACInfinity:
         mock_client.get_account_controllers.return_value = DEVICE_INFO_LIST_ALL
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
         await ac_infinity.refresh_controllers()
         assert not mock_client.login.called
 
@@ -107,18 +110,18 @@ class TestACInfinity:
         mock_client.get_account_controllers.return_value = DEVICE_INFO_LIST_ALL
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
         await ac_infinity.refresh_controllers()
 
-        assert len(ac_infinity._controller_properties) == 2
+        assert len(ac_infinity.data.controller_properties) == 2
         assert (
-            ac_infinity._controller_properties[str(DEVICE_ID)][
+            ac_infinity.data.controller_properties[str(DEVICE_ID)][
                 ControllerPropertyKey.DEVICE_NAME
             ]
             == "Grow Tent"
         )
         assert (
-            ac_infinity._controller_properties[str(AI_DEVICE_ID)][
+            ac_infinity.data.controller_properties[str(AI_DEVICE_ID)][
                 ControllerPropertyKey.DEVICE_NAME
             ]
             == "Grow Tent AI"
@@ -135,7 +138,7 @@ class TestACInfinity:
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
 
         with pytest.raises(ACInfinityClientCannotConnect):
             await ac_infinity.refresh_controllers()
@@ -162,7 +165,7 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.get_account_controllers.side_effect = exception_type
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
 
         with pytest.raises(type(exception_type)):
             await ac_infinity.refresh_controllers()
@@ -181,7 +184,7 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.get_account_controllers.side_effect = ACInfinityClientInvalidAuth("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
 
         with pytest.raises(ACInfinityClientInvalidAuth):
             await ac_infinity.refresh_controllers()
@@ -200,7 +203,7 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.get_account_controllers.side_effect = ValueError("unexpected error")
 
-        ac_infinity = ACInfinityService(mock_client)
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
 
         with pytest.raises(ValueError):
             await ac_infinity.refresh_controllers()
@@ -223,8 +226,8 @@ class TestACInfinity:
         self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property_exists(device_id, property_key)
         assert result == (value if device_id != "12345" else False)
@@ -243,8 +246,8 @@ class TestACInfinity:
         self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property(device_id, property_key)
         assert result == value
@@ -261,8 +264,8 @@ class TestACInfinity:
         self, mock_client, property_key, device_id
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_controller_property(device_id, property_key)
         assert result is None
@@ -280,8 +283,8 @@ class TestACInfinity:
         self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.sensor_properties = SENSOR_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property_exists(
             device_id,
@@ -303,8 +306,8 @@ class TestACInfinity:
         self, mock_client, device_id, property_key: str, value
     ):
         """getting a device property returns the correct value"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._sensor_properties = SENSOR_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.sensor_properties = SENSOR_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property(
             device_id,
@@ -353,8 +356,8 @@ class TestACInfinity:
         self, mock_client, property_key, device_id, access_port, sensor_type: int
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_sensor_property(
             device_id, access_port, sensor_type, property_key
@@ -374,9 +377,9 @@ class TestACInfinity:
         self, mock_client, device_id, property_key: str, value
     ):
         """getting a port property gets the correct property from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
 
         result = ac_infinity.get_device_property_exists(device_id, 1, property_key)
         assert result == (value if device_id != "12345" else False)
@@ -395,9 +398,9 @@ class TestACInfinity:
         self, mock_client, device_id, port_num, property_key: str, value
     ):
         """getting a port property gets the correct property from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
 
         result = ac_infinity.get_device_property(device_id, port_num, property_key)
         assert result == value
@@ -416,17 +419,17 @@ class TestACInfinity:
         self, mock_client, property_key, device_id, port_num
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
 
         result = ac_infinity.get_device_property(device_id, port_num, property_key)
         assert result is None
 
     async def test_get_device_all_device_meta_data_returns_meta_data(self, mock_client):
         """getting port device ids should return ids"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         result = ac_infinity.get_all_controller_properties()
         assert len(result) > 0
@@ -494,8 +497,8 @@ class TestACInfinity:
     @pytest.mark.parametrize("data", [{}, None])
     async def test_get_device_all_device_meta_data_returns_empty_list(self, mock_client, data):
         """getting device metadata returns empty list if no device exists or data isn't initialized"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = data
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = data
 
         result = ac_infinity.get_all_controller_properties()
         assert result == []
@@ -515,9 +518,9 @@ class TestACInfinity:
         self, mock_client, dev_type: int, expected_model: str
     ):
         """getting device returns a model object that contains correct device info for the device registry"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._controller_properties[str(DEVICE_ID)]["devType"] = dev_type
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.controller_properties[str(DEVICE_ID)]["devType"] = dev_type
 
         result = ac_infinity.get_all_controller_properties()
         assert len(result) > 0
@@ -546,9 +549,9 @@ class TestACInfinity:
         self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         result = ac_infinity.get_device_control_exists(device_id, 1, setting_key)
         assert result == (value if device_id != "12345" else False)
@@ -570,9 +573,9 @@ class TestACInfinity:
         self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         result = ac_infinity.get_device_control(device_id, 1, setting_key)
         assert result == value
@@ -583,11 +586,11 @@ class TestACInfinity:
         self, mock_client, device_id, default_value
     ):
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
-        ac_infinity._device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.SURPLUS] = None
+        ac_infinity.data.device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.SURPLUS] = None
 
         result = ac_infinity.get_device_control(
             device_id, 1, DeviceControlKey.SURPLUS, default_value=default_value
@@ -607,10 +610,10 @@ class TestACInfinity:
         self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting_exists(device_id, setting_key)
         assert result == (value if device_id != "12345" else False)
@@ -627,10 +630,10 @@ class TestACInfinity:
         self, mock_client, device_id, setting_key, value
     ):
         """getting a port setting gets the correct setting from the correct port"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         result = ac_infinity.get_controller_setting(device_id, setting_key)
         assert result == value
@@ -641,12 +644,12 @@ class TestACInfinity:
         self, mock_client, device_id, default_value
     ):
         """getting a port setting returns 0 instead of null if the key exists but the value is null"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
-        ac_infinity._device_settings[(str(DEVICE_ID), 1)][
+        ac_infinity.data.device_settings[(str(DEVICE_ID), 1)][
             AdvancedSettingsKey.CALIBRATE_HUMIDITY
         ] = None
 
@@ -671,9 +674,9 @@ class TestACInfinity:
         self, mock_client, setting_key, device_id, port_num
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         result = ac_infinity.get_device_setting(device_id, port_num, setting_key)
         assert result is None
@@ -695,9 +698,9 @@ class TestACInfinity:
         device_id,
     ):
         """the absence of a value should return None instead of keyerror"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         result = ac_infinity.get_device_control(device_id, 1, setting_key)
         assert result is None
@@ -709,9 +712,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         await ac_infinity.update_device_control(controller.devices[0], DeviceControlKey.AT_TYPE, 2)
@@ -725,9 +728,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         await ac_infinity.update_device_controls(controller.devices[0], {DeviceControlKey.AT_TYPE: 2})
@@ -742,9 +745,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.side_effect = ACInfinityClientCannotConnect("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientCannotConnect):
@@ -771,9 +774,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.side_effect = exception_type
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(type(exception_type)):
@@ -792,9 +795,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.side_effect = ACInfinityClientInvalidAuth("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientInvalidAuth):
@@ -813,9 +816,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_controls.side_effect = ValueError("unexpected error")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ValueError):
@@ -831,8 +834,8 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         await ac_infinity.update_controller_setting(
@@ -850,9 +853,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         await ac_infinity.update_controller_settings(
@@ -865,8 +868,8 @@ class TestACInfinity:
 
     async def test_update_controller_settings_raises_for_ai_controller(self, mock_client):
         """updating controller settings should raise NotImplementedError for AI controllers"""
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
 
@@ -885,10 +888,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ACInfinityClientCannotConnect("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientCannotConnect):
@@ -917,10 +920,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = exception_type
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(type(exception_type)):
@@ -941,10 +944,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ACInfinityClientInvalidAuth("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientInvalidAuth):
@@ -965,10 +968,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ValueError("unexpected error")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
-        ac_infinity._device_settings = DEVICE_SETTINGS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity.data.device_settings = DEVICE_SETTINGS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ValueError):
@@ -986,10 +989,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
-        ac_infinity._device_properties[(str(DEVICE_ID), 1)][
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
+        ac_infinity.data.device_properties[(str(DEVICE_ID), 1)][
             DevicePropertyKey.NAME
         ] = DEVICE_NAME
 
@@ -1012,10 +1015,10 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
-        ac_infinity._device_properties[(str(DEVICE_ID), 1)][
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
+        ac_infinity.data.device_properties[(str(DEVICE_ID), 1)][
             DevicePropertyKey.NAME
         ] = DEVICE_NAME
 
@@ -1039,9 +1042,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ACInfinityClientCannotConnect("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientCannotConnect):
@@ -1070,9 +1073,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = exception_type
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(type(exception_type)):
@@ -1093,9 +1096,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ACInfinityClientInvalidAuth("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientInvalidAuth):
@@ -1116,9 +1119,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_device_settings.side_effect = ValueError("unexpected error")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
         with pytest.raises(ValueError):
@@ -1137,9 +1140,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         await ac_infinity.update_device_control(ai_controller.devices[0], DeviceControlKey.AT_TYPE, 2)
@@ -1156,9 +1159,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         await ac_infinity.update_device_controls(ai_controller.devices[0], {DeviceControlKey.AT_TYPE: 2})
@@ -1175,9 +1178,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.return_value = future
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         await ac_infinity.update_device_settings(
@@ -1196,9 +1199,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.side_effect = ACInfinityClientCannotConnect("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientCannotConnect):
@@ -1225,9 +1228,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.side_effect = exception_type
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         with pytest.raises(type(exception_type)):
@@ -1246,9 +1249,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.side_effect = ACInfinityClientInvalidAuth("unit-test")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         with pytest.raises(ACInfinityClientInvalidAuth):
@@ -1267,9 +1270,9 @@ class TestACInfinity:
         mock_client.is_logged_in.return_value = True
         mock_client.update_ai_device_control_and_settings.side_effect = ValueError("unexpected error")
 
-        ac_infinity = ACInfinityService(mock_client)
-        ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        ac_infinity._device_controls = DEVICE_CONTROLS_DATA
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        ac_infinity.data.device_controls = DEVICE_CONTROLS_DATA
 
         ai_controller = ACInfinityController(AI_CONTROLLER_PROPERTIES)
         with pytest.raises(ValueError):
@@ -1376,7 +1379,7 @@ class TestACInfinity:
         )
 
         # Set the online status
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_properties[(str(DEVICE_ID), port)][
             DevicePropertyKey.ONLINE
         ] = online_status
 
@@ -1446,22 +1449,128 @@ class TestACInfinity:
         # Create entity with at_type filter
         from custom_components.ac_infinity.core import ACInfinityDeviceEntity
         entity = ACInfinityDeviceEntity(
-            test_objects.coordinator,
             device,
             lambda entry, device_id, entity_config_key: True,
             lambda e, d: True,
             at_type_fn,
             DevicePropertyKey.SPEAK,
             "sensor",
+            test_objects.coordinator,
         )
 
         # Set the online status and current at_type
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_properties[(str(DEVICE_ID), port)][
             DevicePropertyKey.ONLINE
         ] = online_status
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][
             DeviceControlKey.AT_TYPE
         ] = current_at_type
 
         # Check availability
         assert entity.available == expected_available
+
+
+@pytest.mark.asyncio
+class TestCoordinators:
+    async def test_list_coordinator_update_data_refreshes_controllers(
+        self, mocker: MockFixture, setup
+    ):
+        """the list coordinator's update should delegate to the service's refresh_controllers"""
+        test_objects: ACTestObjects = setup
+        refresh_mock = mocker.patch.object(
+            test_objects.ac_infinity, "refresh_controllers", new_callable=AsyncMock
+        )
+
+        await test_objects.coordinator._async_update_data()
+
+        refresh_mock.assert_called_once()
+
+    async def test_list_coordinator_update_data_raises_update_failed_on_error(
+        self, mocker: MockFixture, setup
+    ):
+        """the list coordinator should surface refresh failures as UpdateFailed"""
+        test_objects: ACTestObjects = setup
+        mocker.patch.object(
+            test_objects.ac_infinity,
+            "refresh_controllers",
+            new_callable=AsyncMock,
+            side_effect=Exception("unit test"),
+        )
+
+        with pytest.raises(UpdateFailed):
+            await test_objects.coordinator._async_update_data()
+
+    async def test_device_coordinator_update_data_refreshes_settings_for_listener_ports(
+        self, mocker: MockFixture, setup
+    ):
+        """the device coordinator should only refresh ports with an active listener context"""
+        test_objects: ACTestObjects = setup
+        device_coordinator = test_objects.device_coordinators[str(DEVICE_ID)]
+        refresh_mock = mocker.patch.object(
+            test_objects.ac_infinity, "refresh_device_settings", new_callable=AsyncMock
+        )
+        mocker.patch.object(device_coordinator, "async_contexts", return_value=[1, 3])
+
+        await device_coordinator._async_update_data()
+
+        refresh_mock.assert_called_once()
+        call_args = refresh_mock.call_args[0]
+        assert call_args[0] == str(DEVICE_ID)
+        assert set(call_args[1]) == {1, 3}
+
+
+@pytest.mark.asyncio
+class TestRefreshDeviceSettings:
+    async def test_refresh_device_settings_explicit_ports_updates_data(self, mock_client):
+        """explicitly requested ports should be refreshed and cached"""
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        await ac_infinity.refresh_device_settings(str(DEVICE_ID), [1, 2])
+
+        assert mock_client.get_device_mode_settings.call_count == 2
+        mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 1)
+        mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 2)
+        assert ac_infinity.data.device_controls[(str(DEVICE_ID), 1)] == DEVICE_CONTROLS
+        assert (
+            ac_infinity.data.device_settings[(str(DEVICE_ID), 2)]
+            == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
+        )
+
+    async def test_refresh_device_settings_falls_back_to_all_ports_when_none_given(
+        self, mock_client
+    ):
+        """an empty port list should fall back to every port on the controller, including port 0"""
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+
+        await ac_infinity.refresh_device_settings(str(DEVICE_ID), [])
+
+        # DEVICE_ID has devPortCount = 4, so ports 0 (controller) through 4 should be refreshed
+        assert mock_client.get_device_mode_settings.call_count == 5
+        for port in range(5):
+            mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), port)
+
+    async def test_refresh_device_settings_continues_after_one_port_fails(
+        self, mocker: MockFixture, mock_client
+    ):
+        """a failure refreshing one port should not prevent the others from refreshing"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+        mocker.patch("asyncio.sleep", return_value=future)
+
+        async def side_effect(controller_id, port_index):
+            if port_index == 2:
+                raise ACInfinityClientRequestFailed("unit-test")
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = side_effect
+
+        ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        await ac_infinity.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
+
+        assert (str(DEVICE_ID), 1) in ac_infinity.data.device_controls
+        assert (str(DEVICE_ID), 3) in ac_infinity.data.device_controls
+        assert (str(DEVICE_ID), 2) not in ac_infinity.data.device_controls

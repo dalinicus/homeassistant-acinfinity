@@ -83,11 +83,11 @@ class TestSwitches:
 
         # Seed AI controls so suitability and mode checks can resolve for AI ports.
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 9
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 9
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -107,9 +107,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 9
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -119,7 +119,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][
             DeviceControlKey.CO2_LOW_SWITCH
         ] = value
 
@@ -136,9 +136,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 9
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -163,9 +163,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 9
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -189,11 +189,11 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 10
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 10
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -213,9 +213,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 10
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -225,7 +225,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][
             DeviceControlKey.CO2_FAN_HIGH_SWITCH
         ] = value
 
@@ -242,9 +242,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 10
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -269,9 +269,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 10
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -295,11 +295,11 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 11
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 11
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -319,9 +319,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 11
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -331,7 +331,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][
             DeviceControlKey.MOISTURE_LOW_SWITCH
         ] = value
 
@@ -348,9 +348,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 11
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -375,9 +375,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 11
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -401,11 +401,11 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 14
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 14
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -425,9 +425,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 14
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -437,7 +437,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][
             DeviceControlKey.EC_TDS_LOW_SWITCH_EC
         ] = value
 
@@ -454,9 +454,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 14
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -481,9 +481,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 14
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -508,11 +508,11 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 13
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 13
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -533,9 +533,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 13
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -545,7 +545,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
 
         entity._handle_coordinator_update()
 
@@ -561,9 +561,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 13
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -589,9 +589,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 13
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -616,11 +616,11 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 12
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 12
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -641,9 +641,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 12
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -653,7 +653,7 @@ class TestSwitches:
             AI_MAC_ADDR,
         )
 
-        test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceSwitchEntity)
@@ -668,9 +668,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 12
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -694,9 +694,9 @@ class TestSwitches:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = deepcopy(test_objects.ac_infinity._device_controls[(str(DEVICE_ID), 1)])
+            ai_control = deepcopy(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 12
-            test_objects.ac_infinity._device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -767,7 +767,7 @@ class TestSwitches:
             setting,
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
 
         entity._handle_coordinator_update()
 
@@ -797,7 +797,7 @@ class TestSwitches:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
             setting
         ] = value
 

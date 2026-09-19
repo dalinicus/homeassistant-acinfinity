@@ -7,12 +7,10 @@ import pytest
 from homeassistant.config_entries import ConfigEntries, ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util.hass_dict import HassDict
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity import (
-    ACInfinityDataUpdateCoordinator,
     async_migrate_entry,
     async_setup_entry,
     async_unload_entry,
@@ -25,9 +23,21 @@ from custom_components.ac_infinity.const import (
     EntityConfigValue,
     ControllerPropertyKey
 )
-from custom_components.ac_infinity.core import ACInfinityService
+from custom_components.ac_infinity.core import (
+    ACInfinityData,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
+    ACInfinityEntryData,
+    ACInfinityService,
+)
 from tests import HOST, CONFIG_ENTRY_DATA
-from tests.data_models import DEVICE_ID, AI_DEVICE_ID, CONTROLLER_PROPERTIES_DATA
+from tests.data_models import (
+    DEVICE_ID,
+    AI_DEVICE_ID,
+    CONTROLLER_PROPERTIES_DATA,
+    DEVICE_CONTROLS,
+    DEVICE_INFO_LIST_ALL,
+)
 
 EMAIL = "myemail@unittest.com"
 PASSWORD = "hunter2"
@@ -36,13 +46,24 @@ ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 @pytest.fixture
 def setup(mocker: MockFixture):
-    mocker.patch.object(ACInfinityService, "refresh")
-    mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
-    mocker.patch.object(ACInfinityClient, "close")
+    mocker.patch.object(ACInfinityClient, "login", new_callable=AsyncMock)
+    mocker.patch.object(
+        ACInfinityClient,
+        "get_account_controllers",
+        new_callable=AsyncMock,
+        return_value=deepcopy(DEVICE_INFO_LIST_ALL),
+    )
+    mocker.patch.object(
+        ACInfinityClient,
+        "get_device_mode_settings",
+        new_callable=AsyncMock,
+        return_value=deepcopy(DEVICE_CONTROLS),
+    )
+    mocker.patch.object(ACInfinityClient, "close", new_callable=AsyncMock)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)
     mocker.patch.object(ConfigEntries, "__init__", return_value=None)
     mocker.patch.object(
-        ConfigEntries, "async_forward_entry_setups"
+        ConfigEntries, "async_forward_entry_setups", new_callable=AsyncMock
     )
     mocker.patch.object(
         ConfigEntries, "async_unload_platforms", new_callable=AsyncMock, return_value=True
@@ -73,11 +94,20 @@ def setup(mocker: MockFixture):
 @pytest.mark.asyncio
 class TestInit:
     async def test_async_setup_entry_ac_infinity_init(self, setup):
-        """when setting up, ac_infinity should be initialized and assigned to the hass object"""
+        """when setting up, an ACInfinityEntryData should be initialized and assigned to the hass object"""
         (hass, config_entry) = setup
         await async_setup_entry(hass, config_entry)
 
-        assert hass.data[DOMAIN][ENTRY_ID] is not None
+        entry_data = hass.data[DOMAIN][ENTRY_ID]
+        assert isinstance(entry_data, ACInfinityEntryData)
+        assert isinstance(entry_data.service, ACInfinityService)
+        assert isinstance(entry_data.list_coordinator, ACInfinityDeviceListCoordinator)
+        assert set(entry_data.device_coordinators.keys()) == {
+            str(DEVICE_ID),
+            str(AI_DEVICE_ID),
+        }
+        for device_coordinator in entry_data.device_coordinators.values():
+            assert isinstance(device_coordinator, ACInfinityDeviceCoordinator)
 
     async def test_async_setup_entry_platforms_initialized(self, setup):
         """When setting up, all platforms should be initialized"""
@@ -94,13 +124,15 @@ class TestInit:
         )
 
     async def test_async_unload_entry(self, setup):
-        """When unloading, all platforms should be unloaded"""
-        coordinator = MagicMock()
-        coordinator.ac_infinity.close = AsyncMock()
-
+        """When unloading, all platforms should be unloaded and the service closed"""
         hass: HomeAssistant
         (hass, config_entry) = setup
-        hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})
+
+        await async_setup_entry(hass, config_entry)
+        entry_data: ACInfinityEntryData = hass.data[DOMAIN][ENTRY_ID]
+        close_mock = AsyncMock()
+        entry_data.service.close = close_mock
+
         result = await async_unload_entry(hass, config_entry)
 
         assert result
@@ -109,18 +141,8 @@ class TestInit:
         hass.config_entries.async_unload_platforms.assert_called_with(
             config_entry, PLATFORMS
         )
-
-    async def test_update_update_failed_thrown(self, mocker: MockFixture, setup):
-        (hass, config_entry) = setup
-
-        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
-        ac_infinity = ACInfinityService(client)
-        mocker.patch.object(ac_infinity, "refresh", side_effect=Exception("unit test"))
-        coordinator = ACInfinityDataUpdateCoordinator(
-            hass, config_entry, ac_infinity, 10
-        )
-        with pytest.raises(UpdateFailed):
-            await coordinator._async_update_data()
+        close_mock.assert_called_once()
+        assert ENTRY_ID not in hass.data[DOMAIN]
 
     async def test_async_migrate_entry_version_1_to_2_success(self, mocker: MockFixture):
         """Test successful migration from version 1 to version 2"""
@@ -146,24 +168,19 @@ class TestInit:
         hass = HomeAssistant("/path")
         hass.config_entries = ConfigEntries(hass, {})
 
-        # Mock the AC Infinity service and client
-        future: asyncio.Future = asyncio.Future()
-        future.set_result(None)
-
         # Create a real ACInfinityService instance with mocked client
         mock_client = MagicMock()
-        mock_ac_infinity = ACInfinityService(mock_client)
-        mock_ac_infinity.refresh = AsyncMock(return_value=future)
-        mock_ac_infinity.close = AsyncMock(return_value=future)
+        mock_ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        mock_ac_infinity.refresh_controllers = AsyncMock()
+        mock_ac_infinity.close = AsyncMock()
 
-        # Set up the service's internal data structures like the real service
-        mock_ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        # Set up the service's cached data like the real service would after a refresh
+        mock_ac_infinity.data.controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
 
         # Mock the get_device_ids method to return our test device IDs
         mock_ac_infinity.get_device_ids = MagicMock(return_value=[DEVICE_ID, AI_DEVICE_ID])
 
         # Mock ACInfinityService constructor
-        mocker.patch.object(ACInfinityService, "__init__", return_value=None)
         mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
 
         # Mock the service instance creation to return our mock
@@ -215,7 +232,7 @@ class TestInit:
             assert device_config["port_4"] == EntityConfigValue.ALL
 
         # Verify service methods were called
-        mock_ac_infinity.refresh.assert_called_once()
+        mock_ac_infinity.refresh_controllers.assert_called_once()
         mock_ac_infinity.get_device_ids.assert_called_once()
         mock_ac_infinity.close.assert_called_once()
 
@@ -245,11 +262,10 @@ class TestInit:
 
         # Mock the AC Infinity service to fail on refresh
         mock_ac_infinity = MagicMock()
-        mock_ac_infinity.refresh = AsyncMock(side_effect=Exception("API Error"))
+        mock_ac_infinity.refresh_controllers = AsyncMock(side_effect=Exception("API Error"))
         mock_ac_infinity.close = AsyncMock()
 
         # Mock service creation
-        mocker.patch.object(ACInfinityService, "__init__", return_value=None)
         mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
         mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_ac_infinity)
 
@@ -327,13 +343,11 @@ class TestInit:
         hass.data = HassDict({})
 
         # Mock the setup dependencies
-        future: asyncio.Future = asyncio.Future()
-        future.set_result(None)
-
-        mocker.patch.object(ACInfinityService, "refresh", return_value=future)
         mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
-        mocker.patch.object(ACInfinityClient, "close", return_value=future)
-        mocker.patch.object(ConfigEntries, "async_forward_entry_setups", return_value=future)
+        mocker.patch.object(ACInfinityClient, "close", new_callable=AsyncMock)
+        mocker.patch.object(
+            ConfigEntries, "async_forward_entry_setups", new_callable=AsyncMock
+        )
 
         # Mock AC Infinity service with multiple new devices
         new_device_id_1 = "12345678901234567890"
@@ -360,11 +374,14 @@ class TestInit:
 
         # Create a real ACInfinityService instance with mocked client
         mock_client = MagicMock()
-        mock_ac_infinity = ACInfinityService(mock_client)
-        mock_ac_infinity.refresh = AsyncMock(return_value=future)
+        mock_ac_infinity = ACInfinityService(mock_client, ACInfinityData())
+        mock_ac_infinity.refresh_controllers = AsyncMock()
 
-        # Set up the service's internal data structures with new device data
-        mock_ac_infinity._controller_properties = {**new_device_1_properties, **new_device_2_properties}
+        # Set up the service's cached data with new device data
+        mock_ac_infinity.data.controller_properties = {
+            **new_device_1_properties,
+            **new_device_2_properties,
+        }
 
         # Mock the get_device_ids method to return our new test device IDs
         mock_ac_infinity.get_device_ids = MagicMock(return_value=[new_device_id_1, new_device_id_2])
@@ -409,3 +426,4 @@ class TestInit:
         assert device2_config["port_4"] == EntityConfigValue.SENSORS_ONLY
         assert device2_config["port_5"] == EntityConfigValue.SENSORS_ONLY
         assert device2_config["port_6"] == EntityConfigValue.SENSORS_ONLY
+

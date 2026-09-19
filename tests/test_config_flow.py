@@ -25,7 +25,7 @@ from custom_components.ac_infinity.const import (
     DEFAULT_POLLING_INTERVAL,
     DOMAIN,
 )
-from custom_components.ac_infinity.core import ACInfinityService
+from custom_components.ac_infinity.core import ACInfinityData, ACInfinityService
 from tests import ACTestObjects, setup_entity_mocks
 
 from .data_models import (
@@ -147,7 +147,7 @@ class TestConfigFlow:
         # Mock ACInfinityService constructor and methods
         mock_service = mocker.MagicMock()
         mock_service.get_device_ids.return_value = [str(DEVICE_ID), str(AI_DEVICE_ID)]
-        mock_service.refresh = mocker.AsyncMock()
+        mock_service.refresh_controllers = mocker.AsyncMock()
 
         # Use mocker.patch instead of context manager
         mock_service_class = mocker.patch("custom_components.ac_infinity.config_flow.ACInfinityService")
@@ -163,7 +163,7 @@ class TestConfigFlow:
         flow.async_show_form.assert_not_called()
 
         # Verify the service refresh was called
-        mock_service.refresh.assert_called_once()
+        mock_service.refresh_controllers.assert_called_once()
 
     async def test_async_step_user_successful_login_aborts_when_no_devices(
         self, setup_config_flow
@@ -175,7 +175,7 @@ class TestConfigFlow:
         # Mock ACInfinityService to return empty device list
         mock_service = mocker.MagicMock()
         mock_service.get_device_ids.return_value = []
-        mock_service.refresh = mocker.AsyncMock()
+        mock_service.refresh_controllers = mocker.AsyncMock()
 
         # Use mocker.patch instead of context manager
         mock_service_class = mocker.patch("custom_components.ac_infinity.config_flow.ACInfinityService")
@@ -191,7 +191,7 @@ class TestConfigFlow:
         flow.async_show_form.assert_not_called()
 
         # Verify the service refresh was called
-        mock_service.refresh.assert_called_once()
+        mock_service.refresh_controllers.assert_called_once()
 
     async def test_config_flow_enable_entities_aborts_when_not_initialized(self, setup_config_flow):
         """When service is not initialized, enable_entities should abort"""
@@ -212,10 +212,10 @@ class TestConfigFlow:
         # Set up the flow's internal state using getters/setters
         # Create a real ACInfinityService instance with mocked client
         mock_client = mocker.MagicMock()
-        mock_service = ACInfinityService(mock_client)
+        mock_service = ACInfinityService(mock_client, ACInfinityData())
         # Set up the service's internal data structures like the real service
-        mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._device_properties = DEVICE_PROPERTIES_DATA
+        mock_service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        mock_service.data.device_properties = DEVICE_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID)]
@@ -242,10 +242,10 @@ class TestConfigFlow:
         # Set up the flow's internal state with multiple devices using getters/setters
         # Create a real ACInfinityService instance with mocked client
         mock_client = mocker.MagicMock()
-        mock_service = ACInfinityService(mock_client)
+        mock_service = ACInfinityService(mock_client, ACInfinityData())
         # Set up the service's internal data structures like the real service
-        mock_service._controller_properties = CONTROLLER_PROPERTIES_DATA
-        mock_service._device_properties = DEVICE_PROPERTIES_DATA
+        mock_service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        mock_service.data.device_properties = DEVICE_PROPERTIES_DATA
 
         flow.ac_infinity = mock_service
         flow.device_ids = [str(DEVICE_ID), str(AI_DEVICE_ID)]
@@ -282,7 +282,7 @@ class TestConfigFlow:
         # Set up the flow's internal state - last device using getters/setters
         # Create a real ACInfinityService instance with mocked client
         mock_client = mocker.MagicMock()
-        mock_service = ACInfinityService(mock_client)
+        mock_service = ACInfinityService(mock_client, ACInfinityData())
         mocker.patch.object(mock_service, 'close', new_callable=mocker.AsyncMock)
 
         flow.ac_infinity = mock_service
@@ -586,7 +586,7 @@ class TestConfigFlow:
         flow = test_objects.options_flow
 
         # Set up the service's internal data structures like the real service
-        test_objects.coordinator.ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
+        test_objects.ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         await flow.async_step_controller_select()
 
@@ -605,7 +605,7 @@ class TestConfigFlow:
         flow = test_objects.options_flow
 
         # Mock get_device_ids to return empty list
-        mocker.patch.object(test_objects.coordinator.ac_infinity, "get_device_ids", return_value=[])
+        mocker.patch.object(test_objects.ac_infinity, "get_device_ids", return_value=[])
 
         result = await flow.async_step_controller_select()
 
@@ -637,8 +637,8 @@ class TestConfigFlow:
         flow.current_device_id = str(DEVICE_ID)
 
         # Set up the service's internal data structures like the real service
-        test_objects.coordinator.ac_infinity._controller_properties = CONTROLLER_PROPERTIES_DATA
-        test_objects.coordinator.ac_infinity._device_properties = DEVICE_PROPERTIES_DATA
+        test_objects.ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        test_objects.ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
 
         await flow.async_step_enable_entities()
 

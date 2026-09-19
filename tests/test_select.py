@@ -114,7 +114,7 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][setting] = value
+        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), 0)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSelectEntity)
@@ -182,7 +182,7 @@ class TestSelectors:
             DeviceControlKey.AT_TYPE,
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][
             DeviceControlKey.AT_TYPE
         ] = at_type
         entity._handle_coordinator_update()
@@ -254,7 +254,7 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][
             setting
         ] = setting_mode
         entity._handle_coordinator_update()
@@ -319,7 +319,7 @@ class TestSelectors:
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE
         ] = value
         entity._handle_coordinator_update()
@@ -385,7 +385,7 @@ class TestSelectors:
             AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.DEVICE_LOAD_TYPE
         ] = load_type
         entity._handle_coordinator_update()

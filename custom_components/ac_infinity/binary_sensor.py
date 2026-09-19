@@ -182,17 +182,17 @@ class ACInfinityControllerBinarySensorEntity(
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityControllerBinarySensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
         super().__init__(
-            coordinator,
             controller,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -207,17 +207,17 @@ class ACInfinitySensorBinarySensorEntity(ACInfinitySensorEntity, BinarySensorEnt
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinitySensorBinarySensorEntityDescription,
         sensor: ACInfinitySensor,
     ) -> None:
         super().__init__(
-            coordinator,
             sensor,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.BINARY_SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -234,24 +234,24 @@ class ACInfinityDeviceBinarySensorEntity(ACInfinityDeviceEntity, BinarySensorEnt
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceBinarySensorEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         """
         Args:
-            coordinator: data coordinator responsible for updating the value of the entity.
+            list_coordinator: data coordinator responsible for updating the value of the entity.
             description: haas description used to initialize the entity.
             device: port object the entity is bound to
         """
         super().__init__(
-            coordinator,
             device,
             description.enabled_fn,
             description.suitable_fn,
             None,
             description.key,
             Platform.BINARY_SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 

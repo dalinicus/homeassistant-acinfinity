@@ -41,20 +41,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     service = ACInfinityService(client, data)
 
     list_coordinator = ACInfinityDeviceListCoordinator(
-        hass, entry, client, data, polling_interval
+        hass, entry, service, polling_interval
     )
     await list_coordinator.async_config_entry_first_refresh()
     await __initialize_new_devices_if_any(hass, entry, service)
 
-    # one device coordinator per controller (port 0 for controller-level settings) and per discovered port
-    port_keys = {(controller_id, 0) for controller_id in data.controller_properties}
-    port_keys.update(data.device_properties.keys())
-
+    # one device coordinator per controller; it polls mode settings/controls for that
+    # controller's ports (context-driven - see ACInfinityDeviceCoordinator)
     device_coordinators = {
-        (controller_id, port_index): ACInfinityDeviceCoordinator(
-            controller_id, port_index, hass, entry, client, data, polling_interval
+        controller_id: ACInfinityDeviceCoordinator(
+            controller_id, hass, entry, service, polling_interval
         )
-        for controller_id, port_index in port_keys
+        for controller_id in data.controller_properties
     }
 
     await asyncio.gather(

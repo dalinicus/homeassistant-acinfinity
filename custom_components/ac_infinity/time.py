@@ -116,16 +116,15 @@ class ACInfinityDeviceTimeEntity(ACInfinityDeviceEntity, TimeEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceTimeEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.TIME, device_coordinator
+            device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.TIME, list_coordinator, device_coordinator
         )
         self.entity_description = description
-        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def native_value(self) -> time | None:
@@ -136,7 +135,7 @@ class ACInfinityDeviceTimeEntity(ACInfinityDeviceEntity, TimeEntity):
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.device_port, value)
-        await self._device_coordinator.async_request_refresh()
+        await self.async_request_device_refresh()
 
 
 async def async_setup_entry(
@@ -152,7 +151,7 @@ async def async_setup_entry(
     for controller in controllers:
 
         for device in controller.devices:
-            device_coordinator = entry_data.device_coordinators[(controller.controller_id, device.device_port)]
+            device_coordinator = entry_data.device_coordinators[controller.controller_id]
             for description in DEVICE_DESCRIPTIONS:
                 entities.append_if_suitable(
                     ACInfinityDeviceTimeEntity(entry_data.list_coordinator, device_coordinator, description, device)

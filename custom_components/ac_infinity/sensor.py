@@ -539,17 +539,17 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityControllerSensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
         super().__init__(
-            coordinator,
             controller,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -563,17 +563,17 @@ class ACInfinitySensorSensorEntity(ACInfinitySensorEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinitySensorSensorEntityDescription,
         sensor: ACInfinitySensor,
     ) -> None:
         super().__init__(
-            coordinator,
             sensor,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -587,12 +587,12 @@ class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceSensorEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR
+            device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR, list_coordinator
         )
         self.entity_description = description
 

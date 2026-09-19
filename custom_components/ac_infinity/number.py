@@ -1181,22 +1181,21 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityControllerNumberEntityDescription,
         controller: ACInfinityController,
     ) -> None:
         super().__init__(
-            coordinator,
             controller,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.NUMBER,
+            list_coordinator,
             device_coordinator,
         )
         self.entity_description = description
-        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def native_value(self) -> float | None:
@@ -1207,7 +1206,7 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.controller, value)
-        await self._device_coordinator.async_request_refresh()
+        await self.async_request_device_refresh()
 
 
 class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
@@ -1215,16 +1214,15 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDeviceListCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceNumberEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.NUMBER, device_coordinator
+            device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.NUMBER, list_coordinator, device_coordinator
         )
         self.entity_description = description
-        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def native_value(self) -> float | None:
@@ -1235,7 +1233,7 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.device_port, value)
-        await self._device_coordinator.async_request_refresh()
+        await self.async_request_device_refresh()
 
 
 async def async_setup_entry(
@@ -1249,7 +1247,7 @@ async def async_setup_entry(
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
-        controller_device_coordinator = entry_data.device_coordinators[(controller.controller_id, 0)]
+        controller_device_coordinator = entry_data.device_coordinators[controller.controller_id]
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerNumberEntity(
                 entry_data.list_coordinator, controller_device_coordinator, controller_description, controller
@@ -1258,7 +1256,7 @@ async def async_setup_entry(
             entities.append_if_suitable(controller_entity)
 
         for device in controller.devices:
-            device_coordinator = entry_data.device_coordinators[(controller.controller_id, device.device_port)]
+            device_coordinator = entry_data.device_coordinators[controller.controller_id]
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceNumberEntity(
                     entry_data.list_coordinator, device_coordinator, device_description, device

@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from abc import abstractmethod, ABC
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Iterable
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
@@ -583,74 +583,121 @@ class ACInfinityService:
 
         return default_value
 
-    async def refresh(self) -> None:
-        """refreshes the values of properties and settings from the AC infinity API"""
-        if self._update_lock.locked():
-            async with self._update_lock:
-                pass  # wait for any in-progress update to complete
+    async def _execute_with_retry[T](
+        self,
+        action: Callable[[], Awaitable[T]],
+        operation_name: str,
+        max_attempts: int = 4,
+    ) -> T:
+        """Executes an async action, retrying transient API failures with exponential backoff.
+
+        A Polly-style retry policy: retryable network/API errors are retried with
+        increasing delay between attempts, while auth failures and unexpected errors
+        are raised immediately without retrying.
+
+        Args:
+            action: the operation to invoke, and retry if it fails
+            operation_name: human-readable description of the operation, used in log messages
+            max_attempts: the maximum number of retry attempts after the initial call
+        """
         try_count = 0
         while True:
-
             try:
-                if not self.client.is_logged_in():
-                    await self.client.login()
-
-                all_devices_json = await self.client.get_account_controllers()
-                for controller_properties_json in all_devices_json:
-                    controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
-
-                    # set controller properties; readings for temp, vpd, humidity, etc...
-                    self.data.controller_properties[str(controller_id)] = controller_properties_json
-
-                    # retrieve and set controller settings; temperature, humidity, and vpd offsets
-                    controller_settings_json = await self.client.get_device_mode_settings(controller_id, 0)
-                    self.data.device_settings[(controller_id, 0)] = controller_settings_json[DeviceControlKey.DEV_SETTING]
-
-                    # controller AI will have a sensor array.
-                    if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
-                        sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
-                        for sensor_properties_json in sensors:
-                            access_port_index = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
-                            sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
-
-                            # set sensor properties; sensor value, unit, and display precision
-                            self.data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
-
-                    for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
-                        device_port = device_properties_json[DevicePropertyKey.PORT]
-
-                        # set port properties; current power and remaining time until a mode switch
-                        self.data.device_properties[(controller_id, device_port)] = device_properties_json
-
-                        # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
-                        device_controls_json = await self.client.get_device_mode_settings(controller_id, device_port)
-                        self.data.device_controls[(controller_id, device_port)] = device_controls_json
-
-                        # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
-                        device_settings_json = await self.client.get_device_mode_settings(controller_id, device_port)
-                        self.data.device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
-
-                return  # update successful.  eject from the infinite while loop.
-
+                return await action()
             except (
                 ACInfinityClientCannotConnect,
                 ACInfinityClientRequestFailed,
                 aiohttp.ClientError,
-                asyncio.TimeoutError
+                asyncio.TimeoutError,
             ) as ex:
-                if try_count < 4:
+                if try_count < max_attempts:
                     try_count += 1
-                    _LOGGER.warning("Unable to refresh from data update coordinator. Retry attempt %s/4", str(try_count))
-                    await asyncio.sleep(1)
+                    delay = 2 ** (try_count - 1)  # exponential backoff: 1s, 2s, 4s, 8s...
+                    _LOGGER.warning(
+                        "Unable to %s. Retry attempt %s/%s in %ss", operation_name, try_count, max_attempts, delay
+                    )
+                    await asyncio.sleep(delay)
                 else:
                     _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
                     raise
             except ACInfinityClientInvalidAuth as ex:
-                _LOGGER.error("Unable to refresh from data update coordinator: Authentication failed", exc_info=ex)
+                _LOGGER.error("Unable to %s: Authentication failed", operation_name, exc_info=ex)
                 raise
             except Exception as ex:
-                _LOGGER.error("Unable to refresh from data update coordinator: Unexpected error", exc_info=ex)
+                _LOGGER.error("Unable to %s: Unexpected error", operation_name, exc_info=ex)
                 raise
+
+    async def refresh_controllers(self) -> None:
+        """Refreshes controller/sensor/port properties from the AC Infinity API.
+
+        Used when data is needed before the device coordinators are running (e.g. setup,
+        config/options flow), and by ACInfinityDeviceListCoordinator on its polling interval.
+        Mode settings/controls are owned by ACInfinityDeviceCoordinator and are not refreshed here.
+        """
+        if self._update_lock.locked():
+            async with self._update_lock:
+                pass  # wait for any in-progress update to complete
+
+        async def _refresh() -> None:
+            if not self.client.is_logged_in():
+                await self.client.login()
+
+            all_devices_json = await self.client.get_account_controllers()
+            for controller_properties_json in all_devices_json:
+                controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
+
+                # set controller properties; readings for temp, vpd, humidity, etc...
+                self.data.controller_properties[str(controller_id)] = controller_properties_json
+
+                # controller AI will have a sensor array.
+                if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
+                    sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
+                    for sensor_properties_json in sensors:
+                        access_port_index = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
+                        sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
+
+                        # set sensor properties; sensor value, unit, and display precision
+                        self.data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
+
+                for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
+                    device_port = device_properties_json[DevicePropertyKey.PORT]
+
+                    # set port properties; current power and remaining time until a mode switch
+                    self.data.device_properties[(controller_id, device_port)] = device_properties_json
+
+        await self._execute_with_retry(_refresh, "refresh controllers")
+
+    async def refresh_device_settings(self, controller_id: str, port_indexes: Iterable[int]) -> None:
+        """Refreshes mode settings/controls for the given ports on a controller from the AC Infinity API.
+
+        Used by ACInfinityDeviceCoordinator on its polling interval. Each port is refreshed independently
+        so a failure retrieving one port's settings does not delay or prevent the others from updating.
+        Falls back to every known port on the controller if no ports are given (e.g. before any entity
+        has subscribed to the coordinator yet).
+        """
+        if not (port_indexes := set(port_indexes)):
+            # port 0 holds controller-level settings; ports 1-PORT_COUNT are the physical ports
+            port_count = self.get_controller_property(controller_id, ControllerPropertyKey.PORT_COUNT, 0)
+            port_indexes = set(range(port_count + 1))
+
+        port_indexes = list(port_indexes)
+
+        async def _refresh_port(port_index: int) -> None:
+            result = await self._execute_with_retry(
+                lambda: self.client.get_device_mode_settings(controller_id, port_index),
+                f"refresh device settings for controller {controller_id} port {port_index}",
+            )
+            self.data.device_controls[(controller_id, port_index)] = result
+            self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+
+        results = await asyncio.gather(
+            *(_refresh_port(port_index) for port_index in port_indexes),
+            return_exceptions=True,
+        )
+
+        for port_index, result in zip(port_indexes, results):
+            if isinstance(result, BaseException):
+                _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", controller_id, port_index, result)
 
     def get_all_controller_properties(self) -> list[ACInfinityController]:
         """gets device metadata, such as ids, labels, macaddr, etc... that are not expected to change"""
@@ -758,32 +805,10 @@ class ACInfinityService:
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
         async with self._update_lock:
-            try_count = 0
-            while True:
-                try:
-                    await self.client.update_device_controls(controller_id, device_port, key_values)
-                    return
-
-                except (
-                    ACInfinityClientCannotConnect,
-                    ACInfinityClientRequestFailed,
-                    aiohttp.ClientError,
-                    asyncio.TimeoutError
-                ) as ex:
-
-                    if try_count < 4:
-                        try_count += 1
-                        _LOGGER.warning("Unable to update device controls. Retry attempt %s/4", str(try_count))
-                        await asyncio.sleep(1)
-                    else:
-                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
-                        raise
-                except ACInfinityClientInvalidAuth as ex:
-                    _LOGGER.error("Unable to update device controls: Authentication failed", exc_info=ex)
-                    raise
-                except Exception as ex:
-                    _LOGGER.error("Unable to update device controls: Unexpected error", exc_info=ex)
-                    raise
+            await self._execute_with_retry(
+                lambda: self.client.update_device_controls(controller_id, device_port, key_values),
+                "update device controls",
+            )
 
     async def __update_advanced_settings(
         self,
@@ -800,31 +825,10 @@ class ACInfinityService:
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
         async with self._update_lock:
-            try_count = 0
-            while True:
-                try:
-                    await self.client.update_device_settings(controller_id, device_port, device_name, key_values)
-                    return
-
-                except (
-                    ACInfinityClientCannotConnect,
-                    ACInfinityClientRequestFailed,
-                    aiohttp.ClientError,
-                    asyncio.TimeoutError
-                ) as ex:
-                    if try_count < 4:
-                        try_count += 1
-                        _LOGGER.warning("Unable to update advanced controller settings. Retry attempt %s/4", str(try_count))
-                        await asyncio.sleep(1)
-                    else:
-                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
-                        raise
-                except ACInfinityClientInvalidAuth as ex:
-                    _LOGGER.error("Unable to update advanced controller settings: Authentication failed", exc_info=ex)
-                    raise
-                except Exception as ex:
-                    _LOGGER.error("Unable to update advanced controller settings: Unexpected error", exc_info=ex)
-                    raise
+            await self._execute_with_retry(
+                lambda: self.client.update_device_settings(controller_id, device_port, device_name, key_values),
+                "update advanced controller settings",
+            )
 
     async def __update_ai_control_and_settings(
         self,
@@ -840,32 +844,10 @@ class ACInfinityService:
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
         async with self._update_lock:
-            try_count = 0
-            while True:
-                try:
-                    await self.client.update_ai_device_control_and_settings(controller_id, device_port, key_values)
-                    return
-
-                except (
-                    ACInfinityClientCannotConnect,
-                    ACInfinityClientRequestFailed,
-                    aiohttp.ClientError,
-                    asyncio.TimeoutError
-                ) as ex:
-
-                    if try_count < 4:
-                        try_count += 1
-                        _LOGGER.warning("Unable to update ai device controls and settings. Retry attempt %s/4", str(try_count))
-                        await asyncio.sleep(1)
-                    else:
-                        _LOGGER.error(ACINFINITY_API_ERROR, exc_info=ex)
-                        raise
-                except ACInfinityClientInvalidAuth as ex:
-                    _LOGGER.error("Unable to update ai device controls and settings: Authentication failed", exc_info=ex)
-                    raise
-                except Exception as ex:
-                    _LOGGER.error("Unable to update ai device controls and settings: Unexpected error", exc_info=ex)
-                    raise
+            await self._execute_with_retry(
+                lambda: self.client.update_ai_device_control_and_settings(controller_id, device_port, key_values),
+                "update ai device controls and settings",
+            )
 
     async def close(self) -> None:
         """Close the client session when done"""
@@ -883,8 +865,6 @@ class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
             polling_interval: int,
         ):
 
-        self._client = service.client
-        self._data = service.data
         self.service = service
 
         super().__init__(
@@ -900,31 +880,7 @@ class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Refreshing global device list.")
 
         try:
-            all_devices_json = await self._client.get_account_controllers()
-            for controller_properties_json in all_devices_json:
-                try:
-                    controller_id:str = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
-
-                    # set controller properties; readings for temp, vpd, humidity, etc...
-                    self._data.controller_properties[str(controller_id)] = controller_properties_json
-
-                    # controller AI will have a sensor array.
-                    if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
-                        sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
-                        for sensor_properties_json in sensors:
-                            access_port_index:int = sensor_properties_json[SensorPropertyKey.ACCESS_PORT]
-                            sensor_type:int = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
-
-                            # set sensor properties; sensor value, unit, and display precision
-                            self._data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
-
-                    for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
-                        device_port = device_properties_json[DevicePropertyKey.PORT]
-
-                        # set port properties; current power and remaining time until a mode switch
-                        self._data.device_properties[(controller_id, device_port)] = device_properties_json
-                except Exception as e:
-                    _LOGGER.error("Error refreshing controller %s from global coordinator: %s", controller_id, e)
+            await self.service.refresh_controllers()
         except Exception as e:
             _LOGGER.error("Error refreshing global device list: %s", e)
             raise UpdateFailed from e
@@ -939,7 +895,6 @@ class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
     """
 
     _controller_id: str
-    _client: ACInfinityClient
 
     def __init__(
             self,
@@ -951,9 +906,7 @@ class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
         ):
 
         self._controller_id = controller_id
-        self._client = service.client
-        self._data = service.data
-        self.ac_infinity = service
+        self.service = service
 
         super().__init__(
             hass,
@@ -963,24 +916,8 @@ class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=polling_interval),
         )
 
-    def _known_port_indexes(self) -> set[int]:
-        """Every port index known for this controller (1-PORT_COUNT), including 0 for controller-level settings"""
-        port_count = self.ac_infinity.get_controller_property(self._controller_id, ControllerPropertyKey.PORT_COUNT, 0)
-        return set(range(1, port_count + 1)) | {0}
-
     async def _async_update_data(self):
-        port_indexes = list(set(self.async_contexts()) or self._known_port_indexes())
-
-        results = await asyncio.gather(
-            *(self._client.get_device_mode_settings(self._controller_id, port_index) for port_index in port_indexes),
-            return_exceptions=True,
-        )
-
-        for port_index, result in zip(port_indexes, results):
-            if isinstance(result, BaseException):
-                _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", self._controller_id, port_index, result)
-            else:
-                self._data.device_controls[(self._controller_id, port_index)] = result
+        await self.service.refresh_device_settings(self._controller_id, self.async_contexts())
 
 
 @dataclass

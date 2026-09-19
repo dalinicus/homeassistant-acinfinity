@@ -135,7 +135,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         )
 
         try:
-            await ac_infinity.refresh()
+            await ac_infinity.refresh_controllers()
             device_ids = ac_infinity.get_device_ids()
 
             # Initialize entities configuration dictionary for v1 -> v2 migration

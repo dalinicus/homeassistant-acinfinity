@@ -170,7 +170,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 self.username = user_input[CONF_EMAIL]
                 self.password = user_input[CONF_PASSWORD]
                 self.ac_infinity = ACInfinityService(client, ACInfinityData())
-                await self.ac_infinity.refresh()
+                await self.ac_infinity.refresh_controllers()
 
                 self.device_ids = self.ac_infinity.get_device_ids()
                 self.device_index = 0

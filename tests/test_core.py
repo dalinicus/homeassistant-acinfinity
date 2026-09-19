@@ -83,7 +83,7 @@ class TestACInfinity:
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
         ac_infinity = ACInfinityService(mock_client)
-        await ac_infinity.refresh()
+        await ac_infinity.refresh_controllers()
 
         assert mock_client.login.called
 
@@ -97,7 +97,7 @@ class TestACInfinity:
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
         ac_infinity = ACInfinityService(mock_client)
-        await ac_infinity.refresh()
+        await ac_infinity.refresh_controllers()
         assert not mock_client.login.called
 
     async def test_update_data_set(self, mock_client):
@@ -108,7 +108,7 @@ class TestACInfinity:
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
 
         ac_infinity = ACInfinityService(mock_client)
-        await ac_infinity.refresh()
+        await ac_infinity.refresh_controllers()
 
         assert len(ac_infinity._controller_properties) == 2
         assert (
@@ -138,7 +138,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
 
         with pytest.raises(ACInfinityClientCannotConnect):
-            await ac_infinity.refresh()
+            await ac_infinity.refresh_controllers()
 
         assert mock_client.get_account_controllers.call_count == 5
 
@@ -165,7 +165,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
 
         with pytest.raises(type(exception_type)):
-            await ac_infinity.refresh()
+            await ac_infinity.refresh_controllers()
 
         # Should retry 5 times total (initial + 4 retries)
         assert mock_client.get_account_controllers.call_count == 5
@@ -184,7 +184,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
 
         with pytest.raises(ACInfinityClientInvalidAuth):
-            await ac_infinity.refresh()
+            await ac_infinity.refresh_controllers()
 
         # Should NOT retry on auth failure
         assert mock_client.get_account_controllers.call_count == 1
@@ -203,7 +203,7 @@ class TestACInfinity:
         ac_infinity = ACInfinityService(mock_client)
 
         with pytest.raises(ValueError):
-            await ac_infinity.refresh()
+            await ac_infinity.refresh_controllers()
 
         # Should NOT retry on unexpected exceptions
         assert mock_client.get_account_controllers.call_count == 1

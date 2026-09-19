@@ -63,14 +63,14 @@ class ACInfinityDeviceTimeEntityDescription(
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_control_exists(
+    return entity.service.get_device_control_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
 def __get_value_fn_time(entity: ACInfinityEntity, device: ACInfinityDevice):
     return __get_time_from_total_minutes(
-        entity.ac_infinity.get_device_control(
+        entity.service.get_device_control(
             device.controller.controller_id,
             device.device_port,
             entity.data_key,
@@ -80,7 +80,7 @@ def __get_value_fn_time(entity: ACInfinityEntity, device: ACInfinityDevice):
 
 
 def __set_value_fn_time(entity: ACInfinityEntity, device: ACInfinityDevice, value: time):
-    return entity.ac_infinity.update_device_control(
+    return entity.service.update_device_control(
         device,
         entity.data_key,
         __get_total_minutes_from_time(value),

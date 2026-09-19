@@ -74,13 +74,13 @@ class ACInfinityDeviceBinarySensorEntityDescription(
 def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_property_exists(
+    return entity.service.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
 
 def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_property_exists(
+    return entity.service.get_device_property_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -88,7 +88,7 @@ def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACIn
 def __get_value_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_property(
+    return entity.service.get_controller_property(
         controller.controller_id, entity.data_key, False
     )
 
@@ -96,18 +96,18 @@ def __get_value_fn_controller_property_default(
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ) -> Any:
-    return entity.ac_infinity.get_device_property(
+    return entity.service.get_device_property(
         device.controller.controller_id, device.device_port, entity.data_key, False
     )
 
 
 def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
-    return sensor.controller.is_ai_controller and entity.ac_infinity.get_sensor_property_exists(
+    return sensor.controller.is_ai_controller and entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
-    ) and entity.ac_infinity.get_sensor_property_exists(
+    ) and entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -118,7 +118,7 @@ def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySen
 def __get_value_fn_sensor_value_default(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
-    data = entity.ac_infinity.get_sensor_property(
+    data = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,

@@ -79,7 +79,7 @@ class TestNumbers:
         entity = await execute_and_get_device_entity(
             setup, async_setup_entry, port, setting
         )
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -114,11 +114,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 9
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 9
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -141,9 +141,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 9
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -154,7 +154,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_LOW_VALUE] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_LOW_VALUE] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -167,9 +167,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 9
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -193,11 +193,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 10
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 10
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -220,9 +220,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 10
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -233,7 +233,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_FAN_HIGH_VALUE] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.CO2_FAN_HIGH_VALUE] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -246,9 +246,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 10
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -272,11 +272,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 11
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 11
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -299,9 +299,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 11
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -312,7 +312,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.MOISTURE_LOW_VALUE] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.MOISTURE_LOW_VALUE] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -325,9 +325,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 11
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -351,11 +351,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 14
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 14
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -378,9 +378,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 14
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -391,7 +391,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.EC_TDS_LOW_VALUE_EC_MS] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.EC_TDS_LOW_VALUE_EC_MS] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -404,9 +404,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 14
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -431,11 +431,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 13
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 13
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -460,9 +460,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 13
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -473,7 +473,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -487,9 +487,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 13
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -522,11 +522,11 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 2
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 12
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][DeviceControlKey.AT_TYPE] = 12
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -557,9 +557,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 12
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -570,7 +570,7 @@ class TestNumbers:
         )
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
-        test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(AI_DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert entity.native_value == expected
@@ -621,9 +621,9 @@ class TestNumbers:
         test_objects: ACTestObjects = setup
 
         for ai_port in [1, 2, 3, 4]:
-            ai_control = dict(test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), 1)])
+            ai_control = dict(test_objects.service.data.device_controls[(str(DEVICE_ID), 1)])
             ai_control[DeviceControlKey.AT_TYPE] = 12
-            test_objects.ac_infinity.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
+            test_objects.service.data.device_controls[(str(AI_DEVICE_ID), ai_port)] = ai_control
 
         entity = await execute_and_get_device_entity(
             setup,
@@ -678,7 +678,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -778,7 +778,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -806,7 +806,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -835,7 +835,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
         entity = await execute_and_get_device_entity(
@@ -872,7 +872,7 @@ class TestNumbers:
 
         test_objects: ACTestObjects = setup
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][
             setting
         ] = prev_value
         entity = await execute_and_get_device_entity(
@@ -926,7 +926,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -990,7 +990,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_controls[(str(DEVICE_ID), port)][setting] = value
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
@@ -1050,7 +1050,7 @@ class TestNumbers:
     ):
         """Sensor for device reported temperature is created on setup"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), 1)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 1)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -1108,7 +1108,7 @@ class TestNumbers:
             setup, async_setup_entry, setting
         )
 
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             setting
         ] = value
         entity._handle_coordinator_update()
@@ -1138,7 +1138,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), 0)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -1188,7 +1188,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), 0)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -1250,7 +1250,7 @@ class TestNumbers:
     ):
         """Dynamic response temp controls setup for each port"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -1325,7 +1325,7 @@ class TestNumbers:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             setting
         ] = value
         entity._handle_coordinator_update()
@@ -1372,7 +1372,7 @@ class TestNumbers:
         future.set_result(None)
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.TEMP_UNIT
         ] = temp_unit
 
@@ -1492,7 +1492,7 @@ class TestNumbers:
             setup, async_setup_entry, port, AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         )
 
-        test_objects.ac_infinity.data.device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.SUNRISE_TIMER_DURATION
         ] = 154
         entity._handle_coordinator_update()

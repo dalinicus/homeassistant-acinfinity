@@ -170,21 +170,21 @@ class TestInit:
 
         # Create a real ACInfinityService instance with mocked client
         mock_client = MagicMock()
-        mock_ac_infinity = ACInfinityService(mock_client, ACInfinityData())
-        mock_ac_infinity.refresh_controllers = AsyncMock()
-        mock_ac_infinity.close = AsyncMock()
+        mock_service = ACInfinityService(mock_client, ACInfinityData())
+        mock_service.refresh_controllers = AsyncMock()
+        mock_service.close = AsyncMock()
 
         # Set up the service's cached data like the real service would after a refresh
-        mock_ac_infinity.data.controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
+        mock_service.data.controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
 
         # Mock the get_device_ids method to return our test device IDs
-        mock_ac_infinity.get_device_ids = MagicMock(return_value=[DEVICE_ID, AI_DEVICE_ID])
+        mock_service.get_device_ids = MagicMock(return_value=[DEVICE_ID, AI_DEVICE_ID])
 
         # Mock ACInfinityService constructor
         mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
 
         # Mock the service instance creation to return our mock
-        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_ac_infinity)
+        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_service)
 
         # Mock async_update_entry
         mock_update_entry = mocker.patch.object(hass.config_entries, "async_update_entry")
@@ -232,9 +232,9 @@ class TestInit:
             assert device_config["port_4"] == EntityConfigValue.ALL
 
         # Verify service methods were called
-        mock_ac_infinity.refresh_controllers.assert_called_once()
-        mock_ac_infinity.get_device_ids.assert_called_once()
-        mock_ac_infinity.close.assert_called_once()
+        mock_service.refresh_controllers.assert_called_once()
+        mock_service.get_device_ids.assert_called_once()
+        mock_service.close.assert_called_once()
 
     async def test_async_migrate_entry_version_1_api_failure(self, mocker: MockFixture):
         """Test migration failure when API call fails"""
@@ -261,13 +261,13 @@ class TestInit:
         hass.config_entries = ConfigEntries(hass, {})
 
         # Mock the AC Infinity service to fail on refresh
-        mock_ac_infinity = MagicMock()
-        mock_ac_infinity.refresh_controllers = AsyncMock(side_effect=Exception("API Error"))
-        mock_ac_infinity.close = AsyncMock()
+        mock_service = MagicMock()
+        mock_service.refresh_controllers = AsyncMock(side_effect=Exception("API Error"))
+        mock_service.close = AsyncMock()
 
         # Mock service creation
         mocker.patch.object(ACInfinityClient, "__init__", return_value=None)
-        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_ac_infinity)
+        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_service)
 
         # Mock async_update_entry (should not be called on failure)
         mock_update_entry = mocker.patch.object(hass.config_entries, "async_update_entry")
@@ -282,7 +282,7 @@ class TestInit:
         mock_update_entry.assert_not_called()
 
         # Verify close was still called in finally block
-        mock_ac_infinity.close.assert_called_once()
+        mock_service.close.assert_called_once()
 
     async def test_async_migrate_entry_version_2_no_migration_needed(self, mocker: MockFixture):
         """Test that version 2 entries are not migrated"""
@@ -374,19 +374,19 @@ class TestInit:
 
         # Create a real ACInfinityService instance with mocked client
         mock_client = MagicMock()
-        mock_ac_infinity = ACInfinityService(mock_client, ACInfinityData())
-        mock_ac_infinity.refresh_controllers = AsyncMock()
+        mock_service = ACInfinityService(mock_client, ACInfinityData())
+        mock_service.refresh_controllers = AsyncMock()
 
         # Set up the service's cached data with new device data
-        mock_ac_infinity.data.controller_properties = {
+        mock_service.data.controller_properties = {
             **new_device_1_properties,
             **new_device_2_properties,
         }
 
         # Mock the get_device_ids method to return our new test device IDs
-        mock_ac_infinity.get_device_ids = MagicMock(return_value=[new_device_id_1, new_device_id_2])
+        mock_service.get_device_ids = MagicMock(return_value=[new_device_id_1, new_device_id_2])
 
-        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_ac_infinity)
+        mocker.patch("custom_components.ac_infinity.ACInfinityService", return_value=mock_service)
 
         # Mock async_update_entry
         mock_update_entry = mocker.patch.object(hass.config_entries, "async_update_entry")

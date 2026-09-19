@@ -975,7 +975,7 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
         return self._device_coordinator
 
     @property
-    def ac_infinity(self) -> ACInfinityService:
+    def service(self) -> ACInfinityService:
         """Returns the underlying ac_infinity api object from the assigned coordinator"""
         return self.coordinator.service
 
@@ -1153,12 +1153,12 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def available(self) -> bool:
         """Returns true if the device is online and, if provided, the active mode matches the at_type filter"""
-        active_at_type = self.ac_infinity.get_device_control(
+        active_at_type = self.service.get_device_control(
             self._device.controller.controller_id,
             self.device_port.device_port,
             DeviceControlKey.AT_TYPE
         )
-        return super().available and self.ac_infinity.get_device_property(
+        return super().available and self.service.get_device_property(
             self._device.controller.controller_id,
             self.device_port.device_port,
             DevicePropertyKey.ONLINE

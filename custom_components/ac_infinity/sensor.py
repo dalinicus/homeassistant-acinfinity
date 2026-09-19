@@ -95,18 +95,18 @@ def __suitable_fn_controller_property_default(
     # These values are available in the sensor array.  The external values are duplicated on the base fields used by
     # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
     # by skipping the controller descriptions for the base values.
-    return not controller.is_ai_controller and entity.ac_infinity.get_controller_property_exists(
+    return not controller.is_ai_controller and entity.service.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
 
 def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
-    return entity.ac_infinity.get_sensor_property_exists(
+    return entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
-    ) and entity.ac_infinity.get_sensor_property_exists(
+    ) and entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -117,7 +117,7 @@ def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySen
 def __get_value_fn_sensor_value_default(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
-    precision = entity.ac_infinity.get_sensor_property(
+    precision = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -125,7 +125,7 @@ def __get_value_fn_sensor_value_default(
         1,
     )
 
-    data = entity.ac_infinity.get_sensor_property(
+    data = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -141,19 +141,19 @@ def __suitable_fn_sensor_temperature(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
     return (
-        entity.ac_infinity.get_sensor_property_exists(
+        entity.service.get_sensor_property_exists(
             sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
             SensorPropertyKey.SENSOR_PRECISION,
         )
-        and entity.ac_infinity.get_sensor_property_exists(
+        and entity.service.get_sensor_property_exists(
             sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
             SensorPropertyKey.SENSOR_DATA,
         )
-        and entity.ac_infinity.get_sensor_property_exists(
+        and entity.service.get_sensor_property_exists(
             sensor.controller.controller_id,
             sensor.sensor_port,
             sensor.sensor_type,
@@ -165,7 +165,7 @@ def __suitable_fn_sensor_temperature(
 def __get_value_fn_sensor_value_temperature(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
-    precision = entity.ac_infinity.get_sensor_property(
+    precision = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -173,7 +173,7 @@ def __get_value_fn_sensor_value_temperature(
         1,
     )
 
-    data = entity.ac_infinity.get_sensor_property(
+    data = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -181,7 +181,7 @@ def __get_value_fn_sensor_value_temperature(
         0,
     )
 
-    unit = entity.ac_infinity.get_sensor_property(
+    unit = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -194,7 +194,7 @@ def __get_value_fn_sensor_value_temperature(
 
 
 def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_property_exists(
+    return entity.service.get_device_property_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -202,7 +202,7 @@ def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACIn
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ):
-    return entity.ac_infinity.get_device_property(
+    return entity.service.get_device_property(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
@@ -212,7 +212,7 @@ def __get_value_fn_floating_point_as_int(
 ):
     # value stored as an integer, but represents a 2 digit precision float
     return (
-        entity.ac_infinity.get_controller_property(
+        entity.service.get_controller_property(
             controller.controller_id, entity.data_key, 0
         )
         / 100
@@ -222,11 +222,11 @@ def __get_value_fn_floating_point_as_int(
 def __get_next_mode_change_timestamp(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ) -> datetime | None:
-    remaining_seconds = entity.ac_infinity.get_device_property(
+    remaining_seconds = entity.service.get_device_property(
         device.controller.controller_id, device.device_port, DevicePropertyKey.REMAINING_TIME, 0
     )
 
-    timezone = entity.ac_infinity.get_controller_property(
+    timezone = entity.service.get_controller_property(
         device.controller.controller_id, ControllerPropertyKey.TIME_ZONE
     )
 

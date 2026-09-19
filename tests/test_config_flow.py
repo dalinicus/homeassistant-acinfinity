@@ -217,7 +217,7 @@ class TestConfigFlow:
         mock_service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
         mock_service.data.device_properties = DEVICE_PROPERTIES_DATA
 
-        flow.ac_infinity = mock_service
+        flow.service = mock_service
         flow.device_ids = [str(DEVICE_ID)]
         flow.device_index = 0
         flow.entities = {}
@@ -247,7 +247,7 @@ class TestConfigFlow:
         mock_service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
         mock_service.data.device_properties = DEVICE_PROPERTIES_DATA
 
-        flow.ac_infinity = mock_service
+        flow.service = mock_service
         flow.device_ids = [str(DEVICE_ID), str(AI_DEVICE_ID)]
         flow.device_index = 0  # First device
         flow.entities = {}
@@ -285,7 +285,7 @@ class TestConfigFlow:
         mock_service = ACInfinityService(mock_client, ACInfinityData())
         mocker.patch.object(mock_service, 'close', new_callable=mocker.AsyncMock)
 
-        flow.ac_infinity = mock_service
+        flow.service = mock_service
         flow.device_ids = [str(DEVICE_ID), str(AI_DEVICE_ID)]
         flow.device_index = 1  # Last device (index 1 of 2 devices)
         flow.entities = {str(DEVICE_ID): {"controller": "all", "sensors": "sensors_only"}}
@@ -586,7 +586,7 @@ class TestConfigFlow:
         flow = test_objects.options_flow
 
         # Set up the service's internal data structures like the real service
-        test_objects.ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        test_objects.service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
 
         await flow.async_step_controller_select()
 
@@ -605,7 +605,7 @@ class TestConfigFlow:
         flow = test_objects.options_flow
 
         # Mock get_device_ids to return empty list
-        mocker.patch.object(test_objects.ac_infinity, "get_device_ids", return_value=[])
+        mocker.patch.object(test_objects.service, "get_device_ids", return_value=[])
 
         result = await flow.async_step_controller_select()
 
@@ -637,8 +637,8 @@ class TestConfigFlow:
         flow.current_device_id = str(DEVICE_ID)
 
         # Set up the service's internal data structures like the real service
-        test_objects.ac_infinity.data.controller_properties = CONTROLLER_PROPERTIES_DATA
-        test_objects.ac_infinity.data.device_properties = DEVICE_PROPERTIES_DATA
+        test_objects.service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+        test_objects.service.data.device_properties = DEVICE_PROPERTIES_DATA
 
         await flow.async_step_enable_entities()
 

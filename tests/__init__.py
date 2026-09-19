@@ -158,7 +158,7 @@ def setup_entity_mocks(mocker: MockFixture):
     data.device_properties = deepcopy(DEVICE_PROPERTIES_DATA)
     data.device_controls = deepcopy(DEVICE_CONTROLS_DATA)
 
-    ac_infinity = ACInfinityService(client, data)
+    service = ACInfinityService(client, data)
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
@@ -174,31 +174,31 @@ def setup_entity_mocks(mocker: MockFixture):
         subentries_data=None,
     )
 
-    list_coordinator = ACInfinityDeviceListCoordinator(hass, config_entry, ac_infinity, 10)
+    list_coordinator = ACInfinityDeviceListCoordinator(hass, config_entry, service, 10)
     device_coordinators = {
         controller_id: ACInfinityDeviceCoordinator(
-            controller_id, hass, config_entry, ac_infinity, 10
+            controller_id, hass, config_entry, service, 10
         )
         for controller_id in data.controller_properties
     }
 
     port_control_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_control"
+        service, "update_device_control"
     )
     port_control_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_controls"
+        service, "update_device_controls"
     )
     controller_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_controller_setting"
+        service, "update_controller_setting"
     )
     controller_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_controller_settings"
+        service, "update_controller_settings"
     )
     port_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_setting"
+        service, "update_device_setting"
     )
     port_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_settings"
+        service, "update_device_settings"
     )
     # Patched on the class so it covers every per-controller device coordinator created above.
     refresh_mock = mocker.patch.object(
@@ -207,7 +207,7 @@ def setup_entity_mocks(mocker: MockFixture):
 
     hass.data = HassDict({
         DOMAIN: {
-            ENTRY_ID: ACInfinityEntryData(ac_infinity, list_coordinator, device_coordinators)
+            ENTRY_ID: ACInfinityEntryData(service, list_coordinator, device_coordinators)
         }
     })
 
@@ -238,7 +238,7 @@ def setup_entity_mocks(mocker: MockFixture):
         hass,
         config_entry,
         entities,
-        ac_infinity,
+        service,
         controller_setting_set_mock,
         controller_setting_sets_mock,
         port_control_set_mock,
@@ -260,7 +260,7 @@ class ACTestObjects:
         hass,
         config_entry,
         entities,
-        ac_infinity,
+        service,
         controller_set_mock,
         controller_sets_mock,
         port_control_set_mock,
@@ -277,7 +277,7 @@ class ACTestObjects:
         self.hass: HomeAssistant = hass
         self.config_entry: ConfigEntry = config_entry
         self.entities: EntitiesTracker = entities
-        self.ac_infinity: ACInfinityService = ac_infinity
+        self.service: ACInfinityService = service
         self.controller_set_mock: MockType = controller_set_mock
         self.controller_sets_mock: MockType = controller_sets_mock
         self.port_control_set_mock: MockType = port_control_set_mock

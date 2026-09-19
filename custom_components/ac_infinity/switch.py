@@ -64,13 +64,13 @@ class ACInfinityDeviceSwitchEntityDescription(
 
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
+    return not device.controller.is_ai_controller and entity.service.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_control_exists(
+    return entity.service.get_device_control_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -78,27 +78,27 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
 def __suitable_fn_device_control_ai_only(entity: ACInfinityEntity, device: ACInfinityDevice):
     return (
         device.controller.is_ai_controller
-        and entity.ac_infinity.get_device_control_exists(
+        and entity.service.get_device_control_exists(
             device.controller.controller_id, device.device_port, entity.data_key
         )
     )
 
 
 def __get_value_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_control(
+    return entity.service.get_device_control(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
 def __get_value_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_setting(
+    return entity.service.get_device_setting(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
 def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinityDevice):
     return (
-        entity.ac_infinity.get_device_control(
+        entity.service.get_device_control(
             device.controller.controller_id,
             device.device_port,
             entity.data_key,
@@ -111,7 +111,7 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinity
 def __set_value_fn_device_control_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_device_control(
+    return entity.service.update_device_control(
         device, entity.data_key, value
     )
 
@@ -119,7 +119,7 @@ def __set_value_fn_device_control_default(
 def __set_value_fn_device_setting_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_device_setting(
+    return entity.service.update_device_setting(
         device, entity.data_key, value
     )
 

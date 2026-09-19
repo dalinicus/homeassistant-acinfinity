@@ -3,13 +3,14 @@ import json
 import logging
 from abc import abstractmethod, ABC
 from collections.abc import Awaitable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
 
 import aiohttp
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import (
@@ -310,26 +311,38 @@ class ACInfinityDevice:
         return self._device_info
 
 
+@dataclass
+class ACInfinityData:
+    """POPO encapsulating the cached properties/settings tracked by ACInfinityService"""
+
+    controller_properties: dict[str, Any] = field(default_factory=dict)
+    sensor_properties: dict[tuple[str, int, int], Any] = field(default_factory=dict)
+    device_properties: dict[tuple[str, int], Any] = field(default_factory=dict)
+    device_controls: dict[tuple[str, int], Any] = field(default_factory=dict)
+    device_settings: dict[tuple[str, int], Any] = field(default_factory=dict)
+
+
 class ACInfinityService:
     """Service layer object responsible for initializing and updating values from the AC Infinity API"""
 
     MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=5)
 
     def __init__(
-        self, client: ACInfinityClient
+        self, client: ACInfinityClient, data: ACInfinityData
     ) -> None:
         """
         Args:
             client: The http client to use to make requests to the AC Infinity API
         """
         self._client = client
+        self._data = data
         self._update_lock = asyncio.Lock()
 
     def get_device_ids(self) -> list[str]:
         """
         returns a list of devices associated with the account
         """
-        return list(self._controller_properties.keys())
+        return list(self._data.controller_properties.keys())
 
     def get_controller_property_exists(
         self, controller_id: str | int, property_key: str
@@ -341,8 +354,8 @@ class ACInfinityService:
             property_key: the json field name for the data being retrieved
         """
         normalized_id = str(controller_id)
-        if normalized_id in self._controller_properties:
-            result = self._controller_properties[normalized_id]
+        if normalized_id in self._data.controller_properties:
+            result = self._data.controller_properties[normalized_id]
             if property_key in result:
                 return True
             return property_key in result[ControllerPropertyKey.DEVICE_INFO]
@@ -360,8 +373,8 @@ class ACInfinityService:
             default_value: the value to return if the controller or property doesn't exist
         """
         normalized_id = str(controller_id)
-        if normalized_id in self._controller_properties:
-            result = self._controller_properties[normalized_id]
+        if normalized_id in self._data.controller_properties:
+            result = self._data.controller_properties[normalized_id]
             if property_key in result:
                 value = result[property_key]
                 return value if value is not None else default_value
@@ -388,8 +401,8 @@ class ACInfinityService:
         """
         normalized_id = (str(controller_id), sensor_port, sensor_type)
         return (
-            normalized_id in self._sensor_properties
-            and property_key in self._sensor_properties[normalized_id]
+            normalized_id in self._data.sensor_properties
+            and property_key in self._data.sensor_properties[normalized_id]
         )
 
     def get_sensor_property(
@@ -410,8 +423,8 @@ class ACInfinityService:
             default_value: the default value to return if the controller, port, or property doesn't exist
         """
         normalized_id = (str(controller_id), sensor_port, sensor_type)
-        if normalized_id in self._sensor_properties:
-            found = self._sensor_properties[normalized_id]
+        if normalized_id in self._data.sensor_properties:
+            found = self._data.sensor_properties[normalized_id]
             if property_key in found:
                 value = found[property_key]
                 return value if value is not None else default_value
@@ -433,8 +446,8 @@ class ACInfinityService:
         """
         normalized_id = (str(controller_id), device_port)
         return (
-            normalized_id in self._device_properties
-            and property_key in self._device_properties[normalized_id]
+            normalized_id in self._data.device_properties
+            and property_key in self._data.device_properties[normalized_id]
         )
 
     def get_device_property(
@@ -453,8 +466,8 @@ class ACInfinityService:
             default_value: the default value to return if the controller, port, or property doesn't exist
         """
         normalized_id = (str(controller_id), device_port)
-        if normalized_id in self._device_properties:
-            found = self._device_properties[normalized_id]
+        if normalized_id in self._data.device_properties:
+            found = self._data.device_properties[normalized_id]
             if property_key in found:
                 value = found[property_key]
                 return value if value is not None else default_value
@@ -495,7 +508,7 @@ class ACInfinityService:
             setting_key: the json field name for the data being retrieved
         """
         normalized_id = (str(controller_id), device_port)
-        return normalized_id in self._device_settings and setting_key in self._device_settings[normalized_id]
+        return normalized_id in self._data.device_settings and setting_key in self._data.device_settings[normalized_id]
 
     def get_device_setting(
         self,
@@ -513,8 +526,8 @@ class ACInfinityService:
             default_value: the value to return if the controller or property doesn't exist
         """
         normalized_id = str(controller_id)
-        if (normalized_id, device_port) in self._device_settings:
-            result = self._device_settings[(normalized_id, device_port)]
+        if (normalized_id, device_port) in self._data.device_settings:
+            result = self._data.device_settings[(normalized_id, device_port)]
             if setting_key in result:
                 value = result[setting_key]
                 return value if value is not None else default_value
@@ -535,8 +548,8 @@ class ACInfinityService:
             setting_key: the setting to pull the value of
         """
         normalized_id = (str(controller_id), device_port)
-        if normalized_id in self._device_controls:
-            found = self._device_controls[normalized_id]
+        if normalized_id in self._data.device_controls:
+            found = self._data.device_controls[normalized_id]
             if setting_key in found:
                 return True
             return setting_key in found[DeviceControlKey.DEV_SETTING]
@@ -559,8 +572,8 @@ class ACInfinityService:
             default_value: the default value to return if the controller, port, or setting doesn't exist
         """
         normalized_id = (str(controller_id), device_port)
-        if normalized_id in self._device_controls:
-            result = self._device_controls[normalized_id]
+        if normalized_id in self._data.device_controls:
+            result = self._data.device_controls[normalized_id]
             if setting_key in result:
                 value = result[setting_key]
                 return value if value is not None else default_value
@@ -587,11 +600,11 @@ class ACInfinityService:
                     controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
 
                     # set controller properties; readings for temp, vpd, humidity, etc...
-                    self._controller_properties[str(controller_id)] = controller_properties_json
+                    self._data.controller_properties[str(controller_id)] = controller_properties_json
 
                     # retrieve and set controller settings; temperature, humidity, and vpd offsets
                     controller_settings_json = await self._client.get_device_mode_settings(controller_id, 0)
-                    self._device_settings[(controller_id, 0)] = controller_settings_json[DeviceControlKey.DEV_SETTING]
+                    self._data.device_settings[(controller_id, 0)] = controller_settings_json[DeviceControlKey.DEV_SETTING]
 
                     # controller AI will have a sensor array.
                     if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
@@ -601,21 +614,21 @@ class ACInfinityService:
                             sensor_type = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
 
                             # set sensor properties; sensor value, unit, and display precision
-                            self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
+                            self._data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
                     for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
                         device_port = device_properties_json[DevicePropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self._device_properties[(controller_id, device_port)] = device_properties_json
+                        self._data.device_properties[(controller_id, device_port)] = device_properties_json
 
                         # retrieve and set port controls; current mode, temperature triggers, on/off speed, etc...
                         device_controls_json = await self._client.get_device_mode_settings(controller_id, device_port)
-                        self._device_controls[(controller_id, device_port)] = device_controls_json
+                        self._data.device_controls[(controller_id, device_port)] = device_controls_json
 
                         # retrieve and set port settings; Dynamic Response, Transition values, Buffer values, etc..
                         device_settings_json = await self._client.get_device_mode_settings(controller_id, device_port)
-                        self._device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
+                        self._data.device_settings[(controller_id, device_port)] = device_settings_json[DeviceControlKey.DEV_SETTING]
 
                 return  # update successful.  eject from the infinite while loop.
 
@@ -641,10 +654,10 @@ class ACInfinityService:
 
     def get_all_controller_properties(self) -> list[ACInfinityController]:
         """gets device metadata, such as ids, labels, macaddr, etc... that are not expected to change"""
-        if self._controller_properties is None:
+        if self._data.controller_properties is None:
             return []
 
-        return [ACInfinityController(device) for device in self._controller_properties.values()]
+        return [ACInfinityController(device) for device in self._data.controller_properties.values()]
 
     async def update_controller_setting(
         self,
@@ -861,15 +874,27 @@ class ACInfinityService:
 
 
 class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
-    # api/user/devInfoListAll json organized by controller device id
-    _controller_properties: dict[str, Any] = {}
-    _sensor_properties: dict[tuple[str, int, int], Any] = {}
-    _device_properties: dict[tuple[str, int], Any] = {}
 
-    _client: ACInfinityClient
+    def __init__(
+            self, 
+            hass: HomeAssistant,
+            entry: ConfigEntry,
+            client: ACInfinityClient, 
+            data: ACInfinityData,
+            polling_interval: int,
+        ):
 
-    def __init__(self, client: ACInfinityClient) -> None:
         self._client = client
+        self._data = data
+        self.ac_infinity = ACInfinityService(client, data)
+
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            config_entry=entry,
+            update_interval=timedelta(seconds=polling_interval),
+        )
 
     async def _async_update_data(self):
         """Refresh the device list from the AC Infinity API"""
@@ -882,7 +907,7 @@ class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
                     controller_id:str = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
 
                     # set controller properties; readings for temp, vpd, humidity, etc...
-                    self._controller_properties[str(controller_id)] = controller_properties_json
+                    self._data.controller_properties[str(controller_id)] = controller_properties_json
 
                     # controller AI will have a sensor array.
                     if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
@@ -892,49 +917,42 @@ class ACInfinityDeviceListCoordinator(DataUpdateCoordinator):
                             sensor_type:int = sensor_properties_json[SensorPropertyKey.SENSOR_TYPE]
 
                             # set sensor properties; sensor value, unit, and display precision
-                            self._sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
+                            self._data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
                     for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
                         device_port = device_properties_json[DevicePropertyKey.PORT]
 
                         # set port properties; current power and remaining time until a mode switch
-                        self._device_properties[(controller_id, device_port)] = device_properties_json
+                        self._data.device_properties[(controller_id, device_port)] = device_properties_json
                 except Exception as e:
                     _LOGGER.error("Error refreshing controller %s from global coordinator: %s", controller_id, e)
         except Exception as e:
             _LOGGER.error("Error refreshing global device list: %s", e)
             raise UpdateFailed from e
 
-class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
-    # api/dev/getDevSetting for a controller id and port (index 0 represents controller settings)
-    _device_settings: Any = {}
 
+class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
     _controller_id: str
     _port_index: int
     _client: ACInfinityClient
 
-    def __init__(self, controller_id: str, port_index: int, client: ACInfinityClient):
+    def __init__(
+            self,
+            controller_id: str, 
+            port_index: int,
+            hass: HomeAssistant,
+            entry: ConfigEntry,
+            client: ACInfinityClient, 
+            data: ACInfinityData,
+            polling_interval: int,
+        ):
+
         self._controller_id = controller_id
         self._port_index = port_index
         self._client = client
+        self._data = data
+        self.ac_infinity = ACInfinityService(client, data)
 
-    async def _async_update_data(self):
-        try:
-            self._device_settings = await self._client.get_device_mode_settings(self._controller_id, self._port_index)
-        except Exception as e:
-            _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", self._controller_id, self._port_index, e)
-
-class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
-    """Handles updating data for the integration"""
-
-    def __init__(
-        self,
-        hass,
-        entry: ConfigEntry,
-        service: ACInfinityService,
-        polling_interval: int,
-    ):
-        """Constructor"""
         super().__init__(
             hass,
             _LOGGER,
@@ -943,34 +961,49 @@ class ACInfinityDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=polling_interval),
         )
 
-        self._ac_infinity = service
-
     async def _async_update_data(self):
-        """Fetch data from the AC Infinity API"""
-        _LOGGER.debug("Refreshing data from data update coordinator")
         try:
-            async with async_timeout.timeout(10):
-                await self._ac_infinity.refresh()
-                return self._ac_infinity
+            self._data.device_controls[(self._controller_id, self._port_index)] = await self._client.get_device_mode_settings(self._controller_id, self._port_index)
         except Exception as e:
-            raise UpdateFailed from e
-
-    @property
-    def ac_infinity(self) -> ACInfinityService:
-        return self._ac_infinity
+            _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", self._controller_id, self._port_index, e)
 
 
-class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
+@dataclass
+class ACInfinityEntryData:
+    """Bundle of coordinators stored in hass.data for a config entry"""
+
+    service: ACInfinityService
+    """Shared service facade for reading/writing cached AC Infinity data"""
+    list_coordinator: ACInfinityDeviceListCoordinator
+    """Single coordinator responsible for polling the account's controller/sensor/port list"""
+    device_coordinators: dict[tuple[str, int], ACInfinityDeviceCoordinator]
+    """One coordinator per (controller_id, port_index) responsible for polling mode settings/controls.
+    Port index 0 represents controller-level settings."""
+
+
+class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
     _attr_has_entity_name = True
-    coordinator: ACInfinityDataUpdateCoordinator
+    coordinator: ACInfinityDeviceListCoordinator
     translation_key: str
 
     def __init__(
-        self, coordinator: ACInfinityDataUpdateCoordinator, platform: str, data_key: str
+        self,
+        list_coordinator: ACInfinityDeviceListCoordinator,
+        platform: str,
+        data_key: str,
+        device_coordinator: ACInfinityDeviceCoordinator | None = None,
     ):
-        super().__init__(coordinator)
+        super().__init__(list_coordinator)
         self._platform_name = platform
         self._data_key = data_key
+        self._device_coordinator = device_coordinator
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if self._device_coordinator is not None:
+            self.async_on_remove(
+                self._device_coordinator.async_add_listener(self._handle_coordinator_update)
+            )
 
     def __repr__(self):
         return f"<ACInfinityEntity unique_id={self.unique_id}>"
@@ -979,6 +1012,11 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     def data_key(self) -> str:
         """Returns the underlying ac_infinity api data key used to track the data"""
         return self._data_key
+
+    @property
+    def device_coordinator(self) -> ACInfinityDeviceCoordinator | None:
+        """Returns the per-port coordinator responsible for mode settings/controls, if any."""
+        return self._device_coordinator
 
     @property
     def ac_infinity(self) -> ACInfinityService:
@@ -1008,6 +1046,13 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
     def platform_name(self) -> str:
         return self._platform_name
 
+    @property
+    def available(self) -> bool:
+        """Returns true only if both the list coordinator and, if assigned, the device coordinator last refreshed successfully"""
+        if self._device_coordinator is not None and not self._device_coordinator.last_update_success:
+            return False
+        return super().available
+
     def _resolve_via_device_id(self, identifier: tuple[str, str]) -> str | None:
         """Resolves the HA device registry id for a via_device identifier, if already registered"""
         if self.hass is None or self.coordinator.config_entry is None:
@@ -1022,14 +1067,15 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDataUpdateCoordinator], ABC):
 class ACInfinityControllerEntity(ACInfinityEntity):
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         controller: ACInfinityController,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityController], bool],
         data_key: str,
         platform: str,
+        device_coordinator: ACInfinityDeviceCoordinator | None = None,
     ):
-        super().__init__(coordinator, platform, data_key)
+        super().__init__(list_coordinator, platform, data_key, device_coordinator)
         self._controller = controller
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
@@ -1059,14 +1105,14 @@ class ACInfinityControllerEntity(ACInfinityEntity):
 class ACInfinitySensorEntity(ACInfinityEntity):
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         sensor: ACInfinitySensor,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinitySensor], bool],
         data_key: str,
         platform: str,
     ):
-        super().__init__(coordinator, platform, data_key)
+        super().__init__(list_coordinator, platform, data_key)
         self._sensor = sensor
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn
@@ -1102,15 +1148,16 @@ class ACInfinitySensorEntity(ACInfinityEntity):
 class ACInfinityDeviceEntity(ACInfinityEntity):
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         device: ACInfinityDevice,
         enabled_fn: Callable[[ConfigEntry, str, str], bool],
         suitable_fn: Callable[[ACInfinityEntity, ACInfinityDevice], bool],
         at_type_fn: Callable[[int], bool] | None,
         data_key: str,
         platform: str,
+        device_coordinator: ACInfinityDeviceCoordinator | None = None,
     ):
-        super().__init__(coordinator, platform, data_key)
+        super().__init__(list_coordinator, platform, data_key, device_coordinator)
         self._device = device
         self._enabled_fn = enabled_fn
         self._suitable_fn = suitable_fn

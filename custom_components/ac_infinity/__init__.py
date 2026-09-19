@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 
@@ -14,7 +15,10 @@ from .client import ACInfinityClient
 from .const import ConfigurationKey, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS, HOST, ControllerPropertyKey, \
     EntityConfigValue
 from .core import (
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityData,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
+    ACInfinityEntryData,
     ACInfinityService,
 )
 
@@ -32,19 +36,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else DEFAULT_POLLING_INTERVAL
     )
 
-    service = ACInfinityService(
-        ACInfinityClient(HOST, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
+    client = ACInfinityClient(HOST, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
+    data = ACInfinityData()
+    service = ACInfinityService(client, data)
+
+    list_coordinator = ACInfinityDeviceListCoordinator(
+        hass, entry, client, data, polling_interval
+    )
+    await list_coordinator.async_config_entry_first_refresh()
+    await __initialize_new_devices_if_any(hass, entry, service)
+
+    # one device coordinator per controller (port 0 for controller-level settings) and per discovered port
+    port_keys = {(controller_id, 0) for controller_id in data.controller_properties}
+    port_keys.update(data.device_properties.keys())
+
+    device_coordinators = {
+        (controller_id, port_index): ACInfinityDeviceCoordinator(
+            controller_id, port_index, hass, entry, client, data, polling_interval
+        )
+        for controller_id, port_index in port_keys
+    }
+
+    await asyncio.gather(
+        *(dc.async_config_entry_first_refresh() for dc in device_coordinators.values())
     )
 
-    coordinator = ACInfinityDataUpdateCoordinator(
-        hass, entry, service, polling_interval
-    )
+    hass.data[DOMAIN][entry.entry_id] = ACInfinityEntryData(service, list_coordinator, device_coordinators)
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
-    await coordinator.async_config_entry_first_refresh()
-    await __initialize_new_devices_if_any(hass, entry, coordinator.ac_infinity)
-    
     # Set up platforms with updated configuration
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -99,8 +117,8 @@ async def __initialize_new_devices_if_any(
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        coordinator = hass.data[DOMAIN][entry.entry_id]
-        await coordinator.ac_infinity.close()
+        entry_data: ACInfinityEntryData = hass.data[DOMAIN][entry.entry_id]
+        await entry_data.service.close()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
@@ -115,7 +133,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new_data = config_entry.data.copy()
 
         ac_infinity = ACInfinityService(
-            ACInfinityClient(HOST, new_data[CONF_EMAIL], new_data[CONF_PASSWORD])
+            ACInfinityClient(HOST, new_data[CONF_EMAIL], new_data[CONF_PASSWORD]), ACInfinityData()
         )
 
         try:

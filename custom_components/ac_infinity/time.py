@@ -12,9 +12,11 @@ from custom_components.ac_infinity.const import (
     AtType, DOMAIN, SCHEDULE_DISABLED_VALUE, DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadWriteMixin, enabled_fn_control,
@@ -114,14 +116,16 @@ class ACInfinityDeviceTimeEntity(ACInfinityDeviceEntity, TimeEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
+        device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceTimeEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.TIME
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.TIME, device_coordinator
         )
         self.entity_description = description
+        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def native_value(self) -> time | None:
@@ -132,7 +136,7 @@ class ACInfinityDeviceTimeEntity(ACInfinityDeviceEntity, TimeEntity):
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.device_port, value)
-        await self.coordinator.async_request_refresh()
+        await self._device_coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
@@ -140,17 +144,18 @@ async def async_setup_entry(
 ) -> None:
     """Set up the AC Infinity Platform."""
 
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
         for device in controller.devices:
+            device_coordinator = entry_data.device_coordinators[(controller.controller_id, device.device_port)]
             for description in DEVICE_DESCRIPTIONS:
                 entities.append_if_suitable(
-                    ACInfinityDeviceTimeEntity(coordinator, description, device)
+                    ACInfinityDeviceTimeEntity(entry_data.list_coordinator, device_coordinator, description, device)
                 )
 
     add_entities_callback(entities)

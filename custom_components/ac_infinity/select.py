@@ -13,9 +13,11 @@ from custom_components.ac_infinity.core import (
     ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadWriteMixin,
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadWriteMixin, enabled_fn_setting, enabled_fn_control,
@@ -327,7 +329,8 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
+        device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityControllerSelectEntityDescription,
         controller: ACInfinityController,
     ) -> None:
@@ -338,8 +341,10 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
             description.suitable_fn,
             description.key,
             Platform.SELECT,
+            device_coordinator,
         )
         self.entity_description = description
+        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def current_option(self) -> str | None:
@@ -352,7 +357,7 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
             option,
         )
         await self.entity_description.set_value_fn(self, self.controller, option)
-        await self.coordinator.async_request_refresh()
+        await self._device_coordinator.async_request_refresh()
 
 
 class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
@@ -360,12 +365,14 @@ class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
+        device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceSelectEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
-        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SELECT)
+        super().__init__(coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SELECT, device_coordinator)
         self.entity_description = description
+        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def current_option(self) -> str | None:
@@ -378,7 +385,7 @@ class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
             option,
         )
         await self.entity_description.set_value_fn(self, self.device_port, option)
-        await self.coordinator.async_request_refresh()
+        await self._device_coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
@@ -386,23 +393,25 @@ async def async_setup_entry(
 ) -> None:
     """Set up the AC Infinity Platform."""
 
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
+        controller_device_coordinator = entry_data.device_coordinators[(controller.controller_id, 0)]
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerSelectEntity(
-                coordinator, controller_description, controller
+                entry_data.list_coordinator, controller_device_coordinator, controller_description, controller
             )
             entities.append_if_suitable(controller_entity)
 
         for device in controller.devices:
+            device_coordinator = entry_data.device_coordinators[(controller.controller_id, device.device_port)]
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceSelectEntity(
-                    coordinator, device_description, device
+                    entry_data.list_coordinator, device_coordinator, device_description, device
                 )
                 entities.append_if_suitable(device_entity)
 

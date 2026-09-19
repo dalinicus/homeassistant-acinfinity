@@ -13,13 +13,13 @@ from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
 from voluptuous import Required
 
-from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
 from custom_components.ac_infinity.client import (
     ACInfinityClient,
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
 from . import ACInfinityService
+from .core import ACInfinityData, ACInfinityEntryData
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -169,7 +169,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
                 self.username = user_input[CONF_EMAIL]
                 self.password = user_input[CONF_PASSWORD]
-                self.ac_infinity = ACInfinityService(client)
+                self.ac_infinity = ACInfinityService(client, ACInfinityData())
                 await self.ac_infinity.refresh()
 
                 self.device_ids = self.ac_infinity.get_device_ids()
@@ -299,10 +299,12 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 self.__update_config_entry_data(new_data)
 
-                coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+                entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][
                     self.config_entry.entry_id
                 ]
-                coordinator.update_interval = timedelta(seconds=polling_interval)
+                entry_data.list_coordinator.update_interval = timedelta(seconds=polling_interval)
+                for device_coordinator in entry_data.device_coordinators.values():
+                    device_coordinator.update_interval = timedelta(seconds=polling_interval)
 
                 _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
 
@@ -328,18 +330,18 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             self.current_device_id = user_input["device_id"]
             return await self.async_step_enable_entities()
 
-        coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][
             self.config_entry.entry_id
         ]
 
-        device_ids = coordinator.ac_infinity.get_device_ids()
+        device_ids = entry_data.service.get_device_ids()
         if not device_ids:
             return self.async_abort(reason="no_devices")
 
         options = []
         for device_id in device_ids:
-            device_code = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
-            device_name = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            device_code = entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
+            device_name = entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
 
             options.append({"value": device_id, "label": f"{device_name} ({device_code})"})
 
@@ -370,7 +372,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
         ac_infinity: ACInfinityService = self.hass.data[DOMAIN][
             self.config_entry.entry_id
-        ].ac_infinity
+        ].service
 
         entities, description_placeholders = self._build_entity_config_schema(
             ac_infinity,

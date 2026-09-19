@@ -27,9 +27,10 @@ from custom_components.ac_infinity.core import (
     ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadOnlyMixin,
@@ -538,7 +539,7 @@ class ACInfinityControllerSensorEntity(ACInfinityControllerEntity, SensorEntity)
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityControllerSensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
@@ -562,7 +563,7 @@ class ACInfinitySensorSensorEntity(ACInfinitySensorEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinitySensorSensorEntityDescription,
         sensor: ACInfinitySensor,
     ) -> None:
@@ -586,7 +587,7 @@ class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceSensorEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
@@ -605,15 +606,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up the AC Infinity Platform."""
 
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerSensorEntity(
-                coordinator, controller_description, controller
+                entry_data.list_coordinator, controller_description, controller
             )
             entities.append_if_suitable(controller_entity)
 
@@ -621,7 +622,7 @@ async def async_setup_entry(
             if sensor.sensor_type in SENSOR_DESCRIPTIONS:
                 sensor_description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
                 sensor_entity = ACInfinitySensorSensorEntity(
-                    coordinator, sensor_description, sensor
+                    entry_data.list_coordinator, sensor_description, sensor
                 )
                 entities.append_if_suitable(sensor_entity)
             elif sensor.sensor_type not in SensorType.__dict__.values():
@@ -634,7 +635,7 @@ async def async_setup_entry(
         for device in controller.devices:
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceSensorEntity(
-                    coordinator, device_description, device
+                    entry_data.list_coordinator, device_description, device
                 )
                 entities.append_if_suitable(device_entity)
 

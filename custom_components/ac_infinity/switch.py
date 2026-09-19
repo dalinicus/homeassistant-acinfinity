@@ -21,9 +21,11 @@ from custom_components.ac_infinity.const import (
     DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadWriteMixin, enabled_fn_control, enabled_fn_setting,
@@ -417,14 +419,16 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        coordinator: ACInfinityDeviceListCoordinator,
+        device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceSwitchEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SWITCH
+            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SWITCH, device_coordinator
         )
         self.entity_description = description
+        self._device_coordinator: ACInfinityDeviceCoordinator = device_coordinator
 
     @property
     def is_on(self) -> bool | None:
@@ -437,7 +441,7 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.on_value
         )
-        await self.coordinator.async_request_refresh()
+        await self._device_coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.info(
@@ -446,23 +450,24 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.off_value
         )
-        await self.coordinator.async_request_refresh()
+        await self._device_coordinator.async_request_refresh()
 
 
 async def async_setup_entry(
     hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
     """Set up the AC Infinity Platform."""
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
         for device in controller.devices:
+            device_coordinator = entry_data.device_coordinators[(controller.controller_id, device.device_port)]
             for description in DEVICE_DESCRIPTIONS:
-                entity = ACInfinityDeviceSwitchEntity(coordinator, description, device)
+                entity = ACInfinityDeviceSwitchEntity(entry_data.list_coordinator, device_coordinator, description, device)
                 entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

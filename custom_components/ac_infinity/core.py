@@ -809,6 +809,7 @@ class ACInfinityService:
                 lambda: self.client.update_device_controls(controller_id, device_port, key_values),
                 "update device controls",
             )
+            self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
 
     async def __update_advanced_settings(
         self,
@@ -829,6 +830,7 @@ class ACInfinityService:
                 lambda: self.client.update_device_settings(controller_id, device_port, device_name, key_values),
                 "update advanced controller settings",
             )
+            self.__cache_updated_values(self.data.device_settings, controller_id, device_port, key_values)
 
     async def __update_ai_control_and_settings(
         self,
@@ -848,6 +850,19 @@ class ACInfinityService:
                 lambda: self.client.update_ai_device_control_and_settings(controller_id, device_port, key_values),
                 "update ai device controls and settings",
             )
+            self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
+
+    @staticmethod
+    def __cache_updated_values(
+        cache: dict[tuple[str, int], Any],
+        controller_id: str | int,
+        device_port: int,
+        key_values: dict[str, int],
+    ) -> None:
+        """Optimistically applies a just-written value to the cache so entities redraw with the new
+        value immediately, rather than a stale value from a refresh that raced the API's write."""
+        normalized_id = (str(controller_id), device_port)
+        cache.setdefault(normalized_id, {}).update(key_values)
 
     async def close(self) -> None:
         """Close the client session when done"""
@@ -1008,11 +1023,6 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
         if self._device_coordinator is not None and not self._device_coordinator.last_update_success:
             return False
         return super().available
-
-    async def async_request_device_refresh(self) -> None:
-        """Requests a refresh of the assigned per-port device coordinator. Only valid for entities constructed with one."""
-        assert self._device_coordinator is not None
-        await self._device_coordinator.async_request_refresh()
 
     def _resolve_via_device_id(self, identifier: tuple[str, str]) -> str | None:
         """Resolves the HA device registry id for a via_device identifier, if already registered"""

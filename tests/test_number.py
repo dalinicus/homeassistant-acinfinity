@@ -106,7 +106,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, 4
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_co2_low_value_created_for_ai_port(self, setup, port):
@@ -185,7 +185,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_LOW_VALUE, value
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_co2_fan_high_value_created_for_ai_port(self, setup, port):
@@ -264,7 +264,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_FAN_HIGH_VALUE, value
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_moisture_low_value_created_for_ai_port(self, setup, port):
@@ -343,7 +343,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.MOISTURE_LOW_VALUE, value
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_ec_tds_low_value_ec_ms_created_for_ai_port(self, setup, port):
@@ -422,7 +422,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.EC_TDS_LOW_VALUE_EC_MS, value
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("setting", [DeviceControlKey.PH_HIGH_VALUE, DeviceControlKey.PH_LOW_VALUE])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -505,7 +505,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -637,7 +637,7 @@ class TestNumbers:
         await entity.async_set_native_value(value)
 
         test_objects.port_control_sets_mock.assert_called_with(entity._device, expected_payload)
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "key",
@@ -713,7 +713,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "key",
@@ -848,7 +848,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -885,7 +885,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "key", [DeviceControlKey.CYCLE_DURATION_ON, DeviceControlKey.CYCLE_DURATION_OFF]
@@ -960,7 +960,7 @@ class TestNumbers:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -1035,7 +1035,7 @@ class TestNumbers:
         test_objects.port_control_sets_mock.assert_called_with(
             entity._device, {setting: c, f_setting: f}
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -1165,7 +1165,7 @@ class TestNumbers:
                     AdvancedSettingsKey.CALIBRATE_TEMP_F: expected,
                 },
             )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "temp_unit,value,expected",
@@ -1209,7 +1209,7 @@ class TestNumbers:
             expected,
         )
 
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("value", [10, -10, 0])
     async def test_async_set_native_value_humidity_calibration(
@@ -1234,7 +1234,7 @@ class TestNumbers:
             entity._controller, AdvancedSettingsKey.CALIBRATE_HUMIDITY, value
         )
 
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -1399,7 +1399,7 @@ class TestNumbers:
                     f_setting: f_expected,
                 },
             )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -1430,7 +1430,7 @@ class TestNumbers:
             entity._device, setting, expected
         )
 
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting",
@@ -1461,7 +1461,7 @@ class TestNumbers:
             entity._device, setting, expected
         )
 
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_sunrise_duration_created_for_each_port(
@@ -1519,4 +1519,4 @@ class TestNumbers:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()

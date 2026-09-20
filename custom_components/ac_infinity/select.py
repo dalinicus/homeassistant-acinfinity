@@ -356,7 +356,7 @@ class ACInfinityControllerSelectEntity(ACInfinityControllerEntity, SelectEntity)
             option,
         )
         await self.entity_description.set_value_fn(self, self.controller, option)
-        await self.async_request_device_refresh()
+        self.async_write_ha_state()
 
 
 class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
@@ -383,7 +383,7 @@ class ACInfinityDeviceSelectEntity(ACInfinityDeviceEntity, SelectEntity):
             option,
         )
         await self.entity_description.set_value_fn(self, self.device_port, option)
-        await self.async_request_device_refresh()
+        self.async_write_ha_state()
 
 
 async def async_setup_entry(

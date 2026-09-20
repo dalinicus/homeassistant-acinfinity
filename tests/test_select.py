@@ -152,7 +152,7 @@ class TestSelectors:
         test_objects.controller_set_mock.assert_called_with(
             entity._controller, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "at_type,expected",
@@ -226,7 +226,7 @@ class TestSelectors:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.AT_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
 
     @pytest.mark.parametrize(
@@ -295,7 +295,7 @@ class TestSelectors:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "value,expected",
@@ -357,7 +357,7 @@ class TestSelectors:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "load_type,expected",
@@ -427,7 +427,7 @@ class TestSelectors:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, AdvancedSettingsKey.DEVICE_LOAD_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_load_type_unknown_device_type(

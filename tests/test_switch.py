@@ -154,7 +154,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_LOW_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("expected", [0])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -181,7 +181,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_LOW_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_co2_fan_high_switch_created_for_ai_port(self, setup, port):
@@ -260,7 +260,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_FAN_HIGH_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("expected", [0])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -287,7 +287,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.CO2_FAN_HIGH_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_moisture_low_switch_created_for_ai_port(self, setup, port):
@@ -366,7 +366,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.MOISTURE_LOW_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("expected", [0])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -393,7 +393,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.MOISTURE_LOW_SWITCH, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_setup_ec_tds_low_switch_ec_created_for_ai_port(self, setup, port):
@@ -472,7 +472,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.EC_TDS_LOW_SWITCH_EC, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("expected", [0])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -499,7 +499,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.EC_TDS_LOW_SWITCH_EC, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("setting", [DeviceControlKey.PH_HIGH_SWITCH, DeviceControlKey.PH_LOW_SWITCH])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -579,7 +579,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("setting", [DeviceControlKey.PH_HIGH_SWITCH, DeviceControlKey.PH_LOW_SWITCH])
     @pytest.mark.parametrize("expected", [0])
@@ -607,7 +607,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("setting", [DeviceControlKey.WATER_TEMP_HIGH_SWITCH, DeviceControlKey.WATER_TEMP_LOW_SWITCH])
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
@@ -684,7 +684,7 @@ class TestSwitches:
         await entity.async_turn_on()
 
         test_objects.port_control_set_mock.assert_called_with(entity._device, setting, expected)
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("setting", [DeviceControlKey.WATER_TEMP_HIGH_SWITCH, DeviceControlKey.WATER_TEMP_LOW_SWITCH])
     @pytest.mark.parametrize("expected", [0])
@@ -710,7 +710,7 @@ class TestSwitches:
         await entity.async_turn_off()
 
         test_objects.port_control_set_mock.assert_called_with(entity._device, setting, expected)
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting,value,expected",
@@ -846,7 +846,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
@@ -877,7 +877,7 @@ class TestSwitches:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
@@ -917,7 +917,7 @@ class TestSwitches:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "setting,expected",
@@ -945,4 +945,4 @@ class TestSwitches:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()

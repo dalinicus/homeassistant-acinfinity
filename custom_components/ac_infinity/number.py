@@ -1206,7 +1206,7 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.controller, value)
-        await self.async_request_device_refresh()
+        self.async_write_ha_state()
 
 
 class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
@@ -1233,7 +1233,7 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
             'User requesting value update of entity "%s" to "%s"', self.unique_id, value
         )
         await self.entity_description.set_value_fn(self, self.device_port, value)
-        await self.async_request_device_refresh()
+        self.async_write_ha_state()
 
 
 async def async_setup_entry(

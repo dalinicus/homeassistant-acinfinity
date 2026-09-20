@@ -655,7 +655,7 @@ class ACInfinityService:
                         # set sensor properties; sensor value, unit, and display precision
                         self.data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
-                for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]:
+                for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []:
                     device_port = device_properties_json[DevicePropertyKey.PORT]
 
                     # set port properties; current power and remaining time until a mode switch
@@ -680,18 +680,18 @@ class ACInfinityService:
         port_indexes = list(port_indexes)
 
         async def _refresh_port(port_index: int) -> None:
-            async with self._update_lock:
-                result = await self._execute_with_retry(
-                    lambda: self.client.get_device_mode_settings(controller_id, port_index),
-                    f"refresh device settings for controller {controller_id} port {port_index}",
-                )
-                self.data.device_controls[(controller_id, port_index)] = result
-                self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+            result = await self._execute_with_retry(
+                lambda: self.client.get_device_mode_settings(controller_id, port_index),
+                f"refresh device settings for controller {controller_id} port {port_index}",
+            )
+            self.data.device_controls[(controller_id, port_index)] = result
+            self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
 
-        results = await asyncio.gather(
-            *(_refresh_port(port_index) for port_index in port_indexes),
-            return_exceptions=True,
-        )
+        async with self._update_lock:
+            results = await asyncio.gather(
+                *(_refresh_port(port_index) for port_index in port_indexes),
+                return_exceptions=True,
+            )
 
         for port_index, result in zip(port_indexes, results):
             if isinstance(result, BaseException):

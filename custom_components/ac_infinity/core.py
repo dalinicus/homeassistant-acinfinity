@@ -634,10 +634,6 @@ class ACInfinityService:
         config/options flow), and by ACInfinityDeviceListCoordinator on its polling interval.
         Mode settings/controls are owned by ACInfinityDeviceCoordinator and are not refreshed here.
         """
-        if self._update_lock.locked():
-            async with self._update_lock:
-                pass  # wait for any in-progress update to complete
-
         async def _refresh() -> None:
             if not self.client.is_logged_in():
                 await self.client.login()
@@ -665,7 +661,8 @@ class ACInfinityService:
                     # set port properties; current power and remaining time until a mode switch
                     self.data.device_properties[(controller_id, device_port)] = device_properties_json
 
-        await self._execute_with_retry(_refresh, "refresh controllers")
+        async with self._update_lock:
+            await self._execute_with_retry(_refresh, "refresh controllers")
 
     async def refresh_device_settings(self, controller_id: str, port_indexes: Iterable[int]) -> None:
         """Refreshes mode settings/controls for the given ports on a controller from the AC Infinity API.
@@ -683,12 +680,13 @@ class ACInfinityService:
         port_indexes = list(port_indexes)
 
         async def _refresh_port(port_index: int) -> None:
-            result = await self._execute_with_retry(
-                lambda: self.client.get_device_mode_settings(controller_id, port_index),
-                f"refresh device settings for controller {controller_id} port {port_index}",
-            )
-            self.data.device_controls[(controller_id, port_index)] = result
-            self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+            async with self._update_lock:
+                result = await self._execute_with_retry(
+                    lambda: self.client.get_device_mode_settings(controller_id, port_index),
+                    f"refresh device settings for controller {controller_id} port {port_index}",
+                )
+                self.data.device_controls[(controller_id, port_index)] = result
+                self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
 
         results = await asyncio.gather(
             *(_refresh_port(port_index) for port_index in port_indexes),
@@ -1040,6 +1038,15 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
             identifier, self.coordinator.config_entry.entry_id
         )
         return device.id if device is not None else None
+
+    def notify_device_update(self) -> None:
+        """Writes this entity's state, and redraws every entity sharing this device's per-port
+        coordinator context from the cache (e.g. after a write updates AT_TYPE, so entities whose
+        availability depends on the new mode reflect it immediately instead of waiting for the next
+        poll). Does not touch the API."""
+        self.async_write_ha_state()
+        if self._device_coordinator is not None:
+            self._device_coordinator.async_update_listeners()
 
 
 class ACInfinityControllerEntity(ACInfinityEntity):

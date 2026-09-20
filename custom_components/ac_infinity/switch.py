@@ -440,7 +440,7 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.on_value
         )
-        self.async_write_ha_state()
+        self.notify_device_update()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.info(
@@ -449,7 +449,7 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.off_value
         )
-        self.async_write_ha_state()
+        self.notify_device_update()
 
 
 async def async_setup_entry(

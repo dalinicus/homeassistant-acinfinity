@@ -108,7 +108,7 @@ class TestSensors:
             setup, async_setup_entry, ControllerPropertyKey.TEMPERATURE
         )
 
-        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+        test_objects.service.data.controller_properties[str(DEVICE_ID)][
             ControllerPropertyKey.TEMPERATURE
         ] = value
 
@@ -142,7 +142,7 @@ class TestSensors:
             setup, async_setup_entry, ControllerPropertyKey.HUMIDITY
         )
 
-        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+        test_objects.service.data.controller_properties[str(DEVICE_ID)][
             ControllerPropertyKey.HUMIDITY
         ] = value
         entity._handle_coordinator_update()
@@ -175,7 +175,7 @@ class TestSensors:
             setup, async_setup_entry, ControllerPropertyKey.VPD
         )
 
-        test_objects.ac_infinity._controller_properties[str(DEVICE_ID)][
+        test_objects.service.data.controller_properties[str(DEVICE_ID)][
             ControllerPropertyKey.VPD
         ] = value
         entity._handle_coordinator_update()
@@ -225,14 +225,14 @@ class TestSensors:
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
                 SensorType.CONTROLLER_TEMPERATURE_F,
             )
         ] = SENSOR_PROPERTY_CONTROLLER_TEMP_F
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -269,14 +269,14 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload.  Fahrenheit should be represented as Celsius"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
                 SensorType.CONTROLLER_TEMPERATURE_F,
             )
         ] = SENSOR_PROPERTY_CONTROLLER_TEMP_F
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -292,7 +292,7 @@ class TestSensors:
             SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -309,7 +309,7 @@ class TestSensors:
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -317,7 +317,7 @@ class TestSensors:
             ),
             None,
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -351,7 +351,7 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload.  Celsius should continue to be represented as Celsius"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -359,7 +359,7 @@ class TestSensors:
             ),
             None,
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -374,7 +374,7 @@ class TestSensors:
             SensorReferenceKey.CONTROLLER_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (
                 str(AI_DEVICE_ID),
                 CONTROLLER_ACCESS_PORT,
@@ -421,7 +421,7 @@ class TestSensors:
             SensorReferenceKey.CONTROLLER_HUMIDITY,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_HUMIDITY)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -466,7 +466,7 @@ class TestSensors:
             SensorReferenceKey.CONTROLLER_VPD,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), CONTROLLER_ACCESS_PORT, SensorType.CONTROLLER_VPD)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -479,10 +479,10 @@ class TestSensors:
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F)
         ] = SENSOR_PROPERTY_PROBE_TEMP_F
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C),
             None,
         )
@@ -515,10 +515,10 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload.  Fahrenheit should be represented as Celsius"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F)
         ] = SENSOR_PROPERTY_PROBE_TEMP_F
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.CONTROLLER_TEMPERATURE_C),
             None,
         )
@@ -530,7 +530,7 @@ class TestSensors:
             SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -543,10 +543,10 @@ class TestSensors:
         """Sensor for device reported temperature is created on setup for AI controllers"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F), None
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_C)
         ] = SENSOR_PROPERTY_PROBE_TEMP_C
 
@@ -576,11 +576,11 @@ class TestSensors:
         """Reported sensor value matches the value in the json payload.  Celsius should continue to be represented as Celsius"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_F),
             None,
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_C)
         ] = SENSOR_PROPERTY_PROBE_TEMP_C
 
@@ -591,7 +591,7 @@ class TestSensors:
             SensorReferenceKey.PROBE_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_TEMPERATURE_C)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -634,7 +634,7 @@ class TestSensors:
             SensorReferenceKey.PROBE_HUMIDITY,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_HUMIDITY)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -673,7 +673,7 @@ class TestSensors:
             setup, async_setup_entry, PROBE_ACCESS_PORT, SensorReferenceKey.PROBE_VPD
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), PROBE_ACCESS_PORT, SensorType.PROBE_VPD)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -717,7 +717,7 @@ class TestSensors:
             SensorReferenceKey.CO2_SENSOR,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.CO2)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -775,7 +775,7 @@ class TestSensors:
             SensorReferenceKey.LIGHT_SENSOR,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), CO2_LIGHT_ACCESS_PORT, SensorType.LIGHT)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -818,7 +818,7 @@ class TestSensors:
             SensorReferenceKey.SOIL,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), SOIL_SENSOR_PORT, SensorType.SOIL)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -858,7 +858,7 @@ class TestSensors:
             SensorReferenceKey.HYDRO_PH,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_PH)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -893,11 +893,11 @@ class TestSensors:
         """Sensor for hydro EC (mS/cm) is created when EC_MS type is present instead of EC_US"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties = copy.deepcopy(test_objects.service.data.sensor_properties)
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_US), None
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_MS)
         ] = SENSOR_PROPERTY_HYDRO_EC_MS
 
@@ -932,7 +932,7 @@ class TestSensors:
             SensorReferenceKey.HYDRO_EC,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_EC_US)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -967,11 +967,11 @@ class TestSensors:
         """Sensor for hydro TDS (ppt) is created when TDS_PPT type is present instead of TDS_PPM"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties = copy.deepcopy(test_objects.service.data.sensor_properties)
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPM), None
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPT)
         ] = SENSOR_PROPERTY_HYDRO_TDS_PPT
 
@@ -1003,7 +1003,7 @@ class TestSensors:
             SensorReferenceKey.HYDRO_TDS,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_TDS_PPM)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -1038,12 +1038,12 @@ class TestSensors:
         """Sensor for hydro water temperature (C) is created when HYDRO_WATER_TEMPERATURE_C type is present instead of F"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties = copy.deepcopy(test_objects.ac_infinity._sensor_properties)
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties = copy.deepcopy(test_objects.service.data.sensor_properties)
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F),
             None,
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
         ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_C
 
@@ -1075,10 +1075,10 @@ class TestSensors:
         """Fahrenheit hydro water temperature is converted and reported as Celsius"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F)
         ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_F
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C),
             None,
         )
@@ -1090,7 +1090,7 @@ class TestSensors:
             SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -1106,11 +1106,11 @@ class TestSensors:
         """Celsius hydro water temperature is reported as-is"""
 
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._sensor_properties.pop(
+        test_objects.service.data.sensor_properties.pop(
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_F),
             None,
         )
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
         ] = SENSOR_PROPERTY_HYDRO_WATER_TEMP_C
 
@@ -1121,7 +1121,7 @@ class TestSensors:
             SensorReferenceKey.HYDRO_WATER_TEMPERATURE,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), HYDRO_SENSOR_PORT, SensorType.HYDRO_WATER_TEMPERATURE_C)
         ][SensorPropertyKey.SENSOR_DATA] = value
 
@@ -1183,7 +1183,7 @@ class TestSensors:
     ):
         """Reported sensor value matches the value in the json payload"""
         test_objects: ACTestObjects = setup
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_properties[(str(DEVICE_ID), port)][
             DevicePropertyKey.SPEAK
         ] = value
 
@@ -1207,7 +1207,7 @@ class TestSensors:
             setup, async_setup_entry, port, DevicePropertyKey.REMAINING_TIME
         )
 
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_properties[(str(DEVICE_ID), port)][
             DevicePropertyKey.REMAINING_TIME
         ] = value
         entity._handle_coordinator_update()
@@ -1242,11 +1242,11 @@ class TestSensors:
             setup, async_setup_entry, port, CustomDevicePropertyKey.NEXT_STATE_CHANGE
         )
 
-        test_objects.ac_infinity._controller_properties[(str(DEVICE_ID))][
+        test_objects.service.data.controller_properties[(str(DEVICE_ID))][
             ControllerPropertyKey.TIME_ZONE
         ] = "America/Chicago"
 
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_properties[(str(DEVICE_ID), port)][
             DevicePropertyKey.REMAINING_TIME
         ] = value
         entity._handle_coordinator_update()

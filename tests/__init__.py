@@ -17,9 +17,12 @@ from custom_components.ac_infinity.config_flow import ConfigFlow, OptionsFlow
 from custom_components.ac_infinity.const import DOMAIN, ConfigurationKey, EntityConfigValue
 from custom_components.ac_infinity.core import (
     ACInfinityControllerEntity,
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityData,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntity,
     ACInfinityDeviceEntity,
+    ACInfinityEntryData,
     ACInfinitySensorEntity,
     ACInfinityService,
 )
@@ -147,13 +150,15 @@ def setup_entity_mocks(mocker: MockFixture):
 
     hass = HomeAssistant("/path")
     client = ACInfinityClient(HOST, EMAIL, PASSWORD)
-    ac_infinity = ACInfinityService(client)
+    data = ACInfinityData()
 
-    ac_infinity._controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
-    ac_infinity._device_settings = deepcopy(DEVICE_SETTINGS_DATA)
-    ac_infinity._sensor_properties = deepcopy(SENSOR_PROPERTIES_DATA)
-    ac_infinity._device_properties = deepcopy(DEVICE_PROPERTIES_DATA)
-    ac_infinity._device_controls = deepcopy(DEVICE_CONTROLS_DATA)
+    data.controller_properties = deepcopy(CONTROLLER_PROPERTIES_DATA)
+    data.device_settings = deepcopy(DEVICE_SETTINGS_DATA)
+    data.sensor_properties = deepcopy(SENSOR_PROPERTIES_DATA)
+    data.device_properties = deepcopy(DEVICE_PROPERTIES_DATA)
+    data.device_controls = deepcopy(DEVICE_CONTROLS_DATA)
+
+    service = ACInfinityService(client, data)
 
     config_entry = ConfigEntry(
         entry_id=ENTRY_ID,
@@ -169,31 +174,42 @@ def setup_entity_mocks(mocker: MockFixture):
         subentries_data=None,
     )
 
-    coordinator = ACInfinityDataUpdateCoordinator(hass, config_entry, ac_infinity, 10)
+    list_coordinator = ACInfinityDeviceListCoordinator(hass, config_entry, service, 10)
+    device_coordinators = {
+        controller_id: ACInfinityDeviceCoordinator(
+            controller_id, hass, config_entry, service, 10
+        )
+        for controller_id in data.controller_properties
+    }
 
     port_control_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_control"
+        service, "update_device_control"
     )
     port_control_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_controls"
+        service, "update_device_controls"
     )
     controller_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_controller_setting"
+        service, "update_controller_setting"
     )
     controller_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_controller_settings"
+        service, "update_controller_settings"
     )
     port_setting_set_mock = mocker.patch.object(
-        ac_infinity, "update_device_setting"
+        service, "update_device_setting"
     )
     port_setting_sets_mock = mocker.patch.object(
-        ac_infinity, "update_device_settings"
+        service, "update_device_settings"
     )
+    # Patched on the class so it covers every per-controller device coordinator created above.
     refresh_mock = mocker.patch.object(
-        coordinator, "async_request_refresh"
+        ACInfinityDeviceCoordinator, "async_request_refresh"
     )
 
-    hass.data = HassDict({DOMAIN: {ENTRY_ID: coordinator}})
+    hass.data = HassDict({
+        DOMAIN: {
+            ENTRY_ID: ACInfinityEntryData(service, list_coordinator, device_coordinators)
+        }
+    })
 
     entities = EntitiesTracker()
 
@@ -222,7 +238,7 @@ def setup_entity_mocks(mocker: MockFixture):
         hass,
         config_entry,
         entities,
-        ac_infinity,
+        service,
         controller_setting_set_mock,
         controller_setting_sets_mock,
         port_control_set_mock,
@@ -230,7 +246,8 @@ def setup_entity_mocks(mocker: MockFixture):
         port_setting_set_mock,
         port_setting_sets_mock,
         write_ha_mock,
-        coordinator,
+        list_coordinator,
+        device_coordinators,
         refresh_mock,
         config_flow,
         options_flow,
@@ -243,7 +260,7 @@ class ACTestObjects:
         hass,
         config_entry,
         entities,
-        ac_infinity,
+        service,
         controller_set_mock,
         controller_sets_mock,
         port_control_set_mock,
@@ -252,6 +269,7 @@ class ACTestObjects:
         port_setting_sets_mock,
         write_ha_mock,
         coordinator,
+        device_coordinators,
         refresh_mock,
         config_flow,
         options_flow,
@@ -259,7 +277,7 @@ class ACTestObjects:
         self.hass: HomeAssistant = hass
         self.config_entry: ConfigEntry = config_entry
         self.entities: EntitiesTracker = entities
-        self.ac_infinity: ACInfinityService = ac_infinity
+        self.service: ACInfinityService = service
         self.controller_set_mock: MockType = controller_set_mock
         self.controller_sets_mock: MockType = controller_sets_mock
         self.port_control_set_mock: MockType = port_control_set_mock
@@ -267,7 +285,9 @@ class ACTestObjects:
         self.port_setting_set_mock: MockType = port_setting_set_mock
         self.port_setting_sets_mock: MockType = port_setting_sets_mock
         self.write_ha_mock: MockType = write_ha_mock
-        self.coordinator: ACInfinityDataUpdateCoordinator = coordinator
+        # `coordinator` is the shared list coordinator; per-controller mode coordinators live in device_coordinators
+        self.coordinator: ACInfinityDeviceListCoordinator = coordinator
+        self.device_coordinators: dict[str, ACInfinityDeviceCoordinator] = device_coordinators
         self.refresh_mock: MockType = refresh_mock
         self.config_flow: ConfigFlow = config_flow
         self.options_flow: OptionsFlow = options_flow

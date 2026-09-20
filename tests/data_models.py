@@ -1,6 +1,7 @@
 from typing import Any
 
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.core import DOMAIN
 
 from custom_components.ac_infinity.const import (
     ControllerType,
@@ -20,7 +21,7 @@ DEVICE_NAME_AI = "Grow Tent AI"
 MAC_ADDR = "2B120D62DC00"
 AI_MAC_ADDR = "3C450E78AB12"
 
-ENTRY_ID = f"ac_infinity-{EMAIL}"
+ENTRY_ID = f"{DOMAIN}-{EMAIL}"
 POLLING_INTERVAL = 15
 
 CONFIG_ENTRY_DATA = {

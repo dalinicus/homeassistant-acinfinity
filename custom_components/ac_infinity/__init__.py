@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 
@@ -14,7 +15,10 @@ from .client import ACInfinityClient
 from .const import ConfigurationKey, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS, HOST, ControllerPropertyKey, \
     EntityConfigValue
 from .core import (
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityData,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
+    ACInfinityEntryData,
     ACInfinityService,
 )
 
@@ -32,19 +36,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else DEFAULT_POLLING_INTERVAL
     )
 
-    service = ACInfinityService(
-        ACInfinityClient(HOST, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    )
+    client = ACInfinityClient(HOST, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
+    data = ACInfinityData()
+    service = ACInfinityService(client, data)
 
-    coordinator = ACInfinityDataUpdateCoordinator(
+    list_coordinator = ACInfinityDeviceListCoordinator(
         hass, entry, service, polling_interval
     )
+    await list_coordinator.async_config_entry_first_refresh()
+    await __initialize_new_devices_if_any(hass, entry, service)
 
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    # one device coordinator per controller; it polls mode settings/controls for that
+    # controller's ports (context-driven - see ACInfinityDeviceCoordinator)
+    device_coordinators = {
+        controller_id: ACInfinityDeviceCoordinator(
+            controller_id, hass, entry, service, polling_interval
+        )
+        for controller_id in data.controller_properties
+    }
 
-    await coordinator.async_config_entry_first_refresh()
-    await __initialize_new_devices_if_any(hass, entry, coordinator.ac_infinity)
-    
+    await asyncio.gather(
+        *(dc.async_config_entry_first_refresh() for dc in device_coordinators.values())
+    )
+
+    hass.data[DOMAIN][entry.entry_id] = ACInfinityEntryData(service, list_coordinator, device_coordinators)
+
     # Set up platforms with updated configuration
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -54,11 +70,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def __initialize_new_devices_if_any(
     hass: HomeAssistant, 
     entry: ConfigEntry, 
-    ac_infinity: ACInfinityService
+    service: ACInfinityService
 ) -> None:
     """Add newly discovered devices to entity configuration with SensorsOnly defaults."""
     
-    current_device_ids = set(ac_infinity.get_device_ids() or [])
+    current_device_ids = set(service.get_device_ids() or [])
     configured_device_ids = set(entry.data[ConfigurationKey.ENTITIES].keys())
     
     # Find devices that exist in API but not in configuration
@@ -72,7 +88,7 @@ async def __initialize_new_devices_if_any(
     entities_config = new_data[ConfigurationKey.ENTITIES].copy()
     
     for device_id in new_device_ids:
-        port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
+        port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         device_config = {
             "controller": EntityConfigValue.SENSORS_ONLY,
@@ -84,7 +100,7 @@ async def __initialize_new_devices_if_any(
         
         entities_config[str(device_id)] = device_config
         
-        device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
+        device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
         _LOGGER.info(
             "Added new device '%s' (ID: %s) to entity configuration with SensorsOnly defaults", 
             device_name, device_id
@@ -99,8 +115,8 @@ async def __initialize_new_devices_if_any(
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        coordinator = hass.data[DOMAIN][entry.entry_id]
-        await coordinator.ac_infinity.close()
+        entry_data: ACInfinityEntryData = hass.data[DOMAIN][entry.entry_id]
+        await entry_data.service.close()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
@@ -114,13 +130,13 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         # Version 1 -> 2: Add entity configuration for existing devices
         new_data = config_entry.data.copy()
 
-        ac_infinity = ACInfinityService(
-            ACInfinityClient(HOST, new_data[CONF_EMAIL], new_data[CONF_PASSWORD])
+        service = ACInfinityService(
+            ACInfinityClient(HOST, new_data[CONF_EMAIL], new_data[CONF_PASSWORD]), ACInfinityData()
         )
 
         try:
-            await ac_infinity.refresh()
-            device_ids = ac_infinity.get_device_ids()
+            await service.refresh_controllers()
+            device_ids = service.get_device_ids()
 
             # Initialize entities configuration dictionary for v1 -> v2 migration
             new_data[ConfigurationKey.ENTITIES] = {}
@@ -128,8 +144,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             # For each device that existed in v1, create explicit configuration
             # Set to most permissive to preserve v1 behavior where all entities were enabled always
             for device_id in device_ids:
-                port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT, 0)
-                device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
+                port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT, 0)
+                device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
 
                 device_config = {
                     "controller": EntityConfigValue.SENSORS_AND_SETTINGS,
@@ -157,7 +173,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.error("Failed to migrate config entry from v1 to v2: %s", ex)
             return False
         finally:
-            await ac_infinity.close()
+            await service.close()
 
         _LOGGER.info("Successfully migrated config entry from version 1 to version 2")
 

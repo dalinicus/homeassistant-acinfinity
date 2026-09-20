@@ -21,9 +21,11 @@ from custom_components.ac_infinity.const import (
     DeviceControlKey,
 )
 from custom_components.ac_infinity.core import (
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadWriteMixin, enabled_fn_control, enabled_fn_setting,
@@ -62,13 +64,13 @@ class ACInfinityDeviceSwitchEntityDescription(
 
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.ac_infinity.get_device_setting_exists(
+    return not device.controller.is_ai_controller and entity.service.get_device_setting_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_control_exists(
+    return entity.service.get_device_control_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -76,27 +78,27 @@ def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInf
 def __suitable_fn_device_control_ai_only(entity: ACInfinityEntity, device: ACInfinityDevice):
     return (
         device.controller.is_ai_controller
-        and entity.ac_infinity.get_device_control_exists(
+        and entity.service.get_device_control_exists(
             device.controller.controller_id, device.device_port, entity.data_key
         )
     )
 
 
 def __get_value_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_control(
+    return entity.service.get_device_control(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
 def __get_value_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_setting(
+    return entity.service.get_device_setting(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
 
 
 def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinityDevice):
     return (
-        entity.ac_infinity.get_device_control(
+        entity.service.get_device_control(
             device.controller.controller_id,
             device.device_port,
             entity.data_key,
@@ -109,7 +111,7 @@ def __get_value_fn_schedule_enabled(entity: ACInfinityEntity, device: ACInfinity
 def __set_value_fn_device_control_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_device_control(
+    return entity.service.update_device_control(
         device, entity.data_key, value
     )
 
@@ -117,7 +119,7 @@ def __set_value_fn_device_control_default(
 def __set_value_fn_device_setting_default(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: int
 ):
-    return entity.ac_infinity.update_device_setting(
+    return entity.service.update_device_setting(
         device, entity.data_key, value
     )
 
@@ -417,12 +419,13 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
+        device_coordinator: ACInfinityDeviceCoordinator,
         description: ACInfinityDeviceSwitchEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         super().__init__(
-            coordinator, device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SWITCH
+            device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.SWITCH, list_coordinator, device_coordinator
         )
         self.entity_description = description
 
@@ -437,7 +440,7 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.on_value
         )
-        await self.coordinator.async_request_refresh()
+        self.notify_device_update()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.info(
@@ -446,23 +449,24 @@ class ACInfinityDeviceSwitchEntity(ACInfinityDeviceEntity, SwitchEntity):
         await self.entity_description.set_value_fn(
             self, self.device_port, self.entity_description.off_value
         )
-        await self.coordinator.async_request_refresh()
+        self.notify_device_update()
 
 
 async def async_setup_entry(
     hass: HomeAssistant, config: ConfigEntry, add_entities_callback
 ) -> None:
     """Set up the AC Infinity Platform."""
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
 
         for device in controller.devices:
+            device_coordinator = entry_data.device_coordinators[controller.controller_id]
             for description in DEVICE_DESCRIPTIONS:
-                entity = ACInfinityDeviceSwitchEntity(coordinator, description, device)
+                entity = ACInfinityDeviceSwitchEntity(entry_data.list_coordinator, device_coordinator, description, device)
                 entities.append_if_suitable(entity)
 
     add_entities_callback(entities)

@@ -114,7 +114,7 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), 0)][setting] = value
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)][setting] = value
         entity._handle_coordinator_update()
 
         assert isinstance(entity, ACInfinityControllerSelectEntity)
@@ -152,7 +152,7 @@ class TestSelectors:
         test_objects.controller_set_mock.assert_called_with(
             entity._controller, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "at_type,expected",
@@ -182,7 +182,7 @@ class TestSelectors:
             DeviceControlKey.AT_TYPE,
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][
             DeviceControlKey.AT_TYPE
         ] = at_type
         entity._handle_coordinator_update()
@@ -226,7 +226,7 @@ class TestSelectors:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, DeviceControlKey.AT_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
 
     @pytest.mark.parametrize(
@@ -254,7 +254,7 @@ class TestSelectors:
             setting,
         )
 
-        test_objects.ac_infinity._device_controls[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_controls[(str(DEVICE_ID), port)][
             setting
         ] = setting_mode
         entity._handle_coordinator_update()
@@ -295,7 +295,7 @@ class TestSelectors:
         test_objects.port_control_set_mock.assert_called_with(
             entity._device, setting, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "value,expected",
@@ -319,7 +319,7 @@ class TestSelectors:
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE
         ] = value
         entity._handle_coordinator_update()
@@ -357,7 +357,7 @@ class TestSelectors:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, AdvancedSettingsKey.DYNAMIC_RESPONSE_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         "load_type,expected",
@@ -385,7 +385,7 @@ class TestSelectors:
             AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         )
 
-        test_objects.ac_infinity._device_settings[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
             AdvancedSettingsKey.DEVICE_LOAD_TYPE
         ] = load_type
         entity._handle_coordinator_update()
@@ -427,7 +427,7 @@ class TestSelectors:
         test_objects.port_setting_set_mock.assert_called_with(
             entity._device, AdvancedSettingsKey.DEVICE_LOAD_TYPE, expected
         )
-        test_objects.refresh_mock.assert_called()
+        test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize("port", [1, 2, 3, 4])
     async def test_async_set_native_value_load_type_unknown_device_type(

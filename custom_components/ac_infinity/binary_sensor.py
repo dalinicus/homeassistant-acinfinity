@@ -25,9 +25,10 @@ from .core import (
     ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
-    ACInfinityDataUpdateCoordinator,
+    ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
+    ACInfinityEntryData,
     ACInfinityDevice,
     ACInfinityDeviceEntity,
     ACInfinityDeviceReadOnlyMixin,
@@ -73,13 +74,13 @@ class ACInfinityDeviceBinarySensorEntityDescription(
 def __suitable_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_property_exists(
+    return entity.service.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
 
 def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.ac_infinity.get_device_property_exists(
+    return entity.service.get_device_property_exists(
         device.controller.controller_id, device.device_port, entity.data_key
     )
 
@@ -87,7 +88,7 @@ def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACIn
 def __get_value_fn_controller_property_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return entity.ac_infinity.get_controller_property(
+    return entity.service.get_controller_property(
         controller.controller_id, entity.data_key, False
     )
 
@@ -95,18 +96,18 @@ def __get_value_fn_controller_property_default(
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ) -> Any:
-    return entity.ac_infinity.get_device_property(
+    return entity.service.get_device_property(
         device.controller.controller_id, device.device_port, entity.data_key, False
     )
 
 
 def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySensor):
-    return sensor.controller.is_ai_controller and entity.ac_infinity.get_sensor_property_exists(
+    return sensor.controller.is_ai_controller and entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
         SensorPropertyKey.SENSOR_PRECISION,
-    ) and entity.ac_infinity.get_sensor_property_exists(
+    ) and entity.service.get_sensor_property_exists(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -117,7 +118,7 @@ def __suitable_fn_sensor_default(entity: ACInfinityEntity, sensor: ACInfinitySen
 def __get_value_fn_sensor_value_default(
     entity: ACInfinityEntity, sensor: ACInfinitySensor
 ):
-    data = entity.ac_infinity.get_sensor_property(
+    data = entity.service.get_sensor_property(
         sensor.controller.controller_id,
         sensor.sensor_port,
         sensor.sensor_type,
@@ -181,17 +182,17 @@ class ACInfinityControllerBinarySensorEntity(
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityControllerBinarySensorEntityDescription,
         controller: ACInfinityController,
     ) -> None:
         super().__init__(
-            coordinator,
             controller,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -206,17 +207,17 @@ class ACInfinitySensorBinarySensorEntity(ACInfinitySensorEntity, BinarySensorEnt
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinitySensorBinarySensorEntityDescription,
         sensor: ACInfinitySensor,
     ) -> None:
         super().__init__(
-            coordinator,
             sensor,
             description.enabled_fn,
             description.suitable_fn,
             description.key,
             Platform.BINARY_SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -233,24 +234,24 @@ class ACInfinityDeviceBinarySensorEntity(ACInfinityDeviceEntity, BinarySensorEnt
 
     def __init__(
         self,
-        coordinator: ACInfinityDataUpdateCoordinator,
+        list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceBinarySensorEntityDescription,
         device: ACInfinityDevice,
     ) -> None:
         """
         Args:
-            coordinator: data coordinator responsible for updating the value of the entity.
+            list_coordinator: data coordinator responsible for updating the value of the entity.
             description: haas description used to initialize the entity.
             device: port object the entity is bound to
         """
         super().__init__(
-            coordinator,
             device,
             description.enabled_fn,
             description.suitable_fn,
             None,
             description.key,
             Platform.BINARY_SENSOR,
+            list_coordinator,
         )
         self.entity_description = description
 
@@ -265,14 +266,14 @@ async def async_setup_entry(
 ) -> None:
     """Set Up the AC Infinity BinarySensor Platform."""
 
-    coordinator: ACInfinityDataUpdateCoordinator = hass.data[DOMAIN][config.entry_id]
-    controllers = coordinator.ac_infinity.get_all_controller_properties()
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
+    controllers = entry_data.service.get_all_controller_properties()
 
     entities = ACInfinityEntities(config)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerBinarySensorEntity(
-                coordinator, controller_description, controller
+                entry_data.list_coordinator, controller_description, controller
             )
             entities.append_if_suitable(controller_entity)
 
@@ -280,14 +281,14 @@ async def async_setup_entry(
             if sensor.sensor_type in SENSOR_DESCRIPTIONS:
                 sensor_description = SENSOR_DESCRIPTIONS[sensor.sensor_type]
                 sensor_entity = ACInfinitySensorBinarySensorEntity(
-                    coordinator, sensor_description, sensor
+                    entry_data.list_coordinator, sensor_description, sensor
                 )
                 entities.append_if_suitable(sensor_entity)
 
         for device in controller.devices:
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceBinarySensorEntity(
-                    coordinator, device_description, device
+                    entry_data.list_coordinator, device_description, device
                 )
                 entities.append_if_suitable(device_entity)
 

@@ -13,13 +13,13 @@ from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
 from voluptuous import Required
 
-from custom_components.ac_infinity import ACInfinityDataUpdateCoordinator
 from custom_components.ac_infinity.client import (
     ACInfinityClient,
     ACInfinityClientCannotConnect,
     ACInfinityClientInvalidAuth,
 )
 from . import ACInfinityService
+from .core import ACInfinityData, ACInfinityEntryData
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -76,22 +76,22 @@ class ACInfinityFlowBase:
 
     def _build_entity_config_schema(
         self,
-        ac_infinity: ACInfinityService,
+        service: ACInfinityService,
         device_id: str | int,
         data: dict[str, Any] | None = None,
     ) -> tuple[dict[Required, Any], dict[str, str]]:
         """Build the entity configuration schema and description placeholders.
 
         Args:
-            ac_infinity: The AC Infinity service instance
+            service: The AC Infinity service instance
             device_id: The device ID to build config for
 
         Returns:
             Tuple of (entities schema dict, description_placeholders dict)
         """
-        device_name = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
-        device_code = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
-        port_count = ac_infinity.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
+        device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+        device_code = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
+        port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         entities = {}
         description_placeholders = {
@@ -119,7 +119,7 @@ class ACInfinityFlowBase:
 
         for i in range(1, port_count + 1):
             entity_config_key = f"port_{i}"
-            description_placeholders[entity_config_key] = ac_infinity.get_device_property(device_id, i, DevicePropertyKey.NAME)
+            description_placeholders[entity_config_key] = service.get_device_property(device_id, i, DevicePropertyKey.NAME)
             entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(data, str(device_id), entity_config_key))] = selector(
                 {
                     "select": {
@@ -141,7 +141,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         # Public fields for temporary state during configuration
         self.username: str | None = None
         self.password: str | None = None
-        self.ac_infinity: ACInfinityService | None = None
+        self.service: ACInfinityService | None = None
         self.device_ids: list[str] | None = None
         self.device_index: int = 0
         self.entities: dict[str, Any] = {}
@@ -169,10 +169,10 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
                 self.username = user_input[CONF_EMAIL]
                 self.password = user_input[CONF_PASSWORD]
-                self.ac_infinity = ACInfinityService(client)
-                await self.ac_infinity.refresh()
+                self.service = ACInfinityService(client, ACInfinityData())
+                await self.service.refresh_controllers()
 
-                self.device_ids = self.ac_infinity.get_device_ids()
+                self.device_ids = self.service.get_device_ids()
                 self.device_index = 0
 
                 if self.device_ids is None or len(self.device_ids) == 0:
@@ -196,7 +196,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         )
 
     async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
-        if self.ac_infinity is None or self.device_ids is None:
+        if self.service is None or self.device_ids is None:
             _LOGGER.error("AC Infinity service is not initialized")
             return self.async_abort(reason="not_initialized")
 
@@ -214,7 +214,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 return await self.async_create_config_entry()
 
         entities, description_placeholders = self._build_entity_config_schema(
-            self.ac_infinity,
+            self.service,
             device_id
         )
 
@@ -226,10 +226,10 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         )
 
     async def async_create_config_entry(self):
-        if self.ac_infinity:
-            await self.ac_infinity.close()
+        if self.service:
+            await self.service.close()
 
-        await self.async_set_unique_id(f"ac_infinity-{self.username}")
+        await self.async_set_unique_id(f"{DOMAIN}-{self.username}")
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(
@@ -299,10 +299,12 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 self.__update_config_entry_data(new_data)
 
-                coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+                entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][
                     self.config_entry.entry_id
                 ]
-                coordinator.update_interval = timedelta(seconds=polling_interval)
+                entry_data.list_coordinator.update_interval = timedelta(seconds=polling_interval)
+                for device_coordinator in entry_data.device_coordinators.values():
+                    device_coordinator.update_interval = timedelta(seconds=polling_interval)
 
                 _LOGGER.info("Polling Interval changed to %s seconds", polling_interval)
 
@@ -328,18 +330,18 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             self.current_device_id = user_input["device_id"]
             return await self.async_step_enable_entities()
 
-        coordinator: ACInfinityDataUpdateCoordinator = self.hass.data[DOMAIN][
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][
             self.config_entry.entry_id
         ]
 
-        device_ids = coordinator.ac_infinity.get_device_ids()
+        device_ids = entry_data.service.get_device_ids()
         if not device_ids:
             return self.async_abort(reason="no_devices")
 
         options = []
         for device_id in device_ids:
-            device_code = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
-            device_name = coordinator.ac_infinity.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            device_code = entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
+            device_name = entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
 
             options.append({"value": device_id, "label": f"{device_name} ({device_code})"})
 
@@ -368,12 +370,12 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
             return await self.async_step_notify_restart()
 
-        ac_infinity: ACInfinityService = self.hass.data[DOMAIN][
+        service: ACInfinityService = self.hass.data[DOMAIN][
             self.config_entry.entry_id
-        ].ac_infinity
+        ].service
 
         entities, description_placeholders = self._build_entity_config_schema(
-            ac_infinity,
+            service,
             device_id,
             dict(self.config_entry.data)
         )

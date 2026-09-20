@@ -12,7 +12,7 @@ http:
       - name: devId
         value: "{{DEVICE_ID}}"
       - name: port
-        value: "1"
+        value: "0"
   auth: inherit
 
 settings:

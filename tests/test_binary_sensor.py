@@ -114,7 +114,7 @@ class TestBinarySensors:
             setup, async_setup_entry, ControllerPropertyKey.ONLINE, mac
         )
 
-        test_objects.ac_infinity._controller_properties[str(device_id)][
+        test_objects.service.data.controller_properties[str(device_id)][
             ControllerPropertyKey.ONLINE
         ] = value
 
@@ -145,7 +145,7 @@ class TestBinarySensors:
             setup, async_setup_entry, port, setting
         )
 
-        test_objects.ac_infinity._device_properties[(str(DEVICE_ID), port)][
+        test_objects.service.data.device_properties[(str(DEVICE_ID), port)][
             setting
         ] = value
 
@@ -188,7 +188,7 @@ class TestBinarySensors:
             SensorReferenceKey.WATER,
         )
 
-        test_objects.ac_infinity._sensor_properties[
+        test_objects.service.data.sensor_properties[
             (str(AI_DEVICE_ID), WATER_SENSOR_PORT, SensorType.WATER)
         ][SensorPropertyKey.SENSOR_DATA] = value
 

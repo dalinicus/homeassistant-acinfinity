@@ -852,6 +852,13 @@ class ACInfinityService:
             )
             self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
 
+            # AI controllers combine controls and settings in one payload; only mirror keys that
+            # already belong to the cached settings dict so control-only keys aren't misclassified.
+            settings = self.data.device_settings.get((str(controller_id), device_port), {})
+            setting_values = {key: value for key, value in key_values.items() if key in settings}
+            if setting_values:
+                self.__cache_updated_values(self.data.device_settings, controller_id, device_port, setting_values)
+
     @staticmethod
     def __cache_updated_values(
         cache: dict[tuple[str, int], Any],

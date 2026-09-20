@@ -862,7 +862,7 @@ class ACInfinityService:
         """Optimistically applies a just-written value to the cache so entities redraw with the new
         value immediately, rather than a stale value from a refresh that raced the API's write."""
         normalized_id = (str(controller_id), device_port)
-        cache.setdefault(normalized_id, {}).update(key_values)
+        cache[normalized_id] = {**cache.get(normalized_id, {}), **key_values}
 
     async def close(self) -> None:
         """Close the client session when done"""

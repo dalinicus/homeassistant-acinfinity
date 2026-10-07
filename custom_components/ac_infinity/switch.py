@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.switch import (
-    SwitchDeviceClass,
+    SwitchDeviceClass,  # pyright: ignore[reportPrivateImportUsage]
     SwitchEntity,
     SwitchEntityDescription,
 )

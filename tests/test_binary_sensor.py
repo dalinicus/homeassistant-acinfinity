@@ -1,6 +1,6 @@
 import pytest
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
+    BinarySensorDeviceClass,  # pyright: ignore[reportPrivateImportUsage]
 )
 from homeassistant.components.sensor import SensorDeviceClass
 from pytest_mock import MockFixture

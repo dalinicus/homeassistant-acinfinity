@@ -93,6 +93,14 @@ class ControllerPropertyKey:
     TIME_ZONE = "zoneId"
     SENSORS = "sensors"
     PORT_COUNT = "devPortCount"
+    # Room-to-room/through-wall fans (e.g. AC-TWT6) report these instead of TEMPERATURE.
+    INSIDE_TEMP = "insideTemp"
+    OUTSIDE_TEMP = "outsideTemp"
+    # Also room-to-room fan specific; live under DEVICE_INFO, and required (along with
+    # DEVICE_NAME) when writing display/panel settings via
+    # ACInfinityClient.update_room_to_room_fan_display_setting.
+    INSIDE_ROOM_NAME = "insideRoomName"
+    OUTSIDE_ROOM_NAME = "outsideRoomName"
 
 
 class ControllerType:
@@ -101,6 +109,10 @@ class ControllerType:
     UIS_89_AI_PLUS = 20
     UIS_OUTLET_AI = 21
     UIS_OUTLET_AI_PLUS = 22
+    # Standalone WiFi room-to-room / through-wall fan (e.g. AC-TWT6). Unlike the
+    # UIS tent controllers, it has no ports and reports two independent zone
+    # readings (insideTemp/outsideTemp) instead of one top-level "temperature".
+    UIS_ROOM_TO_ROOM_FAN = 33
 
 
 AI_CONTROLLER_TYPES = frozenset({
@@ -108,6 +120,128 @@ AI_CONTROLLER_TYPES = frozenset({
     ControllerType.UIS_OUTLET_AI,
     ControllerType.UIS_OUTLET_AI_PLUS
 })
+
+# Devices whose top-level "temperature"/"humidity" fields are stale/unused, and
+# whose real readings live under insideTemp/outsideTemp instead.
+ROOM_TO_ROOM_FAN_CONTROLLER_TYPES = frozenset({
+    ControllerType.UIS_ROOM_TO_ROOM_FAN
+})
+
+
+class RoomToRoomFanMode:
+    """Values of the "atType" field specific to room-to-room/through-wall fans
+    (e.g. AC-TWT6, devType 33). This is the same "atType" field UIS tent
+    controllers use, but with entirely different semantics for this device
+    type - confirmed via packet capture of the official app against a live
+    AC-TWT6 unit. Values do NOT correspond to the general-purpose AtType
+    class above, despite some overlapping numbers.
+    """
+
+    MANUAL = 1
+    TEMP_TARGET = 2
+    TIMER = 3
+    AI_DIFFERENTIAL = 4
+    # Confirmed: the device reports atType=0 while powered off. Note the official app
+    # doesn't appear to set this directly (power is a separate "powerState" field/switch);
+    # it's simply what the device's own firmware reports back while off.
+    OFF = 0
+
+
+# modeAndSettingIdStr values the official app sends, confirmed via packet capture.
+# These differ from the AtType-based mapping used for UIS tent/AI controllers in
+# ACInfinityClient.update_ai_device_control_and_settings.
+#
+# The distinction is which FIELD is being changed, not simply whether atType itself is
+# changing - and it is NOT uniform across modes:
+#   - Changing power state specifically (the power switch): always
+#     ROOM_TO_ROOM_FAN_POWER_ACTION_ID_STR ("[22]"), confirmed via capture for both
+#     powering off and powering back on, independent of atType.
+#   - Changing a mode's own associated value while ALREADY in that mode (e.g. adjusting
+#     the AI differential value without leaving AI_DIFFERENTIAL): confirmed for
+#     AI_DIFFERENTIAL to use the SAME string as entering the mode ("[16,20]") - i.e. no
+#     steady/transition split for this mode.
+#   - Manual mode is the one confirmed EXCEPTION: entering Manual uses "[16]", but
+#     adjusting fan speed while already in Manual uses "[18]"
+#     (ROOM_TO_ROOM_FAN_MODE_MANUAL_STEADY_ID_STR) - confirmed via capture of a fresh
+#     mode-transition immediately followed by a fan-speed-only change.
+#   - TEMP_TARGET/TIMER's steady-state behavior (adjusting their own value without
+#     leaving the mode) is unconfirmed; assumed to follow AI_DIFFERENTIAL's no-split
+#     pattern rather than Manual's, pending further evidence.
+ROOM_TO_ROOM_FAN_MODE_ID_STR = {
+    RoomToRoomFanMode.MANUAL: "[16]",
+    RoomToRoomFanMode.TEMP_TARGET: "[16,19]",
+    RoomToRoomFanMode.TIMER: "[16,21]",
+    RoomToRoomFanMode.AI_DIFFERENTIAL: "[16,20]",
+    # Best-effort for the OFF state - not confirmed as the "correct" idStr for it
+    # specifically, but lets writes to other controls succeed while off rather than
+    # failing outright.
+    RoomToRoomFanMode.OFF: "[22]",
+}
+
+# Confirmed via capture: used whenever the request is specifically changing powerState,
+# regardless of atType (observed identically for both powering off and powering back on).
+# Direction (which room air moves toward) is written on its own with this idStr.
+ROOM_TO_ROOM_FAN_DIRECTION_ID_STR = "[17]"
+ROOM_TO_ROOM_FAN_POWER_ACTION_ID_STR = "[22]"
+
+# Confirmed via capture: used instead of ROOM_TO_ROOM_FAN_MODE_ID_STR[MANUAL] ("[16]")
+# specifically when adjusting fan speed (or any other value) while ALREADY in Manual mode,
+# as opposed to just having transitioned into it.
+ROOM_TO_ROOM_FAN_MODE_MANUAL_STEADY_ID_STR = "[18]"
+
+# Kept for any external references; prefer ROOM_TO_ROOM_FAN_MODE_ID_STR above.
+ROOM_TO_ROOM_FAN_MODE_SETTING_ID_STR = ROOM_TO_ROOM_FAN_MODE_ID_STR
+
+
+class RoomToRoomFanExtraKeys:
+    """Additional modeAndSetting payload fields required specifically by room-to-room/
+    through-wall fans (e.g. AC-TWT6) that are not part of the general ModeAndSettingKeys
+    set used by UIS/AI controllers. The device's firmware appears to reject the request
+    (generic "Operation failed" / code 999999) if these are omitted. Confirmed present
+    in every official-app request via packet capture.
+    """
+
+    DEVICE_COLOR = "deviceColor"
+    H_OSC = "hOsc"
+    V_OSC = "vOsc"
+    INSIDE_PORT = "insidePort"
+    OUTSIDE_PORT = "outsidePort"
+    INSIDE_TYPE = "insideType"
+    OUTSIDE_TYPE = "outsideType"
+    IS_ADV_TEMP_TRIGGER = "isAdvTempTrigger"
+    LK_TYPE = "lkType"
+    STANDARD_MODE = "standardMode"
+
+
+# Panel/display settings (backlight, keytone/keypress sound, brightness) use a
+# fundamentally DIFFERENT, much smaller modeAndSetting payload than mode/fan-speed/power
+# changes - confirmed via packet capture of a live keytoneSwitch toggle. It is built from
+# the device's own "devSetting" object (from getdevModeSettingList) rather than the full
+# ~172-field payload, plus a handful of identity fields, and uses its own fixed idStr.
+ROOM_TO_ROOM_FAN_DISPLAY_SETTING_ID_STR = "[32,33,37]"
+
+# Exact field set confirmed via capture for a display-setting (keytoneSwitch) write.
+ROOM_TO_ROOM_FAN_DISPLAY_SETTING_KEYS = frozenset({
+    "atType", "backlightSwitch", "devBh", "devBt", "devBth", "devBvpd", "devCh",
+    "devCompany", "devCsm1", "devCt", "devCt2", "devCth", "devCth2", "devId", "devLight",
+    "devName", "devTh", "devTt", "devTth", "deviceColor", "deviceLanguage", "ecOrTds",
+    "ecUnit", "externalPort", "hOsc", "hasBacklightSwitch", "hasKeytoneSwitch",
+    "humiCompare", "insideRoomName", "interchangeSensor", "isFlag", "isLeafBulitIn",
+    "isLeafSensor1", "isLeafSensor2", "isOnMinMaxTime", "isOpenDoseTime", "isShare",
+    "keytoneSwitch", "leafTempOutside", "loadType", "matterSta", "offDoseTime",
+    "offSpead", "onDoseTime", "onMaxTime", "onMinTime", "onSelfSpead", "onSpead",
+    "onTime", "onTimeSwitch", "otaUpdating", "outsideRoomName", "photocellSwitch",
+    "port", "powerState", "secFucDevEffect", "secFucDevtype", "secFucParamNums",
+    "secFucStatus", "sensorDisplay", "sensorFlag", "sensorOneType", "sensorPort",
+    "sensorTwoType", "sensorType", "settingMode", "subDeviceId", "subDeviceType",
+    "supportOta", "targetVpdSwitch", "tdsUnit", "tempCompare", "toward", "uuid",
+    "uuidType", "vOsc", "vpdCt", "vpdCth", "vpdSettingMode", "vpdTransition",
+    "zoneSensorType",
+})
+
+# The fields our own entities ever write that should route through the display-setting
+# path above rather than the general mode/control path.
+ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS = frozenset({"backlightSwitch", "keytoneSwitch", "devLight"})
 
 
 class SensorPropertyKey:
@@ -565,3 +699,14 @@ class ModeAndSettingKeys:
 SCHEDULE_DISABLED_VALUE = 65535  # Disabled
 SCHEDULE_MIDNIGHT_VALUE = 0  # 12:00am, default for start time
 SCHEDULE_EOD_VALUE = 1439  # 11:59pm, default for end time
+
+
+# Fields present in the shared ModeAndSettingKeys that the official app does NOT send
+# when writing room-to-room fan mode/power/value changes.
+ROOM_TO_ROOM_FAN_UNSENT_KEYS = frozenset({
+    "portParamData",
+    "secFucParams",
+    "sensorSettingStr",
+    "sensorTransBuffStr",
+    "subDeviceVersion",
+})

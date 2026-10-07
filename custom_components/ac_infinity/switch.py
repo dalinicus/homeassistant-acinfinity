@@ -19,6 +19,8 @@ from custom_components.ac_infinity.const import (
     SCHEDULE_MIDNIGHT_VALUE,
     AdvancedSettingsKey,
     DeviceControlKey,
+    MdiIcon,
+    RoomToRoomFanMode,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityDeviceCoordinator,
@@ -64,14 +66,23 @@ class ACInfinityDeviceSwitchEntityDescription(
 
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.service.get_device_setting_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic UIS controllers (tent controllers), not room-to-room fans or AI controllers"""
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and entity.service.get_device_setting_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.service.get_device_control_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic/AI UIS controllers only; room-to-room fans use their own dedicated entities."""
+    return (
+        not device.controller.is_room_to_room_fan
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
@@ -87,6 +98,17 @@ def __suitable_fn_device_control_ai_only(entity: ACInfinityEntity, device: ACInf
 def __get_value_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
     return entity.service.get_device_control(
         device.controller.controller_id, device.device_port, entity.data_key, 0
+    )
+
+
+def __suitable_fn_room_to_room_fan_control(entity: ACInfinityEntity, device: ACInfinityDevice):
+    """Room-to-room fans expose their controls at device port 0 (controller level)"""
+    return (
+        device.controller.is_room_to_room_fan
+        and device.device_port == 0
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
@@ -410,7 +432,66 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSwitchEntityDescription] = [
         get_value_fn=__get_value_fn_device_setting_default,
         set_value_fn=__set_value_fn_device_setting_default,
         at_type_fn=lambda at_type: True
-    )
+    ),
+    # Room-to-room fan controls (AC-TWT6, devType 33). Field mapping confirmed via
+    # packet capture of the official app against a live unit. Note: this device has no
+    # separate "trigger enabled" toggles for its modes - switching modes is handled
+    # entirely by the mode select entity (see select.py room_to_room_mode).
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.POWER_STATE,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,
+        translation_key="room_to_room_power",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: True
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
+        key=AdvancedSettingsKey.BACKLIGHT_SWITCH,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,
+        translation_key="room_to_room_backlight",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: True
+    ),
+    ACInfinityDeviceSwitchEntityDescription(
+        key=AdvancedSettingsKey.KEYTONE_SWITCH,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=None,
+        translation_key="room_to_room_keytone",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: True
+    ),
+    # Direction: which room the fan is pulling air from/into (Room 1 <-> Room 2).
+    # Confirmed disabled by the official app while AI Differential mode is active,
+    # since that mode manages direction automatically based on the temp differential.
+    ACInfinityDeviceSwitchEntityDescription(
+        key=DeviceControlKey.TOWARD,
+        device_class=SwitchDeviceClass.SWITCH,
+        on_value=1,
+        off_value=0,
+        icon=MdiIcon.SINE_WAVE,
+        translation_key="room_to_room_direction",
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type != RoomToRoomFanMode.AI_DIFFERENTIAL
+    ),
 ]
 
 

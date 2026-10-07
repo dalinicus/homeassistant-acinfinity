@@ -95,7 +95,34 @@ def __suitable_fn_controller_property_default(
     # These values are available in the sensor array.  The external values are duplicated on the base fields used by
     # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
     # by skipping the controller descriptions for the base values.
-    return not controller.is_ai_controller and entity.service.get_controller_property_exists(
+    #
+    # Room-to-room fans (e.g. AC-TWT6) don't report humidity/VPD at all; their only
+    # environmental readings are the dedicated insideTemp/outsideTemp zone sensors.
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and entity.service.get_controller_property_exists(
+            controller.controller_id, entity.data_key
+        )
+    )
+
+
+def __suitable_fn_controller_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    # Standalone room-to-room/through-wall fans (e.g. AC-TWT6) populate the top-level
+    # "temperature" field with a stale/unused value that doesn't match either zone's
+    # actual reading. Their real temperatures live in insideTemp/outsideTemp instead,
+    # exposed via the dedicated descriptions below.
+    if controller.is_room_to_room_fan:
+        return False
+    return __suitable_fn_controller_property_default(entity, controller)
+
+
+def __suitable_fn_room_to_room_zone_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return controller.is_room_to_room_fan and entity.service.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
@@ -246,7 +273,31 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="temperature",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.INSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="inside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.OUTSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="outside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -528,7 +579,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
         icon=None,  # default
         translation_key="next_state_change",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=lambda x, y: True,
+        suitable_fn=lambda entity, device: not device.controller.is_room_to_room_fan,
         get_value_fn=__get_next_mode_change_timestamp,
     ),
 ]

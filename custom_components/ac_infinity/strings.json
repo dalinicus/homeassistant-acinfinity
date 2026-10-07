@@ -209,6 +209,18 @@
       },
       "sunrise_timer_minutes": {
         "name": "Sunrise/Sunset Minutes"
+      },
+      "room_to_room_fan_speed": {
+        "name": "Fan Speed"
+      },
+      "room_to_room_target_temp": {
+        "name": "Temperature Target"
+      },
+      "room_to_room_ai_differential": {
+        "name": "AI Temperature Differential"
+      },
+      "room_to_room_timer_duration": {
+        "name": "Timer Duration"
       }
     },
     "select": {
@@ -232,6 +244,9 @@
       },
       "vpd_settings_mode": {
         "name": "VPD Settings Mode"
+      },
+      "room_to_room_mode": {
+        "name": "Fan Mode"
       }
     },
     "sensor": {
@@ -291,6 +306,12 @@
       },
       "next_state_change": {
         "name": "Next State Change"
+      },
+      "inside_temperature": {
+        "name": "Inside Temperature"
+      },
+      "outside_temperature": {
+        "name": "Outside Temperature"
       }
     },
     "switch": {
@@ -329,6 +350,18 @@
       },
       "sunrise_timer_enabled": {
         "name": "Sunrise/Sunset Enabled"
+      },
+      "room_to_room_power": {
+        "name": "Power"
+      },
+      "room_to_room_backlight": {
+        "name": "Display Backlight"
+      },
+      "room_to_room_direction": {
+        "name": "Direction"
+      },
+      "room_to_room_keytone": {
+        "name": "Keypress Sound"
       },
       "photocell_enabled": {
         "name": "Photocell Enabled"

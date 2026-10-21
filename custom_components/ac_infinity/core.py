@@ -677,13 +677,18 @@ class ACInfinityService:
                 # them. Synthesize the port 0 device properties here; _device_properties gates entity
                 # availability via the ONLINE property check, so without it every control is greyed out.
                 if controller_properties_json.get(ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES:
-                    self.data.device_properties[(controller_id, 0)] = {
-                        DevicePropertyKey.PORT: 0,
-                        DevicePropertyKey.ONLINE: controller_properties_json[ControllerPropertyKey.ONLINE],
-                        DevicePropertyKey.STATE: 0,
-                        DevicePropertyKey.SPEAK: 0,
-                        DevicePropertyKey.REMAINING_TIME: 0,
-                    }
+                    # State/speed/remaining time for this device come from its mode settings (see
+                    # refresh_device_settings), so keep whatever that last stored and only update ONLINE.
+                    synthetic_properties = self.data.device_properties.setdefault(
+                        (controller_id, 0),
+                        {
+                            DevicePropertyKey.PORT: 0,
+                            DevicePropertyKey.STATE: 0,
+                            DevicePropertyKey.SPEAK: 0,
+                            DevicePropertyKey.REMAINING_TIME: 0,
+                        },
+                    )
+                    synthetic_properties[DevicePropertyKey.ONLINE] = controller_properties_json[ControllerPropertyKey.ONLINE]
 
                 # controller AI will have a sensor array.
                 if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
@@ -726,6 +731,25 @@ class ACInfinityService:
             )
             self.data.device_controls[(controller_id, port_index)] = result
             self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+
+            # Room-to-room fans have no ports; their on/off state, current speed and timer countdown only
+            # exist in the mode settings, so mirror them into the synthetic port 0 device properties.
+            if (
+                port_index == 0
+                and self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
+            ):
+                dev_setting = result.get(DeviceControlKey.DEV_SETTING) or {}
+
+                def _value(key: str, default: int = 0) -> int:
+                    value = result.get(key)
+                    if value is None:
+                        value = dev_setting.get(key)
+                    return default if value is None else value
+
+                properties = self.data.device_properties.setdefault((controller_id, 0), {DevicePropertyKey.PORT: 0})
+                properties[DevicePropertyKey.STATE] = _value(DeviceControlKey.POWER_STATE)
+                properties[DevicePropertyKey.SPEAK] = _value(DevicePropertyKey.SPEAK)
+                properties[DevicePropertyKey.REMAINING_TIME] = _value(DeviceControlKey.SURPLUS)
 
         async with self._update_lock:
             results = await asyncio.gather(

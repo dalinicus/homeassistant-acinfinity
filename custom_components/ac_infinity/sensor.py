@@ -226,6 +226,14 @@ def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACIn
     )
 
 
+def __suitable_fn_device_property_not_room_to_room(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return not device.controller.is_room_to_room_fan and __suitable_fn_device_property_default(entity, device)
+
+
+def __suitable_fn_device_property_room_to_room(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return device.controller.is_room_to_room_fan and __suitable_fn_device_property_default(entity, device)
+
+
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ):
@@ -555,7 +563,21 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
         icon=None,  # default
         translation_key="current_power",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_device_property_default,
+        suitable_fn=__suitable_fn_device_property_not_room_to_room,
+        get_value_fn=__get_value_fn_device_property_default,
+    ),
+    # Room-to-room fans report the speed the fan is actually running at (0-10, bounded by the
+    # configured max fan speed) in the same field UIS ports use for current power.
+    ACInfinityDeviceSensorEntityDescription(
+        key=DevicePropertyKey.SPEAK,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        suggested_unit_of_measurement=None,
+        icon=MdiIcon.KNOB,
+        translation_key="current_fan_speed",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_device_property_room_to_room,
         get_value_fn=__get_value_fn_device_property_default,
     ),
     ACInfinityDeviceSensorEntityDescription(

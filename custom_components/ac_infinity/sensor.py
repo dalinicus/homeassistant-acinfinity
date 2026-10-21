@@ -45,7 +45,9 @@ from .const import (
     ISSUE_URL,
     ControllerPropertyKey,
     CustomDevicePropertyKey,
+    DeviceControlKey,
     DevicePropertyKey,
+    RoomToRoomFanMode,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType, ControllerType,
@@ -260,6 +262,16 @@ def __get_next_mode_change_timestamp(
     remaining_seconds = entity.service.get_device_property(
         device.controller.controller_id, device.device_port, DevicePropertyKey.REMAINING_TIME, 0
     )
+
+    # a room-to-room fan only counts down to a state change while its Timer mode is active
+    if (
+        device.controller.is_room_to_room_fan
+        and entity.service.get_device_control(
+            device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 0
+        )
+        != RoomToRoomFanMode.TIMER
+    ):
+        return None
 
     timezone = entity.service.get_controller_property(
         device.controller.controller_id, ControllerPropertyKey.TIME_ZONE
@@ -601,7 +613,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
         icon=None,  # default
         translation_key="next_state_change",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=lambda entity, device: not device.controller.is_room_to_room_fan,
+        suitable_fn=lambda entity, device: True,
         get_value_fn=__get_next_mode_change_timestamp,
     ),
 ]

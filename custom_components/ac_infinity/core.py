@@ -747,8 +747,9 @@ class ACInfinityService:
                     return default if value is None else value
 
                 properties = self.data.device_properties.setdefault((controller_id, 0), {DevicePropertyKey.PORT: 0})
-                properties[DevicePropertyKey.STATE] = _value(DeviceControlKey.POWER_STATE)
                 properties[DevicePropertyKey.SPEAK] = _value(DevicePropertyKey.SPEAK)
+                # State reflects whether the fan is actually moving, not just powered on (idle in AI/Temp modes)
+                properties[DevicePropertyKey.STATE] = 1 if _value(DeviceControlKey.POWER_STATE) and properties[DevicePropertyKey.SPEAK] > 0 else 0
                 properties[DevicePropertyKey.REMAINING_TIME] = _value(DeviceControlKey.SURPLUS)
 
         async with self._update_lock:

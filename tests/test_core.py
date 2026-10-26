@@ -49,6 +49,7 @@ from .data_models import (
     DEVICE_INFO_LIST_ALL,
     DEVICE_NAME,
     DEVICE_SETTINGS_DATA,
+    DEVICE_SETTINGS,
     GET_DEV_MODE_SETTING_LIST_PAYLOAD,
     MAC_ADDR,
     DEVICE_CONTROLS_DATA,
@@ -1525,6 +1526,7 @@ class TestRefreshDeviceSettings:
     async def test_refresh_device_settings_explicit_ports_updates_data(self, mock_client):
         """explicitly requested ports should be refreshed and cached"""
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         await service.refresh_device_settings(str(DEVICE_ID), [1, 2])
@@ -1532,17 +1534,18 @@ class TestRefreshDeviceSettings:
         assert mock_client.get_device_mode_settings.call_count == 2
         mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 1)
         mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 2)
+        assert mock_client.get_device_settings.call_count == 2
+        mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), 1)
+        mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), 2)
         assert service.data.device_controls[(str(DEVICE_ID), 1)] == DEVICE_CONTROLS
-        assert (
-            service.data.device_settings[(str(DEVICE_ID), 2)]
-            == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
-        )
+        assert service.data.device_settings[(str(DEVICE_ID), 2)] == DEVICE_SETTINGS
 
     async def test_refresh_device_settings_falls_back_to_all_ports_when_none_given(
         self, mock_client
     ):
         """an empty port list should fall back to every port on the controller, including port 0"""
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
@@ -1551,8 +1554,10 @@ class TestRefreshDeviceSettings:
 
         # DEVICE_ID has devPortCount = 4, so ports 0 (controller) through 4 should be refreshed
         assert mock_client.get_device_mode_settings.call_count == 5
+        assert mock_client.get_device_settings.call_count == 5
         for port in range(5):
             mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), port)
+            mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), port)
 
     async def test_refresh_device_settings_continues_after_one_port_fails(
         self, mocker: MockFixture, mock_client
@@ -1568,6 +1573,7 @@ class TestRefreshDeviceSettings:
             return DEVICE_CONTROLS
 
         mock_client.get_device_mode_settings.side_effect = side_effect
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         await service.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
@@ -1575,3 +1581,22 @@ class TestRefreshDeviceSettings:
         assert (str(DEVICE_ID), 1) in service.data.device_controls
         assert (str(DEVICE_ID), 3) in service.data.device_controls
         assert (str(DEVICE_ID), 2) not in service.data.device_controls
+        assert service.data.device_settings[(str(DEVICE_ID), 1)] == DEVICE_SETTINGS
+        assert (str(DEVICE_ID), 2) not in service.data.device_settings
+
+    async def test_refresh_device_settings_ai_controller_reads_from_mode_endpoint(
+        self, mock_client
+    ):
+        """AI controllers have no advanced settings endpoint, so settings come from the mode response"""
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        service = ACInfinityService(mock_client, ACInfinityData())
+        service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+
+        await service.refresh_device_settings(str(AI_DEVICE_ID), [1])
+
+        mock_client.get_device_settings.assert_not_called()
+        assert (
+            service.data.device_settings[(str(AI_DEVICE_ID), 1)]
+            == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
+        )

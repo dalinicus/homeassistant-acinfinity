@@ -160,7 +160,7 @@ class TestSensors:
         assert isinstance(entity, ACInfinityControllerSensorEntity)
         assert entity.unique_id == f"{DOMAIN}_{MAC_ADDR}_{ControllerPropertyKey.VPD}"
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert entity.entity_description.suggested_unit_of_measurement is None
+        assert entity.entity_description.suggested_unit_of_measurement is UnitOfPressure.KPA
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
@@ -446,7 +446,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{CONTROLLER_ACCESS_PORT}_{SensorReferenceKey.CONTROLLER_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert entity.entity_description.suggested_unit_of_measurement is None
+        assert entity.entity_description.suggested_unit_of_measurement is UnitOfPressure.KPA
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )
@@ -656,7 +656,7 @@ class TestSensors:
             == f"{DOMAIN}_{AI_MAC_ADDR}_sensor_{PROBE_ACCESS_PORT}_{SensorReferenceKey.PROBE_VPD}"
         )
         assert entity.entity_description.device_class == SensorDeviceClass.PRESSURE
-        assert entity.entity_description.suggested_unit_of_measurement is None
+        assert entity.entity_description.suggested_unit_of_measurement is UnitOfPressure.KPA
         assert (
             entity.entity_description.native_unit_of_measurement == UnitOfPressure.KPA
         )

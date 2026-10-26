@@ -1116,7 +1116,8 @@ class ACInfinitySensorEntity(ACInfinityEntity):
         if device_info is not self._sensor.controller.device_info:
             via_device_id = self._resolve_via_device_id(self._sensor.controller.identifier)
             if via_device_id is not None:
-                device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+                device_info = DeviceInfo(**device_info)
+                device_info["via_device_id"] = via_device_id
         return device_info
 
     @property
@@ -1160,7 +1161,8 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
         device_info = self._device.device_info
         via_device_id = self._resolve_via_device_id(self._device.controller.identifier)
         if via_device_id is not None:
-            device_info = DeviceInfo({**device_info, "via_device_id": via_device_id})
+            device_info = DeviceInfo(**device_info)
+            device_info["via_device_id"] = via_device_id
         return device_info
 
     @property

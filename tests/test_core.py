@@ -1570,7 +1570,30 @@ class TestRefreshDeviceSettings:
         mock_client.get_device_mode_settings.side_effect = side_effect
 
         service = ACInfinityService(mock_client, ACInfinityData())
+        service.data.device_controls[(str(DEVICE_ID), 2)] = DEVICE_CONTROLS
         await service.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
+
+        assert (str(DEVICE_ID), 1) in service.data.device_controls
+        assert (str(DEVICE_ID), 3) in service.data.device_controls
+
+    async def test_refresh_device_settings_raises_when_uncached_port_fails(
+        self, mocker: MockFixture, mock_client
+    ):
+        """a port that fails before it has ever been retrieved should fail the refresh, after the others are cached"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+        mocker.patch("asyncio.sleep", return_value=future)
+
+        async def side_effect(controller_id, port_index):
+            if port_index == 2:
+                raise ACInfinityClientRequestFailed("unit-test")
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = side_effect
+
+        service = ACInfinityService(mock_client, ACInfinityData())
+        with pytest.raises(ACInfinityClientRequestFailed):
+            await service.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
 
         assert (str(DEVICE_ID), 1) in service.data.device_controls
         assert (str(DEVICE_ID), 3) in service.data.device_controls

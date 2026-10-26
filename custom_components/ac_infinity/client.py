@@ -87,6 +87,25 @@ class ACInfinityClient:
         )
         return body["data"]
 
+    async def get_device_settings(self, controller_id: str | int, device_port: int):
+        """Obtains the advanced settings for a particular port on a controller, which includes
+        information like the load type, device name, speed limits, and transition/buffer values.
+
+        The mode settings endpoint returns the same keys but leaves some of them (notably
+        loadType) at their default of 0, so settings must be read from this endpoint instead.
+
+        Args:
+            controller_id: The parent controller id of the port
+            device_port: The port on the controller of the settings to grab
+        """
+        self.__ensure_logged_in()
+
+        headers = self.__create_headers(use_auth_token=True)
+        body = await self.__post(
+            API_URL_GET_DEV_SETTING, {"devId": controller_id, "port": device_port}, headers
+        )
+        return body["data"]
+
     @staticmethod
     def __transfer_values(device_control_keys: list[str], new_values: dict, existing_values: dict):
         updated: dict[str, str | int | bool] = {}

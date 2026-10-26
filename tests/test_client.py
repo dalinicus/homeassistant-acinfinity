@@ -317,6 +317,37 @@ class TestACInfinityClient:
         with pytest.raises(ACInfinityClientCannotConnect):
             await client.get_device_mode_settings(DEVICE_ID, 0)
 
+    @pytest.mark.parametrize("port", [0, 1, 2, 3, 4])
+    async def test_get_device_advanced_settings_returns_settings(self, port: int):
+        """When logged in, get device settings should return the port's advanced settings"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                mocked.post(
+                    re.compile(rf"{HOST}{API_URL_GET_DEV_SETTING}.*"),
+                    status=200,
+                    payload=GET_DEV_SETTINGS_PAYLOAD,
+                )
+
+                result = await client.get_device_settings(DEVICE_ID, port)
+
+                assert result is not None
+                assert result[AdvancedSettingsKey.DEVICE_LOAD_TYPE] == 8
+
+                gen = (request for request in mocked.requests.values())
+                found = next(gen)
+
+                assert found[0].kwargs["data"]["port"] == port
+        finally:
+            await client.close()
+
+    async def test_get_device_advanced_settings_connect_error_on_not_logged_in(self):
+        """When not logged in, get device settings should throw a connect error"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        with pytest.raises(ACInfinityClientCannotConnect):
+            await client.get_device_settings(DEVICE_ID, 0)
+
     @staticmethod
     async def __make_generic_update_advanced_settings_call_and_get_sent_payload(
         dev_settings_payload=GET_DEV_SETTINGS_PAYLOAD,

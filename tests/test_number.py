@@ -2,6 +2,7 @@ import asyncio
 from asyncio import Future
 
 import pytest
+from homeassistant.const import UnitOfTemperature
 from homeassistant.components.number import NumberDeviceClass
 from pytest_mock import MockFixture
 
@@ -1036,6 +1037,53 @@ class TestNumbers:
             entity._device, {setting: c, f_setting: f}
         )
         test_objects.refresh_mock.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F),
+            (DeviceControlKey.AUTO_TEMP_LOW_TRIGGER, DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
+        ],
+    )
+    async def test_temp_trigger_fahrenheit_controller_reads_f_key(self, setup, setting, f_setting):
+        """A Fahrenheit controller exposes the F field natively, so 88°F reads as 88°F (not 0°C / 32°F)"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, setting)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = {
+            **test_objects.service.data.device_settings[(str(DEVICE_ID), 0)],
+            AdvancedSettingsKey.TEMP_UNIT: 0,
+        }
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][setting] = 0
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][f_setting] = 88
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.native_value == 88
+        assert entity.native_unit_of_measurement == UnitOfTemperature.FAHRENHEIT
+        assert entity.native_min_value == 32
+        assert entity.native_max_value == 194
+
+    @pytest.mark.parametrize("f,c", [(78, 26), (77, 25), (32, 0), (194, 90)])
+    @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
+        ],
+    )
+    async def test_temp_trigger_fahrenheit_controller_writes_exact_f(self, setup, setting, f_setting, f, c):
+        """Whole °F setpoints round-trip exactly on a Fahrenheit controller"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, setting)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = {
+            **test_objects.service.data.device_settings[(str(DEVICE_ID), 0)],
+            AdvancedSettingsKey.TEMP_UNIT: 0,
+        }
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        await entity.async_set_native_value(f)
+
+        test_objects.port_control_sets_mock.assert_called_with(entity._device, {setting: c, f_setting: f})
 
     @pytest.mark.parametrize(
         "setting",

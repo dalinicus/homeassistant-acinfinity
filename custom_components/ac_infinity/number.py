@@ -455,45 +455,38 @@ def __set_value_fn_vpd_setting(
     return entity.service.update_device_setting(device, entity.data_key, int((value or 0) * 10))
 
 
-def __set_value_fn_temp_auto_low(
+# Auto mode temperature triggers are stored twice by the API, once per unit.  The entity's native unit follows
+# the controller's unit so whole-degree setpoints round-trip exactly (78°F must not snap through whole °C).
+FAHRENHEIT_KEYS = {
+    DeviceControlKey.AUTO_TEMP_LOW_TRIGGER: DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
+    DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
+    DeviceControlKey.TARGET_TEMP: DeviceControlKey.TARGET_TEMP_F,
+}
+
+
+def controller_uses_fahrenheit(entity: ACInfinityEntity, device: ACInfinityDevice) -> bool:
+    # same polarity as the calibration / dynamic response entities: devCompany > 0 means Celsius
+    return entity.service.get_controller_setting(device.controller.controller_id, AdvancedSettingsKey.TEMP_UNIT, 0) == 0
+
+
+def __get_value_fn_auto_temp(entity: ACInfinityEntity, device: ACInfinityDevice):
+    key = FAHRENHEIT_KEYS[entity.data_key] if controller_uses_fahrenheit(entity, device) else entity.data_key
+    return entity.service.get_device_control(device.controller.controller_id, device.device_port, key, 0)
+
+
+def __set_value_fn_auto_temp(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
+    # value is received from HA in the entity's native unit; both units must be written
+    if controller_uses_fahrenheit(entity, device):
+        fahrenheit = int(round(value or 0))
+        celsius = int(round((fahrenheit - 32) / 1.8))
+    else:
+        celsius = int(round(value or 0))
+        fahrenheit = int(round((celsius * 1.8) + 32))
+
     return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.AUTO_TEMP_LOW_TRIGGER: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
-        },
-    )
-
-
-def __set_value_fn_temp_auto_high(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
-):
-    return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
-        },
-    )
-
-
-def __set_value_fn_target_temp(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
-):
-    return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.TARGET_TEMP: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.TARGET_TEMP_F: int(round((value * 1.8) + 32, 0)),
-        },
+        device, {entity.data_key: celsius, FAHRENHEIT_KEYS[entity.data_key]: fahrenheit}
     )
 
 
@@ -1065,8 +1058,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="auto_mode_temp_low_trigger",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_temp_auto_low,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1081,8 +1074,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="auto_mode_temp_high_trigger",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_temp_auto_high,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1097,8 +1090,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="target_temp",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_target_temp,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1377,6 +1370,24 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         return self.entity_description.get_value_fn(self, self.device_port)
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return UnitOfTemperature.FAHRENHEIT
+        return super().native_unit_of_measurement
+
+    @property
+    def native_min_value(self) -> float:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return 32
+        return super().native_min_value
+
+    @property
+    def native_max_value(self) -> float:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return 194
+        return super().native_max_value
 
     async def async_set_native_value(self, value: float) -> None:
         _LOGGER.info(

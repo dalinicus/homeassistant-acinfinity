@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+from homeassistant.components.switch.const import SwitchDeviceClass
 from homeassistant.components.switch import (
-    SwitchDeviceClass,
     SwitchEntity,
     SwitchEntityDescription,
 )

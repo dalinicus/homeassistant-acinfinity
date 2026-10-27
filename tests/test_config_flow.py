@@ -3,7 +3,7 @@ from types import MappingProxyType
 from unittest.mock import ANY
 
 import pytest
-import voluptuous as vol
+import probatio as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD

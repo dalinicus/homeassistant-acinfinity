@@ -3,5 +3,5 @@
     "render_readme": true,
     "zip_release": true,
     "filename": "ac_infinity.zip",
-    "homeassistant": "2026.8.3"
+    "homeassistant": "2026.10.4"
 }

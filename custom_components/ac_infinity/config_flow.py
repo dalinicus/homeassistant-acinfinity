@@ -6,12 +6,12 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-import voluptuous as vol
+import probatio as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
-from voluptuous import Required
+from probatio import Required
 
 from custom_components.ac_infinity.client import (
     ACInfinityClient,

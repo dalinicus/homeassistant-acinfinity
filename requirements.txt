@@ -1,6 +1,6 @@
-homeassistant==2026.8.3
+homeassistant==2026.10.4
 aiohttp
-voluptuous
+probatio
 DateTime
 async-timeout
 pytest

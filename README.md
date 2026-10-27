@@ -13,6 +13,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Configuration](#configuration)
   - [General Configuration](#general-configuration)
   - [Enable / Disable Entities](#enable--disable-entities)
+  - [Remove Unwanted Entities](#remove-unwanted-entities)
 - [Fan Entities](#fan-entities)
 - [Diagnostics](#diagnostics)
 
@@ -64,6 +65,7 @@ The following configurations can be modified via the configuration options dialo
 ## General Configuration
 - `Polling Interval (Seconds)`: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
 - `Update Password`: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
+- `Number Display Type`: Show every number entity (power levels, triggers, durations, ...) as a `Box` you type a value into, as a `Slider`, or leave it `Automatic`.
 
 ## Enable / Disable Entities
 
@@ -78,7 +80,16 @@ You can enable or disable these entities as needed.  The following options are a
 
 New controllers added to the AC Infinity app will be added with `Sensors Only` by default during the next home assistant restart.
 
-Entities disabled after initial setup will no longer be provided by this integration, but will not be automatically removed from home assistant.  They can be cleaned up manually via `https://<your-ha-instance>/config/entities`.
+Entities disabled after initial setup are removed from Home Assistant the next time the integration loads.  Port and sensor devices left without any entities are removed too, and any stale device can be deleted from its device page.
+
+## Remove Unwanted Entities
+
+Shown at the end of initial setup, and available any time from the integration's `Configure` menu.  These filters apply to every controller and port at once:
+
+- `Remove entities for modes`: removes every entity that only applies to the selected modes.  For example, selecting `Schedule`, `Cycle` and `VPD` removes all schedule times, cycle durations and VPD triggers on every port.  Entities used in every mode (current power, active mode, on/off power, ...) are never removed by this, and the modes themselves can still be selected.
+- `Remove entity types`: removes the selected entities on every device, e.g. every `Cycle Duration On`.
+
+Saving reloads the integration and deletes the excluded entities from Home Assistant; no restart is needed.  Clear a selection to bring those entities back.
 
 # Fan Entities
 

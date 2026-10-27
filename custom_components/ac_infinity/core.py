@@ -413,6 +413,12 @@ class ACInfinityService:
         self.client = client
         self.data = data
         self._update_lock = asyncio.Lock()
+        self._controller_locks: dict[str, asyncio.Lock] = {}
+
+    def _controller_lock(self, controller_id: str | int) -> asyncio.Lock:
+        """Serializes reads and writes for one controller, so a refresh never races a write's optimistic cache
+        update.  Each controller has its own lock so accounts with many controllers refresh them in parallel."""
+        return self._controller_locks.setdefault(str(controller_id), asyncio.Lock())
 
     def get_device_ids(self) -> list[str]:
         """
@@ -822,7 +828,7 @@ class ACInfinityService:
                 properties[DevicePropertyKey.STATE] = 1 if _value(DeviceControlKey.POWER_STATE) and properties[DevicePropertyKey.SPEAK] > 0 else 0
                 properties[DevicePropertyKey.REMAINING_TIME] = _value(DeviceControlKey.SURPLUS)
 
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             results = await asyncio.gather(
                 *(_refresh_port(port_index) for port_index in port_indexes),
                 return_exceptions=True,
@@ -964,7 +970,7 @@ class ACInfinityService:
             device_port: the index of the port on the controller
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_device_controls(controller_id, device_port, key_values),
                 "update device controls",
@@ -985,7 +991,7 @@ class ACInfinityService:
             device_port: 0 for controller settings, or the port number for port settings
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_device_settings(controller_id, device_port, device_name, key_values),
                 "update advanced controller settings",
@@ -1005,7 +1011,7 @@ class ACInfinityService:
             device_port: the index of the port on the controller
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_ai_device_control_and_settings(controller_id, device_port, key_values),
                 "update ai device controls and settings",
@@ -1044,7 +1050,7 @@ class ACInfinityService:
             device_port: the index of the port on the controller (always 0)
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_room_to_room_fan_control(controller_id, device_port, key_values),
                 "update room-to-room fan controls",
@@ -1072,7 +1078,7 @@ class ACInfinityService:
             outside_room_name: the "outside" zone's room name, as configured in the app
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_room_to_room_fan_display_setting(
                     controller_id, device_port, dev_name, inside_room_name, outside_room_name, key_values
@@ -1092,7 +1098,7 @@ class ACInfinityService:
             controller_id: the device id of the fan
             key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
         """
-        async with self._update_lock:
+        async with self._controller_lock(controller_id):
             await self._execute_with_retry(
                 lambda: self.client.update_airtap_controls(controller_id, key_values),
                 "update AIRTAP controls",

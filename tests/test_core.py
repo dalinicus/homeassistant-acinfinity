@@ -1640,3 +1640,34 @@ class TestRefreshDeviceSettings:
             service.data.device_settings[(str(AI_DEVICE_ID), 1)]
             == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
         )
+
+
+@pytest.mark.asyncio
+class TestControllerLocks:
+    async def test_controllers_refresh_in_parallel(self, mock_client):
+        """Each controller has its own lock, so a slow controller doesn't hold up the others"""
+        both_started = asyncio.Event()
+        started: set[str] = set()
+
+        async def get_device_mode_settings(controller_id, port_index):
+            started.add(controller_id)
+            if len(started) == 2:
+                both_started.set()
+            await asyncio.wait_for(both_started.wait(), timeout=1)
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = get_device_mode_settings
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
+        service = ACInfinityService(mock_client, ACInfinityData())
+
+        await asyncio.gather(
+            service.refresh_device_settings("controller-a", [1]),
+            service.refresh_device_settings("controller-b", [1]),
+        )
+
+        assert started == {"controller-a", "controller-b"}
+
+    async def test_same_controller_is_serialized(self, mock_client):
+        service = ACInfinityService(mock_client, ACInfinityData())
+        assert service._controller_lock("1") is service._controller_lock(1)
+        assert service._controller_lock("1") is not service._controller_lock("2")

@@ -192,7 +192,7 @@ class ACInfinityControllerBinarySensorEntity(
             description.enabled_fn,
             description.suitable_fn,
             description.key,
-            Platform.SENSOR,
+            Platform.BINARY_SENSOR,
             list_coordinator,
         )
         self.entity_description = description

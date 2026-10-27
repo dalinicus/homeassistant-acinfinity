@@ -36,15 +36,14 @@
         }
       },
       "entity_filters": {
-        "title": "Remove unwanted entities",
-        "description": "Removes whole kinds of entities from every controller and port. Anything excluded here is deleted from Home Assistant and stops being created. Change it any time from the integration's Configure menu.",
+        "title": "{controller}: entities to keep",
+        "description": "Tick the entities you want for {controller}; everything you leave unticked is removed from Home Assistant. Leave everything unticked to keep all entities. Tick \"Tick every entity\" and submit to tick them all, then untick the ones you don't want.",
         "data": {
-          "excluded_modes": "Remove entities for modes",
-          "excluded_entity_types": "Remove entity types"
+          "select_all_entity_types": "Tick every entity",
+          "included_entity_types": "Entities to keep"
         },
         "data_description": {
-          "excluded_modes": "Removes every entity that only applies to the selected modes, e.g. all Schedule or VPD triggers. The mode itself can still be selected.",
-          "excluded_entity_types": "Removes the selected entity on every device, e.g. every 'Cycle Duration On'."
+          "included_entity_types": "Applies to this controller and all of its ports and sensors."
         }
       }
     }
@@ -56,7 +55,7 @@
         "menu_options": {
           "general_config": "General Configuration",
           "controller_select": "Enable / Disable Entities",
-          "entity_filters": "Remove Unwanted Entities",
+          "entity_filters": "Choose Entities to Keep",
           "calibrate": "Calibrate Sensors"
         }
       },
@@ -104,15 +103,9 @@
         }
       },
       "entity_filters": {
-        "title": "Remove unwanted entities",
-        "description": "Removes whole kinds of entities from every controller and port. Anything excluded here is deleted from Home Assistant and stops being created. Change it any time from the integration's Configure menu.",
+        "title": "Choose entities",
         "data": {
-          "excluded_modes": "Remove entities for modes",
-          "excluded_entity_types": "Remove entity types"
-        },
-        "data_description": {
-          "excluded_modes": "Removes every entity that only applies to the selected modes, e.g. all Schedule or VPD triggers. The mode itself can still be selected.",
-          "excluded_entity_types": "Removes the selected entity on every device, e.g. every 'Cycle Duration On'."
+          "device_id": "Controller"
         }
       },
       "enable_entities": {
@@ -139,6 +132,17 @@
           "device_id": "Controller",
           "temperature_entity": "Reference temperature sensor",
           "humidity_entity": "Reference humidity sensor"
+        }
+      },
+      "controller_entity_filters": {
+        "title": "{controller}: entities to keep",
+        "description": "Tick the entities you want for {controller}; everything you leave unticked is removed from Home Assistant. Leave everything unticked to keep all entities. Tick \"Tick every entity\" and submit to tick them all, then untick the ones you don't want.",
+        "data": {
+          "select_all_entity_types": "Tick every entity",
+          "included_entity_types": "Entities to keep"
+        },
+        "data_description": {
+          "included_entity_types": "Applies to this controller and all of its ports and sensors."
         }
       }
     },

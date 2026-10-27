@@ -42,6 +42,9 @@ class ConfigurationKey:
     ENTITIES = "entities"
     MODIFIED_AT = "modified_at"
     EXCLUDED_ENTITY_TYPES = "excluded_entity_types"
+    ENTITY_FILTERS = "entity_filters"
+    INCLUDED_ENTITY_TYPES = "included_entity_types"
+    SELECT_ALL_ENTITY_TYPES = "select_all_entity_types"
     EXCLUDED_MODES = "excluded_modes"
     NUMBER_DISPLAY_TYPE = "number_display_type"
 

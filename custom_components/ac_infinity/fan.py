@@ -117,7 +117,7 @@ async def async_setup_entry(
     """Set up the AC Infinity Platform."""
     entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
 
-    entities = ACInfinityEntities(config, entry_data.excluded_unique_ids)
+    entities = ACInfinityEntities(config, entry_data)
     for controller in entry_data.service.get_all_controller_properties():
         device_coordinator = entry_data.device_coordinators[controller.controller_id]
         for device in controller.devices:

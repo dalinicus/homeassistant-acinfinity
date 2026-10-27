@@ -1619,6 +1619,42 @@ class TestEntityFilters:
         assert not is_excluded_by_filters(self._entry(excluded_entity_types=["sensor.on_power"]), entity)
         assert not is_excluded_by_filters(self._entry(), entity)
 
+    async def test_keep_list_is_per_controller(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        keep = {"included_entity_types": ["number.off_power"]}
+
+        # not in this controller's keep-list -> removed
+        assert is_excluded_by_filters(self._entry(entity_filters={str(DEVICE_ID): keep}), entity)
+        # kept when ticked
+        assert not is_excluded_by_filters(
+            self._entry(entity_filters={str(DEVICE_ID): {"included_entity_types": ["number.on_power"]}}), entity
+        )
+        # another controller's keep-list doesn't apply
+        assert not is_excluded_by_filters(self._entry(entity_filters={"other": keep}), entity)
+        # an empty keep-list keeps everything
+        assert not is_excluded_by_filters(
+            self._entry(entity_filters={str(DEVICE_ID): {"included_entity_types": []}}), entity
+        )
+
+    async def test_supported_types_are_recorded_even_when_not_kept(self, setup):
+        """the keep-list form must still offer types that are currently removed, so they can be ticked again"""
+        from custom_components.ac_infinity.const import DOMAIN as AC_DOMAIN
+        test_objects: ACTestObjects = setup
+        entry_data = test_objects.hass.data[AC_DOMAIN][test_objects.config_entry.entry_id]
+        object.__setattr__(test_objects.config_entry, "data", {
+            **test_objects.config_entry.data,
+            "entity_filters": {str(DEVICE_ID): {"included_entity_types": ["number.off_power"]}},
+        })
+
+        await async_setup_entry(test_objects.hass, test_objects.config_entry, test_objects.entities.add_entities_callback)
+
+        assert "number.on_power" in entry_data.available_entity_types[str(DEVICE_ID)]
+        assert not [
+            e for e in test_objects.entities.added_entities
+            if str(DEVICE_ID) == e.controller_id and e.translation_key == "on_power"
+        ]
+
     async def test_entity_type_keys_match_the_option_list(self, setup):
         """every entity the platform creates must be selectable in the filter option list"""
         from custom_components.ac_infinity.entity_filter import all_entity_types

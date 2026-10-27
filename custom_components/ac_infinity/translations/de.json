@@ -17,15 +17,14 @@
         }
       },
       "entity_filters": {
-        "title": "Unerwünschte Entitäten entfernen",
-        "description": "Entfernt ganze Entitätsarten von allen Controllern und Ports. Ausgeschlossene Entitäten werden aus Home Assistant gelöscht und nicht mehr erstellt.",
+        "title": "{controller}: Entitäten behalten",
+        "description": "Wähle die Entitäten, die du für {controller} behalten willst; alles nicht Angehakte wird aus Home Assistant entfernt. Nichts anhaken behält alle Entitäten. \"Alle Entitäten anhaken\" anhaken und absenden, um alle anzuhaken und dann einzelne abzuwählen.",
         "data": {
-          "excluded_modes": "Entitäten für Modi entfernen",
-          "excluded_entity_types": "Entitätsarten entfernen"
+          "select_all_entity_types": "Alle Entitäten anhaken",
+          "included_entity_types": "Zu behaltende Entitäten"
         },
         "data_description": {
-          "excluded_modes": "Entfernt alle Entitäten, die nur für die gewählten Modi gelten. Der Modus selbst bleibt auswählbar.",
-          "excluded_entity_types": "Entfernt die gewählte Entität auf jedem Gerät."
+          "included_entity_types": "Gilt für diesen Controller und alle seine Ports und Sensoren."
         }
       }
     }
@@ -42,7 +41,7 @@
           "update_password": "Die Aktualisierung des Passworts erfordert einen Neustart von Home Assistant."
         },
         "menu_options": {
-          "entity_filters": "Unerwünschte Entitäten entfernen",
+          "entity_filters": "Entitäten auswählen",
           "calibrate": "Sensoren kalibrieren"
         }
       },
@@ -55,15 +54,9 @@
         }
       },
       "entity_filters": {
-        "title": "Unerwünschte Entitäten entfernen",
-        "description": "Entfernt ganze Entitätsarten von allen Controllern und Ports. Ausgeschlossene Entitäten werden aus Home Assistant gelöscht und nicht mehr erstellt.",
+        "title": "Entitäten auswählen",
         "data": {
-          "excluded_modes": "Entitäten für Modi entfernen",
-          "excluded_entity_types": "Entitätsarten entfernen"
-        },
-        "data_description": {
-          "excluded_modes": "Entfernt alle Entitäten, die nur für die gewählten Modi gelten. Der Modus selbst bleibt auswählbar.",
-          "excluded_entity_types": "Entfernt die gewählte Entität auf jedem Gerät."
+          "device_id": "Controller"
         }
       },
       "general_config": {
@@ -81,6 +74,17 @@
           "device_id": "Controller",
           "temperature_entity": "Referenz-Temperatur",
           "humidity_entity": "Referenz-Feuchte"
+        }
+      },
+      "controller_entity_filters": {
+        "title": "{controller}: Entitäten behalten",
+        "description": "Wähle die Entitäten, die du für {controller} behalten willst; alles nicht Angehakte wird aus Home Assistant entfernt. Nichts anhaken behält alle Entitäten. \"Alle Entitäten anhaken\" anhaken und absenden, um alle anzuhaken und dann einzelne abzuwählen.",
+        "data": {
+          "select_all_entity_types": "Alle Entitäten anhaken",
+          "included_entity_types": "Zu behaltende Entitäten"
+        },
+        "data_description": {
+          "included_entity_types": "Gilt für diesen Controller und alle seine Ports und Sensoren."
         }
       }
     },

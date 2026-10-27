@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from abc import abstractmethod, ABC
-from collections.abc import Awaitable, Iterable
+from collections.abc import Awaitable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Callable
@@ -1194,6 +1194,9 @@ class ACInfinityEntryData:
     device_coordinators: dict[str, ACInfinityDeviceCoordinator]
     """One coordinator per controller_id responsible for polling that controller's mode settings/controls.
     Listeners use the port index (0 for controller-level settings) as their subscription context."""
+    available_entity_types: dict[str, set[str]] = field(default_factory=dict)
+    """controller id -> every "platform.translation_key" the controller supports, whether or not it is kept, so the
+    keep-list form can offer types that are currently removed."""
     excluded_unique_ids: set[tuple[str, str]] = field(default_factory=set)
     """(platform, unique id) of entities the user excluded (entity filters or per-device options); purged from the
     registry.  The platform is part of the key because unique ids are only unique within a platform.
@@ -1255,6 +1258,11 @@ class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
     @abstractmethod
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the controller entity"""
+
+    @property
+    @abstractmethod
+    def controller_id(self) -> str:
+        """The id of the controller this entity belongs to"""
 
     @abstractmethod
     def is_enabled(self, entry: ConfigEntry) -> bool:
@@ -1327,6 +1335,10 @@ class ACInfinityControllerEntity(ACInfinityEntity):
     def controller(self) -> ACInfinityController:
         return self._controller
 
+    @property
+    def controller_id(self) -> str:
+        return str(self._controller.controller_id)
+
     def is_enabled(self, entry: ConfigEntry) -> bool:
         return self._enabled_fn(entry, str(self._controller.controller_id), "controller")
 
@@ -1372,6 +1384,10 @@ class ACInfinitySensorEntity(ACInfinityEntity):
     @property
     def sensor(self) -> ACInfinitySensor:
         return self._sensor
+
+    @property
+    def controller_id(self) -> str:
+        return str(self._sensor.controller.controller_id)
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
         return self._enabled_fn(entry, str(self._sensor.controller.controller_id), "sensors")
@@ -1419,6 +1435,10 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     @property
     def device_port(self) -> ACInfinityDevice:
         return self._device
+
+    @property
+    def controller_id(self) -> str:
+        return str(self._device.controller.controller_id)
 
     def is_enabled(self, entry: ConfigEntry) -> bool:
         return self._enabled_fn(entry, str(self._device.controller.controller_id), f"port_{self._device.device_port}")
@@ -1496,16 +1516,19 @@ class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
-    def __init__(self, config: ConfigEntry, excluded_unique_ids: set[tuple[str, str]] | None = None):
+    def __init__(self, config: ConfigEntry, entry_data: "ACInfinityEntryData | None" = None):
         super().__init__()
         self._config_entry = config
-        self._excluded_unique_ids = excluded_unique_ids
+        self._entry_data = entry_data
 
     def __exclude(self, entity: ACInfinityEntity):
-        if self._excluded_unique_ids is not None:
-            self._excluded_unique_ids.add((str(entity.platform_name), entity.unique_id))
+        if self._entry_data is not None:
+            self._entry_data.excluded_unique_ids.add((str(entity.platform_name), entity.unique_id))
 
     def append_if_suitable(self, entity: ACInfinityEntity):
+
+        if self._entry_data is not None and entity.is_suitable:
+            self._entry_data.available_entity_types.setdefault(entity.controller_id, set()).add(entity_type(entity))
 
         if is_excluded_by_filters(self._config_entry, entity):
             self.__exclude(entity)
@@ -1546,14 +1569,31 @@ ALL_AT_TYPES = frozenset(
 )
 
 
+def get_entity_filters(entry_data: Mapping[str, Any], controller_id: str) -> Mapping[str, Any]:
+    """The "Remove unwanted entities" choices for one controller.  Entries saved before filters became per
+    controller kept them at the top level; those still apply to controllers without their own choices."""
+    per_controller = entry_data.get(ConfigurationKey.ENTITY_FILTERS) or {}
+    return per_controller.get(str(controller_id), entry_data)
+
+
+def entity_type(entity: ACInfinityEntity) -> str:
+    """The kind of entity, as offered in the keep-list form: "platform.translation_key"."""
+    return f"{entity.platform_name}.{entity.translation_key}"
+
+
 def is_excluded_by_filters(entry: ConfigEntry, entity: ACInfinityEntity) -> bool:
-    """True if the user excluded this entity integration-wide, either by its type (e.g. every "Cycle Duration On")
-    or because every mode it applies to was excluded (e.g. all Schedule mode entities)."""
-    excluded_types = entry.data.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES) or []
-    if f"{entity.platform_name}.{entity.translation_key}" in excluded_types:
+    """True if the user removed this entity on its controller: it isn't in the controller's keep-list, or (entries
+    from before the keep-list) its type or every mode it applies to was excluded."""
+    filters = get_entity_filters(entry.data, entity.controller_id)
+    included_types = filters.get(ConfigurationKey.INCLUDED_ENTITY_TYPES) or []
+    if included_types and entity_type(entity) not in included_types:
         return True
 
-    excluded_modes = {int(mode) for mode in entry.data.get(ConfigurationKey.EXCLUDED_MODES) or []}
+    excluded_types = filters.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES) or []
+    if entity_type(entity) in excluded_types:
+        return True
+
+    excluded_modes = {int(mode) for mode in filters.get(ConfigurationKey.EXCLUDED_MODES) or []}
     at_type_fn = getattr(entity, "_at_type_fn", None)
     if not excluded_modes or at_type_fn is None:
         return False

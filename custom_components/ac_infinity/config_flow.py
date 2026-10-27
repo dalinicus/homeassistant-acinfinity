@@ -20,9 +20,9 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientInvalidAuth,
 )
 from . import ACInfinityService
-from .core import ACInfinityData, ACInfinityEntryData
+from .core import ACInfinityData, ACInfinityEntryData, get_entity_filters
 from .calibration import async_calibrate, read_reference
-from .entity_filter import async_filter_schema
+from .entity_filter import async_keep_list_schema
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -77,6 +77,11 @@ NUMBER_DISPLAY_TYPE_SELECTOR = selector({
 
 class ACInfinityFlowBase:
     """Base class for AC Infinity config and options flows."""
+
+    @staticmethod
+    def _keep_list_from_input(user_input: dict[str, Any]) -> dict[str, list[str]]:
+        # an empty keep-list means no filtering, so submitting without ticking anything can't remove everything
+        return {ConfigurationKey.INCLUDED_ENTITY_TYPES: user_input.get(ConfigurationKey.INCLUDED_ENTITY_TYPES, [])}
 
     @staticmethod
     def __get_saved_entity_conf_value(data: dict[str, Any] | None, device_id: str, entity_config_key: str):
@@ -223,13 +228,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
         if user_input is not None:
             self.entities[str(device_id)] = user_input
-
-            if self.device_index < len(self.device_ids) - 1:
-                self.device_index += 1
-                return await self.async_step_enable_entities()
-
-            else:
-                return await self.async_step_entity_filters()
+            return await self.async_step_entity_filters()
 
         entities, description_placeholders = self._build_entity_config_schema(
             self.service,
@@ -244,13 +243,25 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         )
 
     async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
-        """Integration wide filters to drop whole kinds of entities, across every device."""
-        if user_input is not None:
-            self.filters = user_input
+        """Each controller's keep-list, shown after its entity step: tick the entity types to keep."""
+        if self.service is None or self.device_ids is None:
+            return self.async_abort(reason="not_initialized")
+
+        device_id = str(self.device_ids[self.device_index])
+        select_all = bool(user_input and user_input.get(ConfigurationKey.SELECT_ALL_ENTITY_TYPES))
+        if user_input is not None and not select_all:
+            self.filters[device_id] = self._keep_list_from_input(user_input)
+            if self.device_index < len(self.device_ids) - 1:
+                self.device_index += 1
+                return await self.async_step_enable_entities()
             return await self.async_create_config_entry()
 
         return self.async_show_form(
-            step_id="entity_filters", data_schema=await async_filter_schema(self.hass, None)
+            step_id="entity_filters",
+            data_schema=await async_keep_list_schema(self.hass, None, select_all=select_all),
+            description_placeholders={
+                "controller": self.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            },
         )
 
     async def async_create_config_entry(self):
@@ -266,8 +277,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 CONF_PASSWORD: self.password,
                 ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
                 ConfigurationKey.ENTITIES: self.entities,
-                ConfigurationKey.EXCLUDED_MODES: self.filters.get(ConfigurationKey.EXCLUDED_MODES, []),
-                ConfigurationKey.EXCLUDED_ENTITY_TYPES: self.filters.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES, []),
+                ConfigurationKey.ENTITY_FILTERS: self.filters,
                 ConfigurationKey.MODIFIED_AT: datetime.now().isoformat()
             }
         )
@@ -429,19 +439,52 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
         )
 
     async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
-        """Integration wide filters to drop whole kinds of entities, across every device.  Saving reloads the
-        integration, which removes the excluded entities from Home Assistant."""
+        """Pick the controller whose entities to choose."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
         if user_input is not None:
+            self.current_device_id = user_input["device_id"]
+            return await self.async_step_controller_entity_filters()
+
+        return self.async_show_form(
+            step_id="entity_filters",
+            data_schema=vol.Schema({
+                vol.Required("device_id"): selector({
+                    "select": {
+                        "options": [
+                            {"value": c.controller_id, "label": c.controller_name}
+                            for c in entry_data.service.get_all_controller_properties()
+                        ]
+                    }
+                })
+            }),
+        )
+
+    async def async_step_controller_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """One controller's keep-list.  Saving reloads the integration, which removes everything not kept."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        device_id = str(self.current_device_id)
+        select_all = bool(user_input and user_input.get(ConfigurationKey.SELECT_ALL_ENTITY_TYPES))
+        if user_input is not None and not select_all:
             new_data = self.config_entry.data.copy()
-            new_data[ConfigurationKey.EXCLUDED_MODES] = user_input.get(ConfigurationKey.EXCLUDED_MODES, [])
-            new_data[ConfigurationKey.EXCLUDED_ENTITY_TYPES] = user_input.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES, [])
+            new_data[ConfigurationKey.ENTITY_FILTERS] = {
+                **(new_data.get(ConfigurationKey.ENTITY_FILTERS) or {}),
+                device_id: self._keep_list_from_input(user_input),
+            }
             self.__update_config_entry_data(new_data)
             self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
-            step_id="entity_filters",
-            data_schema=await async_filter_schema(self.hass, dict(self.config_entry.data)),
+            step_id="controller_entity_filters",
+            data_schema=await async_keep_list_schema(
+                self.hass,
+                get_entity_filters(self.config_entry.data, device_id),
+                entry_data.available_entity_types.get(device_id),
+                select_all=select_all,
+            ),
+            description_placeholders={
+                "controller": entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            },
         )
 
     async def async_step_calibrate(self, user_input: dict[str, Any] | None = None):

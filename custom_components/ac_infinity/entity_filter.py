@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import probatio as vol
@@ -15,6 +16,7 @@ from . import binary_sensor, number, select, sensor, switch, time
 from .const import DOMAIN, AtType, ConfigurationKey
 
 MODE_LABELS = {
+    AtType.OFF: "Off",
     AtType.ON: "On",
     AtType.AUTO: "Auto",
     AtType.TIMER_TO_ON: "Timer to On",
@@ -55,16 +57,20 @@ def all_entity_types() -> list[tuple[str, str]]:
     return sorted(types)
 
 
-async def async_entity_type_options(hass: HomeAssistant) -> list[dict[str, str]]:
-    """Selector options for every entity type, labelled with its translated name."""
+async def async_entity_type_options(hass: HomeAssistant, only: set[str] | None = None) -> list[dict[str, str]]:
+    """Selector options for entity types (all, or only the given "platform.translation_key" values), labelled with
+    their translated names."""
     translations = await async_get_translations(hass, hass.config.language, "entity", {DOMAIN})
     options = []
     for platform, translation_key in all_entity_types():
+        value = f"{platform}.{translation_key}"
+        if only is not None and value not in only:
+            continue
         name = translations.get(
             f"component.{DOMAIN}.entity.{platform}.{translation_key}.name",
             translation_key.replace("_", " ").title(),
         )
-        options.append({"value": f"{platform}.{translation_key}", "label": f"{name} ({platform.replace('_', ' ')})"})
+        options.append({"value": value, "label": f"{name} ({platform.replace('_', ' ')})"})
     return sorted(options, key=lambda option: option["label"].lower())
 
 
@@ -72,22 +78,28 @@ def mode_options() -> list[dict[str, str]]:
     return [{"value": str(mode), "label": label} for mode, label in MODE_LABELS.items()]
 
 
-async def async_filter_schema(hass: HomeAssistant, data: dict[str, Any] | None) -> vol.Schema:
-    """Form for the integration wide entity filters, defaulting to the saved choices."""
-    data = data or {}
-    modes = mode_options()
-    entity_types = await async_entity_type_options(hass)
+async def async_keep_list_schema(
+    hass: HomeAssistant,
+    filters: Mapping[str, Any] | None,
+    entity_types: set[str] | None = None,
+    select_all: bool = False,
+) -> vol.Schema:
+    """Form for one controller's keep-list: tick the entity types to keep, everything else is removed.
 
-    def saved(key: str, options: list[dict[str, str]]) -> list[str]:
-        # drop saved values a later release no longer offers, or the form would fail validation
-        offered = {option["value"] for option in options}
-        return [value for value in data.get(key) or [] if value in offered]
+    entity_types limits the list to what the controller supports (None lists every type).  Nothing is ticked
+    until the user ticks it, unless select_all is set, which ticks every listed type so a few can be unticked."""
+    filters = filters or {}
+    type_options = await async_entity_type_options(hass, entity_types)
+    offered = {option["value"] for option in type_options}
+    if select_all:
+        ticked = sorted(offered)
+    else:
+        # drop saved values no longer offered, or the form would fail validation
+        ticked = [value for value in filters.get(ConfigurationKey.INCLUDED_ENTITY_TYPES) or [] if value in offered]
 
     return vol.Schema({
-        vol.Optional(
-            ConfigurationKey.EXCLUDED_MODES, default=saved(ConfigurationKey.EXCLUDED_MODES, modes)
-        ): selector({"select": {"options": modes, "multiple": True, "mode": "list"}}),
-        vol.Optional(
-            ConfigurationKey.EXCLUDED_ENTITY_TYPES, default=saved(ConfigurationKey.EXCLUDED_ENTITY_TYPES, entity_types)
-        ): selector({"select": {"options": entity_types, "multiple": True, "mode": "dropdown"}}),
+        vol.Optional(ConfigurationKey.SELECT_ALL_ENTITY_TYPES, default=False): bool,
+        vol.Optional(ConfigurationKey.INCLUDED_ENTITY_TYPES, default=ticked): selector(
+            {"select": {"options": type_options, "multiple": True, "mode": "list"}}
+        ),
     })

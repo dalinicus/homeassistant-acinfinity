@@ -13,7 +13,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Configuration](#configuration)
   - [General Configuration](#general-configuration)
   - [Enable / Disable Entities](#enable--disable-entities)
-  - [Remove Unwanted Entities](#remove-unwanted-entities)
+  - [Choose Entities to Keep](#choose-entities-to-keep)
 - [Fan Entities](#fan-entities)
 - [Calibrating Against Another Sensor](#calibrating-against-another-sensor)
 - [Diagnostics](#diagnostics)
@@ -83,14 +83,19 @@ New controllers added to the AC Infinity app will be added with `Sensors Only` b
 
 Entities disabled after initial setup are removed from Home Assistant the next time the integration loads.  Port and sensor devices left without any entities are removed too, and any stale device can be deleted from its device page.
 
-## Remove Unwanted Entities
+## Choose Entities to Keep
 
-Shown at the end of initial setup, and available any time from the integration's `Configure` menu.  These filters apply to every controller and port at once:
+Shown for each controller during initial setup, and available any time from the integration's `Configure` menu
+(`Choose Entities to Keep`, then pick a controller).  Nothing is ticked to start with: tick the entities you want for
+that controller and everything else is removed from Home Assistant.  It applies to the controller and all of its ports
+and sensors.
 
-- `Remove entities for modes`: removes every entity that only applies to the selected modes.  For example, selecting `Schedule`, `Cycle` and `VPD` removes all schedule times, cycle durations and VPD triggers on every port.  Entities used in every mode (current power, active mode, on/off power, ...) are never removed by this, and the modes themselves can still be selected.
-- `Remove entity types`: removes the selected entities on every device, e.g. every `Cycle Duration On`.
+- To keep most entities, tick `Tick every entity` and submit; the form comes back with everything ticked so you can
+  untick the few you don't want.
+- Leaving everything unticked keeps all entities, so submitting an empty form never removes everything.
+- Entities that are currently removed are still listed, so they can be ticked again later.
 
-Saving reloads the integration and deletes the excluded entities from Home Assistant; no restart is needed.  Clear a selection to bring those entities back.
+Saving reloads the integration; no restart is needed.  The per-device options above still apply on top of this.
 
 # Fan Entities
 

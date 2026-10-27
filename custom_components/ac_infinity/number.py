@@ -466,8 +466,12 @@ FAHRENHEIT_KEYS = {
 
 
 def controller_uses_fahrenheit(entity: ACInfinityEntity, device: ACInfinityDevice) -> bool:
-    # same polarity as the calibration / dynamic response entities: devCompany > 0 means Celsius
-    return entity.service.get_controller_setting(device.controller.controller_id, AdvancedSettingsKey.TEMP_UNIT, 0) == 0
+    # same polarity as the calibration / dynamic response entities: devCompany > 0 means Celsius.
+    # When the unit isn't reported at all, keep the historical Celsius behaviour rather than guessing.
+    controller_id = device.controller.controller_id
+    if not entity.service.get_controller_setting_exists(controller_id, AdvancedSettingsKey.TEMP_UNIT):
+        return False
+    return entity.service.get_controller_setting(controller_id, AdvancedSettingsKey.TEMP_UNIT, 0) == 0
 
 
 def __get_value_fn_auto_temp(entity: ACInfinityEntity, device: ACInfinityDevice):
@@ -1421,7 +1425,7 @@ async def async_setup_entry(
     entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
     controllers = entry_data.service.get_all_controller_properties()
 
-    entities = ACInfinityEntities(config, entry_data.provided_unique_ids)
+    entities = ACInfinityEntities(config, entry_data.excluded_unique_ids)
     for controller in controllers:
 
         controller_device_coordinator = entry_data.device_coordinators[controller.controller_id]
@@ -1442,4 +1446,3 @@ async def async_setup_entry(
                 entities.append_if_suitable(device_entity)
 
     add_entities_callback(entities)
-    entry_data.completed_platforms.add(__name__)

@@ -45,6 +45,14 @@ PASSWORD = "hunter2"
 ENTRY_ID = f"ac_infinity-{EMAIL}"
 
 
+@pytest.fixture(autouse=True)
+def skip_registry_cleanup(request, mocker: MockFixture):
+    """Setup tests run against a bare HomeAssistant without entity/device registries."""
+    if request.cls is not None and request.cls.__name__ == "TestRemoveExcludedEntities":
+        return
+    mocker.patch("custom_components.ac_infinity.__remove_excluded_entities_and_empty_devices")
+
+
 @pytest.fixture
 def setup(mocker: MockFixture):
     mocker.patch.object(ACInfinityClient, "login", new_callable=AsyncMock)
@@ -436,11 +444,11 @@ class TestInit:
 
 
 
-class TestRemoveStaleEntities:
-    """Entities the integration no longer provides (excluded or disabled via options) are removed from the registry."""
+class TestRemoveExcludedEntities:
+    """Entities the user excluded (entity filters or per-device options) are removed from the registry."""
 
     @staticmethod
-    def _run(mocker: MockFixture, registry_entries, devices, device_entities, provided, controller_ids):
+    def _run(mocker: MockFixture, registry_entries, devices, device_entities, excluded, controller_ids):
         import custom_components.ac_infinity as integration
 
         entity_registry = MagicMock()
@@ -455,19 +463,21 @@ class TestRemoveStaleEntities:
 
         service = MagicMock()
         service.get_device_ids.return_value = controller_ids
-        entry_data = ACInfinityEntryData(service, MagicMock(), {}, provided_unique_ids=set(provided))
+        entry_data = ACInfinityEntryData(service, MagicMock(), {}, excluded_unique_ids=set(excluded))
         entry = MagicMock(entry_id=ENTRY_ID)
 
-        getattr(integration, "__remove_stale_entities_and_devices")(MagicMock(), entry, entry_data)
+        getattr(integration, "__remove_excluded_entities_and_empty_devices")(MagicMock(), entry, entry_data)
         return entity_registry, device_registry
 
-    def test_removes_entities_not_provided(self, mocker: MockFixture):
+    def test_removes_only_excluded_entities(self, mocker: MockFixture):
         entries = [
             MagicMock(unique_id="kept", entity_id="sensor.kept"),
             MagicMock(unique_id="excluded", entity_id="number.excluded"),
+            # not provided this load (e.g. controller offline), but never excluded: must survive
+            MagicMock(unique_id="missing_from_api", entity_id="sensor.missing_from_api"),
         ]
 
-        entity_registry, _ = self._run(mocker, entries, [], {}, {"kept"}, [])
+        entity_registry, _ = self._run(mocker, entries, [], {}, {"excluded"}, [])
 
         entity_registry.async_remove.assert_called_once_with("number.excluded")
 
@@ -481,3 +491,20 @@ class TestRemoveStaleEntities:
         )
 
         device_registry.async_update_device.assert_called_once_with("empty_port", remove_config_entry_id=ENTRY_ID)
+
+
+@pytest.mark.asyncio
+class TestRemoveConfigEntryDevice:
+    async def _remove_allowed(self, setup, identifiers) -> bool:
+        from custom_components.ac_infinity import async_remove_config_entry_device
+
+        (hass, config_entry) = setup
+        await async_setup_entry(hass, config_entry)
+        return await async_remove_config_entry_device(hass, config_entry, MagicMock(identifiers=identifiers))
+
+    async def test_live_controller_and_port_cannot_be_removed(self, setup):
+        assert not await self._remove_allowed(setup, {(DOMAIN, str(DEVICE_ID))})
+        assert not await self._remove_allowed(setup, {(DOMAIN, f"{DEVICE_ID}_1")})
+
+    async def test_stale_device_can_be_removed(self, setup):
+        assert await self._remove_allowed(setup, {(DOMAIN, f"{DEVICE_ID}_9")})

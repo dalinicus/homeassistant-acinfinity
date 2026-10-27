@@ -1194,10 +1194,9 @@ class ACInfinityEntryData:
     device_coordinators: dict[str, ACInfinityDeviceCoordinator]
     """One coordinator per controller_id responsible for polling that controller's mode settings/controls.
     Listeners use the port index (0 for controller-level settings) as their subscription context."""
-    provided_unique_ids: set[str] = field(default_factory=set)
-    """Unique ids of every entity the platforms offered during setup, used to purge stale registry entries."""
-    completed_platforms: set[str] = field(default_factory=set)
-    """Platform modules that finished setup; stale entities are only purged once every platform has."""
+    excluded_unique_ids: set[str] = field(default_factory=set)
+    """Unique ids of entities the user excluded (entity filters or per-device options); purged from the registry.
+    Entities merely missing from the API's data this time are deliberately not tracked, so they are never purged."""
 
 
 class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
@@ -1496,14 +1495,19 @@ class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
-    def __init__(self, config: ConfigEntry, provided_unique_ids: set[str] | None = None):
+    def __init__(self, config: ConfigEntry, excluded_unique_ids: set[str] | None = None):
         super().__init__()
         self._config_entry = config
-        self._provided_unique_ids = provided_unique_ids
+        self._excluded_unique_ids = excluded_unique_ids
+
+    def __exclude(self, entity: ACInfinityEntity):
+        if self._excluded_unique_ids is not None:
+            self._excluded_unique_ids.add(entity.unique_id)
 
     def append_if_suitable(self, entity: ACInfinityEntity):
 
         if is_excluded_by_filters(self._config_entry, entity):
+            self.__exclude(entity)
             _LOGGER.debug(
                 'Ignoring excluded entity "%s" (%s) for platform "%s". (Excluded by user)',
                 entity.unique_id,
@@ -1513,8 +1517,6 @@ class ACInfinityEntities(list[ACInfinityEntity]):
         elif entity.is_enabled(self._config_entry):
             if entity.is_suitable:
                 self.append(entity)
-                if self._provided_unique_ids is not None:
-                    self._provided_unique_ids.add(entity.unique_id)
                 _LOGGER.debug(
                     'Initializing entity "%s" (%s) for platform "%s".',
                     entity.unique_id,
@@ -1529,6 +1531,7 @@ class ACInfinityEntities(list[ACInfinityEntity]):
                     entity.platform_name,
                 )
         else:
+            self.__exclude(entity)
             _LOGGER.debug(
                 'Ignoring disabled entity "%s" (%s) for platform "%s". (Disabled by user)',
                 entity.unique_id,

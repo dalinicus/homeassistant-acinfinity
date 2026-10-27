@@ -1,14 +1,17 @@
 import asyncio
+from typing import cast
 from unittest.mock import MagicMock
 from asyncio import Future
 
 import pytest
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.components.number import NumberDeviceClass, NumberMode
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    AtType,
     AdvancedSettingsKey,
     DeviceControlKey,
 )
@@ -1064,6 +1067,20 @@ class TestNumbers:
         assert entity.native_min_value == 32
         assert entity.native_max_value == 194
 
+    async def test_temp_trigger_unknown_unit_keeps_celsius(self, setup):
+        """Without devCompany the unit is unknown; keep reading the Celsius key as before"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER)
+        settings = dict(test_objects.service.data.device_settings[(str(DEVICE_ID), 0)])
+        settings.pop(AdvancedSettingsKey.TEMP_UNIT, None)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = settings
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER] = 25
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F] = 0
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.native_value == 25
+        assert entity.native_unit_of_measurement == UnitOfTemperature.CELSIUS
+
     @pytest.mark.parametrize("f,c", [(78, 26), (77, 25), (32, 0), (194, 90)])
     @pytest.mark.parametrize(
         "setting, f_setting",
@@ -1582,3 +1599,43 @@ class TestNumbers:
             entity._device, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
         )
         test_objects.refresh_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+class TestEntityFilters:
+    """Integration wide filters from the "Remove unwanted entities" step"""
+
+    @staticmethod
+    def _entry(**data) -> ConfigEntry:
+        from types import SimpleNamespace
+        return cast(ConfigEntry, SimpleNamespace(data=data))
+
+    async def test_entity_type_filter_matches_platform_and_translation_key(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+
+        assert is_excluded_by_filters(self._entry(excluded_entity_types=["number.on_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(excluded_entity_types=["number.off_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(excluded_entity_types=["sensor.on_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(), entity)
+
+    async def test_entity_type_keys_match_the_option_list(self, setup):
+        """every entity the platform creates must be selectable in the filter option list"""
+        from custom_components.ac_infinity.entity_filter import all_entity_types
+        test_objects: ACTestObjects = setup
+        await async_setup_entry(test_objects.hass, test_objects.config_entry, test_objects.entities.add_entities_callback)
+
+        offered = {f"{platform}.{key}" for platform, key in all_entity_types()}
+        created = {f"{e.platform_name}.{e.translation_key}" for e in test_objects.entities.added_entities}
+        assert created and created <= offered
+
+    async def test_mode_filter_removes_only_mode_specific_entities(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        timer_on = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.TIMER_DURATION_TO_ON)
+        on_power = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        entry = self._entry(excluded_modes=[str(AtType.TIMER_TO_ON)])
+
+        assert is_excluded_by_filters(entry, timer_on)
+        # shown in every mode, so never removed by a mode filter
+        assert not is_excluded_by_filters(self._entry(excluded_modes=[str(m) for m in range(16)]), on_power)
+        assert not is_excluded_by_filters(self._entry(excluded_modes=[str(AtType.CYCLE)]), timer_on)

@@ -75,11 +75,19 @@ def mode_options() -> list[dict[str, str]]:
 async def async_filter_schema(hass: HomeAssistant, data: dict[str, Any] | None) -> vol.Schema:
     """Form for the integration wide entity filters, defaulting to the saved choices."""
     data = data or {}
+    modes = mode_options()
+    entity_types = await async_entity_type_options(hass)
+
+    def saved(key: str, options: list[dict[str, str]]) -> list[str]:
+        # drop saved values a later release no longer offers, or the form would fail validation
+        offered = {option["value"] for option in options}
+        return [value for value in data.get(key) or [] if value in offered]
+
     return vol.Schema({
         vol.Optional(
-            ConfigurationKey.EXCLUDED_MODES, default=data.get(ConfigurationKey.EXCLUDED_MODES) or []
-        ): selector({"select": {"options": mode_options(), "multiple": True, "mode": "list"}}),
+            ConfigurationKey.EXCLUDED_MODES, default=saved(ConfigurationKey.EXCLUDED_MODES, modes)
+        ): selector({"select": {"options": modes, "multiple": True, "mode": "list"}}),
         vol.Optional(
-            ConfigurationKey.EXCLUDED_ENTITY_TYPES, default=data.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES) or []
-        ): selector({"select": {"options": await async_entity_type_options(hass), "multiple": True, "mode": "dropdown"}}),
+            ConfigurationKey.EXCLUDED_ENTITY_TYPES, default=saved(ConfigurationKey.EXCLUDED_ENTITY_TYPES, entity_types)
+        ): selector({"select": {"options": entity_types, "multiple": True, "mode": "dropdown"}}),
     })

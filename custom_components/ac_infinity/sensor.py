@@ -697,7 +697,7 @@ async def async_setup_entry(
 
     controllers = entry_data.service.get_all_controller_properties()
 
-    entities = ACInfinityEntities(config, entry_data.provided_unique_ids)
+    entities = ACInfinityEntities(config, entry_data.excluded_unique_ids)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerSensorEntity(
@@ -729,4 +729,3 @@ async def async_setup_entry(
                 entities.append_if_suitable(device_entity)
 
     add_entities_callback(entities)
-    entry_data.completed_platforms.add(__name__)

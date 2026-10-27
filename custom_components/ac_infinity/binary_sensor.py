@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+from homeassistant.components.binary_sensor.const import BinarySensorDeviceClass
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )

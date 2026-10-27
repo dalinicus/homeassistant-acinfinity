@@ -708,9 +708,17 @@ class ACInfinityService:
                 return_exceptions=True,
             )
 
+        uncached_failure: BaseException | None = None
         for port_index, result in zip(port_indexes, results):
             if isinstance(result, BaseException):
                 _LOGGER.error("Error refreshing device settings for controller %s port %s: %s", controller_id, port_index, result)
+                if (controller_id, port_index) not in self.data.device_controls:
+                    uncached_failure = uncached_failure or result
+
+        # a port that has never been retrieved has no data for entities to be built from (e.g. on startup),
+        # so fail the refresh rather than letting its settings/controls be silently skipped as unsuitable.
+        if uncached_failure is not None:
+            raise uncached_failure
 
     def get_all_controller_properties(self) -> list[ACInfinityController]:
         """gets device metadata, such as ids, labels, macaddr, etc... that are not expected to change"""
@@ -952,7 +960,11 @@ class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self):
-        await self.service.refresh_device_settings(self._controller_id, self.async_contexts())
+        try:
+            await self.service.refresh_device_settings(self._controller_id, self.async_contexts())
+        except Exception as e:
+            _LOGGER.error("Error refreshing device settings for controller %s: %s", self._controller_id, e)
+            raise UpdateFailed from e
 
 
 @dataclass

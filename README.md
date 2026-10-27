@@ -35,7 +35,9 @@ Please see the [official HACS documentation](https://hacs.xyz) for information o
 
 ## Manual Installation
 
-Copy `custom_components/acinfinity` into your Home Assistant `$HA_HOME/config` directory, then restart Home Assistant
+Copy `custom_components/ac_infinity` into your Home Assistant `$HA_HOME/config/custom_components` directory (creating it if it doesn't exist), so that `$HA_HOME/config/custom_components/ac_infinity/manifest.json` exists, then restart Home Assistant.
+
+Copying the files only makes the integration available; it must still be added from the integration section of the Home Assistant settings as described in [Initial Setup](#initial-setup).
 
 # Initial Setup
 Add an integration entry as normal from integration section of the home assistant settings.  You'll need the following configuration items

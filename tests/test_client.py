@@ -627,3 +627,48 @@ class TestACInfinityClient:
         # Decode the URL-encoded value for comparison
         actual_value = unquote(payload[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR])
         assert actual_value == expected_id_str
+
+
+@pytest.mark.asyncio
+class TestLoginExpired:
+    """The API expires sessions server side: every request then answers
+    {'msg': 'Login Expired Please login again!', 'code': 403} until the client logs in again."""
+
+    EXPIRED = {"msg": "Login Expired Please login again!", "code": 403}
+
+    async def test_expired_session_logs_in_again_and_replays_request(self):
+        from tests.data_models import DEVICE_INFO_LIST_ALL_PAYLOAD
+
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                list_url = re.compile(rf"{HOST}{API_URL_GET_DEVICE_INFO_LIST_ALL}.*")
+                mocked.post(list_url, status=200, payload=self.EXPIRED)
+                mocked.post(re.compile(rf"{HOST}{API_URL_LOGIN}.*"), status=200, payload=LOGIN_PAYLOAD)
+                mocked.post(list_url, status=200, payload=DEVICE_INFO_LIST_ALL_PAYLOAD)
+
+                result = await client.get_account_controllers()
+
+                assert result == DEVICE_INFO_LIST_ALL_PAYLOAD["data"]
+                logins = [c for (m, u), c in mocked.requests.items() if API_URL_LOGIN in str(u)]
+                assert len(logins) == 1 and len(logins[0]) == 1
+        finally:
+            await client.close()
+
+    async def test_still_expired_after_relogin_fails_instead_of_looping(self):
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                list_url = re.compile(rf"{HOST}{API_URL_GET_DEVICE_INFO_LIST_ALL}.*")
+                mocked.post(list_url, status=200, payload=self.EXPIRED, repeat=True)
+                mocked.post(re.compile(rf"{HOST}{API_URL_LOGIN}.*"), status=200, payload=LOGIN_PAYLOAD, repeat=True)
+
+                with pytest.raises(ACInfinityClientRequestFailed):
+                    await client.get_account_controllers()
+
+                logins = [c for (m, u), c in mocked.requests.items() if API_URL_LOGIN in str(u)]
+                assert len(logins[0]) == 1
+        finally:
+            await client.close()

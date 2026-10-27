@@ -34,6 +34,8 @@ API_URL_MODE_AND_SETTINGS = "/api/dev/modeAndSetting"
 API_URL_GET_DEV_SETTING = "/api/dev/getDevSetting"
 API_URL_UPDATE_ADV_SETTING = "/api/dev/updateAdvSetting"
 
+API_CODE_LOGIN_EXPIRED = 403
+
 
 class ACInfinityClient:
     """Encapsulates http calls to the AC Infinity API"""
@@ -451,36 +453,37 @@ class ACInfinityClient:
 
     async def __post(self, path, post_data, headers):
         """generically make a post request to the AC Infinity API"""
-        session = await self.__get_session()
-        async with async_timeout.timeout(10), session.post(
-            f"{self._host}{path}", data=post_data, headers=headers
-        ) as response:
-            if response.status != 200:
-                raise ACInfinityClientCannotConnect
-
-            body = await response.json()
-            if body["code"] != 200:
-                if path == API_URL_LOGIN:
-                    raise ACInfinityClientInvalidAuth
-                else:
-                    raise ACInfinityClientRequestFailed(body)
-
-            return body
+        return await self.__request("POST", path, post_data, headers)
 
     async def __put(self, path, headers):
         """generically make a put request to the AC Infinity API"""
+        return await self.__request("PUT", path, None, headers)
+
+    async def __request(self, method: str, path: str, data, headers: dict, relogin: bool = True):
         session = await self.__get_session()
-        async with async_timeout.timeout(10), session.put(
-            f"{self._host}{path}", headers=headers
+        async with async_timeout.timeout(10), session.request(
+            method, f"{self._host}{path}", data=data, headers=headers
         ) as response:
             if response.status != 200:
                 raise ACInfinityClientCannotConnect
 
             body = await response.json()
-            if body["code"] != 200:
-                raise ACInfinityClientRequestFailed(body)
 
+        if body["code"] == 200:
             return body
+        if path == API_URL_LOGIN:
+            raise ACInfinityClientInvalidAuth
+
+        # The session expires server side after a while ("Login Expired Please login again!", code 403) and
+        # every request fails until the user logs in again.  Log in once and replay the request.
+        if relogin and body["code"] == API_CODE_LOGIN_EXPIRED and "token" in headers:
+            _LOGGER.info("AC Infinity session expired; logging in again")
+            await self.login()
+            if isinstance(data, dict) and "userId" in data:
+                data = {**data, "userId": self._user_id}
+            return await self.__request(method, path, data, {**headers, "token": self._user_id}, relogin=False)
+
+        raise ACInfinityClientRequestFailed(body)
 
     def __create_headers(self, use_auth_token: bool, use_min_version: bool = False) -> dict:
         """Creates a header object to use in a request to the AC Infinity API"""

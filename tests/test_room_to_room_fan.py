@@ -125,3 +125,41 @@ class TestRoomToRoomFan:
 
         entity = cast(Any, SimpleNamespace(data_key=temperature_description.key, service=service))
         assert temperature_description.suitable_fn(entity, controller) is True
+
+
+class TestRoomToRoomFanSensorPolling:
+    """Port 0 state of a room-to-room fan only exists in its mode settings, which the device coordinator polls.
+    Its sensors must subscribe to that coordinator, or with no control entities enabled nothing keeps it polling."""
+
+    @staticmethod
+    def _entry_data(service):
+        from unittest.mock import MagicMock
+        list_coordinator = MagicMock()
+        list_coordinator.service = service
+        device_coordinator = MagicMock()
+        entry_data = MagicMock()
+        entry_data.service = service
+        entry_data.list_coordinator = list_coordinator
+        entry_data.device_coordinators = {DEVICE_ID: device_coordinator}
+        return entry_data, device_coordinator
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("platform", ["sensor", "binary_sensor"])
+    async def test_port_entities_subscribe_to_device_coordinator(self, controller_and_service, platform):
+        import importlib
+        from custom_components.ac_infinity.const import DOMAIN
+
+        _, service = controller_and_service
+        # what refresh_controllers caches for the fan's synthetic port 0
+        service.data.device_properties[(DEVICE_ID, 0)] = ACInfinityController.get_port_jsons(ROOM_TO_ROOM_FAN_PROPERTIES)[0]
+        entry_data, device_coordinator = self._entry_data(service)
+        hass = SimpleNamespace(data={DOMAIN: {"entry": entry_data}})
+        config = cast(Any, SimpleNamespace(entry_id="entry", data={"entities": {DEVICE_ID: {"port_0": "all"}}}))
+        added: list = []
+
+        module = importlib.import_module(f"custom_components.ac_infinity.{platform}")
+        await module.async_setup_entry(hass, config, added.extend)
+
+        port_entities = [e for e in added if "_port_0_" in e.unique_id]
+        assert port_entities
+        assert all(e.device_coordinator is device_coordinator for e in port_entities)

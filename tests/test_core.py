@@ -1505,7 +1505,8 @@ class TestCoordinators:
     async def test_device_coordinator_update_data_refreshes_settings_for_listener_ports(
         self, mocker: MockFixture, setup
     ):
-        """the device coordinator should only refresh ports with an active listener context"""
+        """the device coordinator should only refresh ports with an active listener context, plus port 0
+        which holds controller level settings (e.g. the temperature unit) that port entities depend on"""
         test_objects: ACTestObjects = setup
         device_coordinator = test_objects.device_coordinators[str(DEVICE_ID)]
         refresh_mock = mocker.patch.object(
@@ -1518,7 +1519,22 @@ class TestCoordinators:
         refresh_mock.assert_called_once()
         call_args = refresh_mock.call_args[0]
         assert call_args[0] == str(DEVICE_ID)
-        assert set(call_args[1]) == {1, 3}
+        assert set(call_args[1]) == {0, 1, 3}
+
+    async def test_device_coordinator_update_data_without_listeners_falls_back_to_all_ports(
+        self, mocker: MockFixture, setup
+    ):
+        """with no listeners the service picks every port, so the coordinator must not narrow it to port 0"""
+        test_objects: ACTestObjects = setup
+        device_coordinator = test_objects.device_coordinators[str(DEVICE_ID)]
+        refresh_mock = mocker.patch.object(
+            test_objects.service, "refresh_device_settings", new_callable=AsyncMock
+        )
+        mocker.patch.object(device_coordinator, "async_contexts", return_value=[])
+
+        await device_coordinator._async_update_data()
+
+        assert set(refresh_mock.call_args[0][1]) == set()
 
 
 @pytest.mark.asyncio

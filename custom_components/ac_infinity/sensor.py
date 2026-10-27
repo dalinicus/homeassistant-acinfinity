@@ -27,6 +27,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
+    ACInfinityDeviceCoordinator,
     ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
@@ -675,9 +676,10 @@ class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
         list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceSensorEntityDescription,
         device: ACInfinityDevice,
+        device_coordinator: ACInfinityDeviceCoordinator | None = None,
     ) -> None:
         super().__init__(
-            device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR, list_coordinator
+            device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR, list_coordinator, device_coordinator
         )
         self.entity_description = description
 
@@ -720,7 +722,9 @@ async def async_setup_entry(
         for device in controller.devices:
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceSensorEntity(
-                    entry_data.list_coordinator, device_description, device
+                    entry_data.list_coordinator, device_description, device,
+                    # a room-to-room fan's port state only exists in its mode settings, polled by the device coordinator
+                    entry_data.device_coordinators[controller.controller_id] if controller.is_room_to_room_fan else None,
                 )
                 entities.append_if_suitable(device_entity)
 

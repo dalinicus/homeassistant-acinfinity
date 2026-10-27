@@ -43,21 +43,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     list_coordinator = ACInfinityDeviceListCoordinator(
         hass, entry, service, polling_interval
     )
-    await list_coordinator.async_config_entry_first_refresh()
-    await __initialize_new_devices_if_any(hass, entry, service)
+    try:
+        await list_coordinator.async_config_entry_first_refresh()
+        await __initialize_new_devices_if_any(hass, entry, service)
 
-    # one device coordinator per controller; it polls mode settings/controls for that
-    # controller's ports (context-driven - see ACInfinityDeviceCoordinator)
-    device_coordinators = {
-        controller_id: ACInfinityDeviceCoordinator(
-            controller_id, hass, entry, service, polling_interval
+        # one device coordinator per controller; it polls mode settings/controls for that
+        # controller's ports (context-driven - see ACInfinityDeviceCoordinator)
+        device_coordinators = {
+            controller_id: ACInfinityDeviceCoordinator(
+                controller_id, hass, entry, service, polling_interval
+            )
+            for controller_id in data.controller_properties
+        }
+
+        await asyncio.gather(
+            *(dc.async_config_entry_first_refresh() for dc in device_coordinators.values())
         )
-        for controller_id in data.controller_properties
-    }
-
-    await asyncio.gather(
-        *(dc.async_config_entry_first_refresh() for dc in device_coordinators.values())
-    )
+    except Exception:
+        # setup is retried with a fresh client; don't leak this one's http session
+        await service.close()
+        raise
 
     hass.data[DOMAIN][entry.entry_id] = ACInfinityEntryData(service, list_coordinator, device_coordinators)
 

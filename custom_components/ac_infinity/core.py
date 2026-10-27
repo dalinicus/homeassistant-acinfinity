@@ -1167,7 +1167,10 @@ class ACInfinityDeviceCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         try:
-            await self.service.refresh_device_settings(self._controller_id, self.async_contexts())
+            # port 0 carries controller level settings other ports depend on (e.g. the temperature unit),
+            # so it is polled whenever any port is
+            contexts = set(self.async_contexts())
+            await self.service.refresh_device_settings(self._controller_id, contexts | {0} if contexts else contexts)
         except Exception as e:
             _LOGGER.error("Error refreshing device settings for controller %s: %s", self._controller_id, e)
             raise UpdateFailed from e

@@ -238,6 +238,9 @@
       },
       "sunrise_timer_enabled": {
         "name": "Sonnenaufgang/-untergang aktiviert"
+      },
+      "dynamic_wind": {
+        "name": "Dynamischer Wind"
       }
     },
     "time": {

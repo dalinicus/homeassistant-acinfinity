@@ -85,8 +85,8 @@
         "title": "Restart required",
         "description": "Restart of Home Assistant is required for this change to take effect.",
         "menu_options": {
-            "restart_yes": "Restart Now",
-            "restart_no": "Restart Later"
+          "restart_yes": "Restart Now",
+          "restart_no": "Restart Later"
         }
       }
     },
@@ -188,7 +188,7 @@
       "humidity_calibration": {
         "name": "Humidity Calibration"
       },
-      "vpd_leaf_temperature_offset" : {
+      "vpd_leaf_temperature_offset": {
         "name": "VPD Leaf Temperature Offset"
       },
       "dynamic_transition_temp": {
@@ -397,6 +397,9 @@
       },
       "water_detection_enabled": {
         "name": "Water Detection Enabled"
+      },
+      "dynamic_wind": {
+        "name": "Dynamic Wind"
       }
     },
     "time": {

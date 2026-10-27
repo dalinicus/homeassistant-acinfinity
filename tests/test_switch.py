@@ -43,7 +43,7 @@ class TestSwitches:
             test_objects.entities.add_entities_callback,
         )
 
-        assert len(test_objects.entities._added_entities) == 52
+        assert len(test_objects.entities._added_entities) == 56
 
     @pytest.mark.parametrize(
         "setting",
@@ -946,3 +946,42 @@ class TestSwitches:
             entity._device, setting, expected
         )
         test_objects.refresh_mock.assert_not_called()
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    @pytest.mark.parametrize(
+        "port_param_data,expected",
+        [
+            ("[0, 2, 1, 2, 3, 232, 2, 1, 1]", True),
+            ("[0, 2, 1, 2, 3, 232, 2, 1, 0]", False),
+            ([0, 2, 1, 2, 3, 232, 2, 1, 1], True),
+        ],
+    )
+    async def test_async_update_dynamic_wind_value_correct(self, setup, port, port_param_data, expected):
+        """Dynamic Wind is the last element of the JSON encoded portParamData setting"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, "dynamic_wind")
+
+        test_objects.service.data.device_settings[(str(DEVICE_ID), port)][
+            AdvancedSettingsKey.PORT_PARAM_DATA
+        ] = port_param_data
+        entity._handle_coordinator_update()
+
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
+        assert entity.is_on == expected
+
+    @pytest.mark.parametrize("port", [1, 2, 3, 4])
+    @pytest.mark.parametrize("turn_on,expected", [(True, "[0, 2, 1, 2, 3, 232, 2, 1, 1]"), (False, "[0, 2, 1, 2, 3, 232, 2, 1, 0]")])
+    async def test_async_set_dynamic_wind(self, setup, port, turn_on, expected):
+        """Only index 8 changes, and the value is written back as a JSON string"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, port, "dynamic_wind")
+
+        assert isinstance(entity, ACInfinityDeviceSwitchEntity)
+        if turn_on:
+            await entity.async_turn_on()
+        else:
+            await entity.async_turn_off()
+
+        test_objects.port_setting_set_mock.assert_called_with(
+            entity._device, AdvancedSettingsKey.PORT_PARAM_DATA, expected
+        )

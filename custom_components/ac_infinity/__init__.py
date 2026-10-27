@@ -159,7 +159,7 @@ def __remove_excluded_entities_and_empty_devices(
     entity_registry = er.async_get(hass)
     removed = 0
     for registry_entry in er.async_entries_for_config_entry(entity_registry, entry.entry_id):
-        if registry_entry.unique_id in entry_data.excluded_unique_ids:
+        if (registry_entry.domain, registry_entry.unique_id) in entry_data.excluded_unique_ids:
             entity_registry.async_remove(registry_entry.entity_id)
             removed += 1
 

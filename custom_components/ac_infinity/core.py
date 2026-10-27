@@ -1194,8 +1194,9 @@ class ACInfinityEntryData:
     device_coordinators: dict[str, ACInfinityDeviceCoordinator]
     """One coordinator per controller_id responsible for polling that controller's mode settings/controls.
     Listeners use the port index (0 for controller-level settings) as their subscription context."""
-    excluded_unique_ids: set[str] = field(default_factory=set)
-    """Unique ids of entities the user excluded (entity filters or per-device options); purged from the registry.
+    excluded_unique_ids: set[tuple[str, str]] = field(default_factory=set)
+    """(platform, unique id) of entities the user excluded (entity filters or per-device options); purged from the
+    registry.  The platform is part of the key because unique ids are only unique within a platform.
     Entities merely missing from the API's data this time are deliberately not tracked, so they are never purged."""
 
 
@@ -1495,14 +1496,14 @@ class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
-    def __init__(self, config: ConfigEntry, excluded_unique_ids: set[str] | None = None):
+    def __init__(self, config: ConfigEntry, excluded_unique_ids: set[tuple[str, str]] | None = None):
         super().__init__()
         self._config_entry = config
         self._excluded_unique_ids = excluded_unique_ids
 
     def __exclude(self, entity: ACInfinityEntity):
         if self._excluded_unique_ids is not None:
-            self._excluded_unique_ids.add(entity.unique_id)
+            self._excluded_unique_ids.add((str(entity.platform_name), entity.unique_id))
 
     def append_if_suitable(self, entity: ACInfinityEntity):
 

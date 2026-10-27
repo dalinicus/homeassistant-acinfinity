@@ -471,13 +471,15 @@ class TestRemoveExcludedEntities:
 
     def test_removes_only_excluded_entities(self, mocker: MockFixture):
         entries = [
-            MagicMock(unique_id="kept", entity_id="sensor.kept"),
-            MagicMock(unique_id="excluded", entity_id="number.excluded"),
+            MagicMock(unique_id="kept", entity_id="sensor.kept", domain="sensor"),
+            MagicMock(unique_id="excluded", entity_id="number.excluded", domain="number"),
+            # same unique id on another platform: unique ids are only unique per platform, so it must survive
+            MagicMock(unique_id="excluded", entity_id="sensor.excluded", domain="sensor"),
             # not provided this load (e.g. controller offline), but never excluded: must survive
-            MagicMock(unique_id="missing_from_api", entity_id="sensor.missing_from_api"),
+            MagicMock(unique_id="missing_from_api", entity_id="sensor.missing_from_api", domain="sensor"),
         ]
 
-        entity_registry, _ = self._run(mocker, entries, [], {}, {"excluded"}, [])
+        entity_registry, _ = self._run(mocker, entries, [], {}, {("number", "excluded")}, [])
 
         entity_registry.async_remove.assert_called_once_with("number.excluded")
 

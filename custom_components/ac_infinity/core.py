@@ -23,6 +23,8 @@ from custom_components.ac_infinity.client import ACInfinityClient, ACInfinityCli
     ACInfinityClientCannotConnect, ACInfinityClientRequestFailed
 from .const import (
     AI_CONTROLLER_TYPES,
+    ROOM_TO_ROOM_FAN_CONTROLLER_TYPES,
+    ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS,
     DOMAIN,
     MANUFACTURER,
     ControllerPropertyKey,
@@ -61,9 +63,6 @@ class ACInfinityController:
         self._controller_type = controller_json[ControllerPropertyKey.DEVICE_TYPE]
         self._identifier = (DOMAIN, self._controller_id)
 
-        devices = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
-        self._devices = [ACInfinityDevice(self, device)for device in devices]
-
         self._device_info = DeviceInfo(
             identifiers={self._identifier},
             name=self._controller_name,
@@ -74,6 +73,22 @@ class ACInfinityController:
                 controller_json[ControllerPropertyKey.DEVICE_TYPE]
             ),
         )
+
+        devices = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
+        self._devices = [ACInfinityDevice(self, device)for device in devices]
+
+        # Room-to-room fans (e.g. AC-TWT6) have no ports but expose controls at port 0.
+        # Create a synthetic device entry to enable control entities.
+        if not devices and controller_json.get(ControllerPropertyKey.DEVICE_TYPE) in [33]:  # UIS_ROOM_TO_ROOM_FAN
+            synthetic_device = {
+                DevicePropertyKey.PORT: 0,
+                DevicePropertyKey.NAME: "Main",
+                DevicePropertyKey.SPEAK: 0,
+                DevicePropertyKey.ONLINE: controller_json[ControllerPropertyKey.ONLINE],
+                DevicePropertyKey.STATE: 0,
+                DevicePropertyKey.REMAINING_TIME: 0,
+            }
+            self._devices = [ACInfinityDevice(self, synthetic_device)]
 
         # controller AI will have a sensor array.
         self._sensors = []
@@ -95,6 +110,11 @@ class ACInfinityController:
     def is_ai_controller(self) -> bool:
         """Returns true if this controller is an AI controller"""
         return self._controller_type in AI_CONTROLLER_TYPES
+
+    @property
+    def is_room_to_room_fan(self) -> bool:
+        """Returns true if this is a standalone room-to-room/through-wall fan (e.g. AC-TWT6)"""
+        return self._controller_type in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
 
     @property
     def mac_addr(self) -> str:
@@ -134,6 +154,8 @@ class ACInfinityController:
                 return "UIS Controller Outlet AI (AC-ADA4)"
             case ControllerType.UIS_OUTLET_AI_PLUS:
                 return "UIS Controller Outlet AI+ (AC-ADA8)"
+            case ControllerType.UIS_ROOM_TO_ROOM_FAN:
+                return "Room to Room Fan (AC-TWT6)"
             case _:
                 return f"UIS Controller Type {device_type}"
 
@@ -282,6 +304,12 @@ class ACInfinityDevice:
         self._controller = controller
         self._device_port = device_json[DevicePropertyKey.PORT]
         self._device_name = device_json[DevicePropertyKey.NAME]
+
+        if controller.is_room_to_room_fan and self._device_port == 0:
+            # A room-to-room fan is a single physical unit: its controls (synthetic port 0) and its
+            # controller-level sensors belong on one device, not a separate "<name> Main" device.
+            self._device_info = controller.device_info
+            return
 
         self._device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{controller.controller_id}_{self._device_port}")},
@@ -645,6 +673,23 @@ class ACInfinityService:
                 # set controller properties; readings for temp, vpd, humidity, etc...
                 self.data.controller_properties[str(controller_id)] = controller_properties_json
 
+                # Room-to-room fans (e.g. AC-TWT6) have no ports, so the loop below never runs for
+                # them. Synthesize the port 0 device properties here; _device_properties gates entity
+                # availability via the ONLINE property check, so without it every control is greyed out.
+                if controller_properties_json.get(ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES:
+                    # State/speed/remaining time for this device come from its mode settings (see
+                    # refresh_device_settings), so keep whatever that last stored and only update ONLINE.
+                    synthetic_properties = self.data.device_properties.setdefault(
+                        (controller_id, 0),
+                        {
+                            DevicePropertyKey.PORT: 0,
+                            DevicePropertyKey.STATE: 0,
+                            DevicePropertyKey.SPEAK: 0,
+                            DevicePropertyKey.REMAINING_TIME: 0,
+                        },
+                    )
+                    synthetic_properties[DevicePropertyKey.ONLINE] = controller_properties_json[ControllerPropertyKey.ONLINE]
+
                 # controller AI will have a sensor array.
                 if ControllerPropertyKey.SENSORS in controller_properties_json[ControllerPropertyKey.DEVICE_INFO]:
                     sensors = controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
@@ -686,6 +731,26 @@ class ACInfinityService:
             )
             self.data.device_controls[(controller_id, port_index)] = result
             self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+
+            # Room-to-room fans have no ports; their on/off state, current speed and timer countdown only
+            # exist in the mode settings, so mirror them into the synthetic port 0 device properties.
+            if (
+                port_index == 0
+                and self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
+            ):
+                dev_setting = result.get(DeviceControlKey.DEV_SETTING) or {}
+
+                def _value(key: str, default: int = 0) -> int:
+                    value = result.get(key)
+                    if value is None:
+                        value = dev_setting.get(key)
+                    return default if value is None else value
+
+                properties = self.data.device_properties.setdefault((controller_id, 0), {DevicePropertyKey.PORT: 0})
+                properties[DevicePropertyKey.SPEAK] = _value(DevicePropertyKey.SPEAK)
+                # State reflects whether the fan is actually moving, not just powered on (idle in AI/Temp modes)
+                properties[DevicePropertyKey.STATE] = 1 if _value(DeviceControlKey.POWER_STATE) and properties[DevicePropertyKey.SPEAK] > 0 else 0
+                properties[DevicePropertyKey.REMAINING_TIME] = _value(DeviceControlKey.SURPLUS)
 
         async with self._update_lock:
             results = await asyncio.gather(
@@ -786,6 +851,19 @@ class ACInfinityService:
     ):
         if device.controller.is_ai_controller:
             await self.__update_ai_control_and_settings(device.controller.controller_id, device.device_port, key_values)
+        elif device.controller.is_room_to_room_fan:
+            if ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS.intersection(key_values):
+                controller_id = device.controller.controller_id
+                await self.__update_room_to_room_fan_display_setting(
+                    controller_id,
+                    device.device_port,
+                    self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_NAME, ""),
+                    self.get_controller_property(controller_id, ControllerPropertyKey.INSIDE_ROOM_NAME, ""),
+                    self.get_controller_property(controller_id, ControllerPropertyKey.OUTSIDE_ROOM_NAME, ""),
+                    key_values,
+                )
+            else:
+                await self.__update_room_to_room_fan_controls(device.controller.controller_id, device.device_port, key_values)
         else:
             await self.__update_device_controls(device.controller.controller_id, device.device_port, key_values)
 
@@ -869,6 +947,55 @@ class ACInfinityService:
         normalized_id = (str(controller_id), device_port)
         cache[normalized_id] = {**cache.get(normalized_id, {}), **key_values}
 
+    async def __update_room_to_room_fan_controls(
+        self,
+        controller_id: str | int,
+        device_port: int,
+        key_values: dict[str, int],
+    ):
+        """Update the values of a set of settings via the AC Infinity API
+
+        Args:
+            controller_id: the device id of the controller
+            device_port: the index of the port on the controller (always 0)
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        async with self._update_lock:
+            await self._execute_with_retry(
+                lambda: self.client.update_room_to_room_fan_control(controller_id, device_port, key_values),
+                "update room-to-room fan controls",
+            )
+            self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
+
+    async def __update_room_to_room_fan_display_setting(
+        self,
+        controller_id: str | int,
+        device_port: int,
+        dev_name: str,
+        inside_room_name: str,
+        outside_room_name: str,
+        key_values: dict[str, int],
+    ):
+        """Update display/panel settings (backlight, keytone, brightness) via the AC
+        Infinity API. These use a different request shape than other room-to-room fan
+        controls - see ACInfinityClient.update_room_to_room_fan_display_setting.
+
+        Args:
+            controller_id: the device id of the controller
+            device_port: the index of the port on the controller (always 0)
+            dev_name: the controller's display name, as configured in the app
+            inside_room_name: the "inside" zone's room name, as configured in the app
+            outside_room_name: the "outside" zone's room name, as configured in the app
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        async with self._update_lock:
+            await self._execute_with_retry(
+                lambda: self.client.update_room_to_room_fan_display_setting(
+                    controller_id, device_port, dev_name, inside_room_name, outside_room_name, key_values
+                ),
+                "update room-to-room fan display setting",
+            )
+            self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
     async def close(self) -> None:
         """Close the client session when done"""
         if self.client:
@@ -1159,6 +1286,8 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
     def device_info(self) -> DeviceInfo:
         """Returns the device info for the port entity"""
         device_info = self._device.device_info
+        if device_info is self._device.controller.device_info:
+            return device_info  # device shares the controller's own device (room-to-room fans)
         via_device_id = self._resolve_via_device_id(self._device.controller.identifier)
         if via_device_id is not None:
             device_info = DeviceInfo(**device_info)
@@ -1275,15 +1404,27 @@ class ACInfinityEntities(list[ACInfinityEntity]):
 
 
 def enabled_fn_sensor(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    return entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key] != EntityConfigValue.DISABLE
+    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
+    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
+    if not entity_config:
+        return True  # Enable synthetic devices by default
+    return entity_config.get(entity_config_key, EntityConfigValue.ALL) != EntityConfigValue.DISABLE
 
 
 def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
+    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
+    if not entity_config:
+        return True  # Enable synthetic devices by default
+    setting = entity_config.get(entity_config_key, EntityConfigValue.ALL)
     return setting == EntityConfigValue.ALL or setting == EntityConfigValue.SENSORS_AND_CONTROLS
 
 
 def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
+    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
+    if not entity_config:
+        return True  # Enable synthetic devices by default
+    setting = entity_config.get(entity_config_key, EntityConfigValue.ALL)
     return setting == EntityConfigValue.ALL or setting == EntityConfigValue.SENSORS_AND_SETTINGS
 

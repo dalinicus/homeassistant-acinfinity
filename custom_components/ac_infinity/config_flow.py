@@ -487,7 +487,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="calibrate",
-            data_schema=vol.Schema({
+            data_schema=self.add_suggested_values_to_schema(vol.Schema({
                 vol.Required("device_id"): selector({
                     "select": {
                         "options": [{"value": i, "label": c.controller_name} for i, c in controllers.items()]
@@ -499,7 +499,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
                 vol.Optional("humidity_entity"): selector(
                     {"entity": {"domain": "sensor", "device_class": "humidity"}}
                 ),
-            }),
+            }), user_input or {}),
             errors=errors,
             description_placeholders=placeholders,
         )

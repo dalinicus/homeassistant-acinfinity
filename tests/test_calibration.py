@@ -11,6 +11,14 @@ from custom_components.ac_infinity.core import ACInfinityController, ACInfinityD
 from tests.data_models import CONTROLLER_PROPERTIES, DEVICE_ID
 
 
+@pytest.fixture(autouse=True)
+def reset_cooldown():
+    from custom_components.ac_infinity import calibration
+    calibration._last_calibrated.clear()
+    yield
+    calibration._last_calibrated.clear()
+
+
 def make_service(temp_unit: int, temperature: int, humidity: int, cal_c=0, cal_f=0, cal_h=0) -> ACInfinityService:
     service = ACInfinityService(MagicMock(), ACInfinityData())
     service.data.controller_properties[str(DEVICE_ID)] = {
@@ -78,6 +86,25 @@ class TestCalibrate:
         assert result.clamped
         assert updates(service).call_args[0][1] == {AdvancedSettingsKey.CALIBRATE_HUMIDITY: 10}
 
+    async def test_recalibrating_within_cooldown_is_refused(self):
+        """the cloud may still report a reading taken with the old offset, which would overshoot"""
+        service = make_service(temp_unit=1, temperature=2500, humidity=5000)
+        await async_calibrate(service, controller_of(service), 23.4, None)
+
+        with pytest.raises(HomeAssistantError, match="calibrated"):
+            await async_calibrate(service, controller_of(service), 23.4, None)
+        assert updates(service).await_count == 1
+
+    async def test_recalibrating_after_cooldown_is_allowed(self, mocker):
+        from custom_components.ac_infinity import calibration
+        service = make_service(temp_unit=1, temperature=2500, humidity=5000)
+        await async_calibrate(service, controller_of(service), 23.4, None)
+
+        mocker.patch.object(calibration.time, "monotonic", return_value=calibration.time.monotonic() + calibration.COOLDOWN + 1)
+        await async_calibrate(service, controller_of(service), 23.4, None)
+
+        assert updates(service).await_count == 2
+
     async def test_ai_controller_rejected(self):
         service = make_service(temp_unit=1, temperature=2500, humidity=5000)
         controller = MagicMock(is_ai_controller=True, controller_name="AI")
@@ -95,6 +122,11 @@ class TestReadReference:
 
     def test_fahrenheit_reference_converted_to_celsius(self):
         assert read_reference(self._hass("77", "°F"), "sensor.x", temperature=True) == pytest.approx(25.0)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("state", ["nan", "inf"])
+    def test_non_finite_reference_rejected(self, state):
+        with pytest.raises(HomeAssistantError):
+            read_reference(self._hass(state), "sensor.x", temperature=False)  # type: ignore[arg-type]
 
     def test_unavailable_reference_rejected(self):
         with pytest.raises(HomeAssistantError):

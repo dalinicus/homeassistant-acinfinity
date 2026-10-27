@@ -107,7 +107,8 @@ A controller's built-in temperature / humidity sensor can be calibrated to match
 from the integration's `Configure` menu (`Calibrate Sensors`) or with the `ac_infinity.calibrate` action.  The offset is
 written to the controller's own calibration setting, so the controller's triggers and display use the corrected value too.
 
-It is computed from the uncalibrated reading, so it is safe to run repeatedly, e.g. from an automation:
+It is computed from the uncalibrated reading, so it is safe to run repeatedly, e.g. from an automation. A controller
+can only be calibrated once every 10 minutes, giving it time to report a reading with the new offset:
 
 ```yaml
 automation:

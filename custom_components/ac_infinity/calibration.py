@@ -3,10 +3,15 @@
 The offset is written to the controller's own calibration setting, so the controller's triggers and display use the
 corrected value too, not just Home Assistant.  The offset is computed from the raw (uncalibrated) reading, so
 calibrating repeatedly - e.g. from an automation - converges on the same value instead of stacking offsets.
+
+That only holds once the cloud reports a reading taken with the new offset, which can lag the write by minutes, so a
+controller can't be calibrated again until COOLDOWN has passed.
 """
 
 from __future__ import annotations
 
+import math
+import time
 from dataclasses import dataclass
 
 from homeassistant.const import ATTR_UNIT_OF_MEASUREMENT, UnitOfTemperature
@@ -21,6 +26,9 @@ from .core import ACInfinityController, ACInfinityService
 TEMP_RANGE_C = 10
 TEMP_RANGE_F = 20
 HUMIDITY_RANGE = 10
+
+COOLDOWN = 600  # seconds
+_last_calibrated: dict[str, float] = {}
 
 
 @dataclass
@@ -40,6 +48,8 @@ def read_reference(hass: HomeAssistant, entity_id: str, temperature: bool) -> fl
         value = float(state.state)
     except ValueError as ex:
         raise HomeAssistantError(f"Reference sensor {entity_id} has no numeric value ({state.state})") from ex
+    if not math.isfinite(value):
+        raise HomeAssistantError(f"Reference sensor {entity_id} has no numeric value ({state.state})")
 
     if temperature:
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT, UnitOfTemperature.CELSIUS)
@@ -64,6 +74,13 @@ async def async_calibrate(
         raise HomeAssistantError(f"{controller.controller_name} does not support calibration from Home Assistant")
 
     controller_id = controller.controller_id
+    elapsed = time.monotonic() - _last_calibrated.get(controller_id, -math.inf)
+    if elapsed < COOLDOWN:
+        raise HomeAssistantError(
+            f"{controller.controller_name} was calibrated {int(elapsed)} s ago; wait "
+            f"{int(COOLDOWN - elapsed)} s for it to report a reading with the new offset"
+        )
+
     if not service.get_controller_setting_exists(controller_id, AdvancedSettingsKey.TEMP_UNIT):
         raise HomeAssistantError(f"Calibration settings for {controller.controller_name} have not been retrieved yet")
 
@@ -104,4 +121,5 @@ async def async_calibrate(
 
     if settings:
         await service.update_controller_settings(controller, settings)
+        _last_calibrated[controller_id] = time.monotonic()
     return result

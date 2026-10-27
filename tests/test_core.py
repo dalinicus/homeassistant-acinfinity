@@ -49,6 +49,7 @@ from .data_models import (
     DEVICE_INFO_LIST_ALL,
     DEVICE_NAME,
     DEVICE_SETTINGS_DATA,
+    DEVICE_SETTINGS,
     GET_DEV_MODE_SETTING_LIST_PAYLOAD,
     MAC_ADDR,
     DEVICE_CONTROLS_DATA,
@@ -1504,7 +1505,8 @@ class TestCoordinators:
     async def test_device_coordinator_update_data_refreshes_settings_for_listener_ports(
         self, mocker: MockFixture, setup
     ):
-        """the device coordinator should only refresh ports with an active listener context"""
+        """the device coordinator should only refresh ports with an active listener context, plus port 0
+        which holds controller level settings (e.g. the temperature unit) that port entities depend on"""
         test_objects: ACTestObjects = setup
         device_coordinator = test_objects.device_coordinators[str(DEVICE_ID)]
         refresh_mock = mocker.patch.object(
@@ -1517,7 +1519,22 @@ class TestCoordinators:
         refresh_mock.assert_called_once()
         call_args = refresh_mock.call_args[0]
         assert call_args[0] == str(DEVICE_ID)
-        assert set(call_args[1]) == {1, 3}
+        assert set(call_args[1]) == {0, 1, 3}
+
+    async def test_device_coordinator_update_data_without_listeners_falls_back_to_all_ports(
+        self, mocker: MockFixture, setup
+    ):
+        """with no listeners the service picks every port, so the coordinator must not narrow it to port 0"""
+        test_objects: ACTestObjects = setup
+        device_coordinator = test_objects.device_coordinators[str(DEVICE_ID)]
+        refresh_mock = mocker.patch.object(
+            test_objects.service, "refresh_device_settings", new_callable=AsyncMock
+        )
+        mocker.patch.object(device_coordinator, "async_contexts", return_value=[])
+
+        await device_coordinator._async_update_data()
+
+        assert set(refresh_mock.call_args[0][1]) == set()
 
 
 @pytest.mark.asyncio
@@ -1525,6 +1542,7 @@ class TestRefreshDeviceSettings:
     async def test_refresh_device_settings_explicit_ports_updates_data(self, mock_client):
         """explicitly requested ports should be refreshed and cached"""
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         await service.refresh_device_settings(str(DEVICE_ID), [1, 2])
@@ -1532,17 +1550,18 @@ class TestRefreshDeviceSettings:
         assert mock_client.get_device_mode_settings.call_count == 2
         mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 1)
         mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), 2)
+        assert mock_client.get_device_settings.call_count == 2
+        mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), 1)
+        mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), 2)
         assert service.data.device_controls[(str(DEVICE_ID), 1)] == DEVICE_CONTROLS
-        assert (
-            service.data.device_settings[(str(DEVICE_ID), 2)]
-            == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
-        )
+        assert service.data.device_settings[(str(DEVICE_ID), 2)] == DEVICE_SETTINGS
 
     async def test_refresh_device_settings_falls_back_to_all_ports_when_none_given(
         self, mock_client
     ):
         """an empty port list should fall back to every port on the controller, including port 0"""
         mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
@@ -1551,8 +1570,10 @@ class TestRefreshDeviceSettings:
 
         # DEVICE_ID has devPortCount = 4, so ports 0 (controller) through 4 should be refreshed
         assert mock_client.get_device_mode_settings.call_count == 5
+        assert mock_client.get_device_settings.call_count == 5
         for port in range(5):
             mock_client.get_device_mode_settings.assert_any_call(str(DEVICE_ID), port)
+            mock_client.get_device_settings.assert_any_call(str(DEVICE_ID), port)
 
     async def test_refresh_device_settings_continues_after_one_port_fails(
         self, mocker: MockFixture, mock_client
@@ -1568,10 +1589,85 @@ class TestRefreshDeviceSettings:
             return DEVICE_CONTROLS
 
         mock_client.get_device_mode_settings.side_effect = side_effect
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
+        service.data.device_controls[(str(DEVICE_ID), 2)] = DEVICE_CONTROLS
         await service.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
 
         assert (str(DEVICE_ID), 1) in service.data.device_controls
         assert (str(DEVICE_ID), 3) in service.data.device_controls
+
+    async def test_refresh_device_settings_raises_when_uncached_port_fails(
+        self, mocker: MockFixture, mock_client
+    ):
+        """a port that fails before it has ever been retrieved should fail the refresh, after the others are cached"""
+        future: Future = asyncio.Future()
+        future.set_result(None)
+        mocker.patch("asyncio.sleep", return_value=future)
+
+        async def side_effect(controller_id, port_index):
+            if port_index == 2:
+                raise ACInfinityClientRequestFailed("unit-test")
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = side_effect
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
+
+        service = ACInfinityService(mock_client, ACInfinityData())
+        with pytest.raises(ACInfinityClientRequestFailed):
+            await service.refresh_device_settings(str(DEVICE_ID), [1, 2, 3])
+
+        assert (str(DEVICE_ID), 1) in service.data.device_controls
+        assert (str(DEVICE_ID), 3) in service.data.device_controls
         assert (str(DEVICE_ID), 2) not in service.data.device_controls
+        assert service.data.device_settings[(str(DEVICE_ID), 1)] == DEVICE_SETTINGS
+        assert (str(DEVICE_ID), 2) not in service.data.device_settings
+
+    async def test_refresh_device_settings_ai_controller_reads_from_mode_endpoint(
+        self, mock_client
+    ):
+        """AI controllers have no advanced settings endpoint, so settings come from the mode response"""
+        mock_client.get_device_mode_settings.return_value = DEVICE_CONTROLS
+
+        service = ACInfinityService(mock_client, ACInfinityData())
+        service.data.controller_properties = CONTROLLER_PROPERTIES_DATA
+
+        await service.refresh_device_settings(str(AI_DEVICE_ID), [1])
+
+        mock_client.get_device_settings.assert_not_called()
+        assert (
+            service.data.device_settings[(str(AI_DEVICE_ID), 1)]
+            == DEVICE_CONTROLS[DeviceControlKey.DEV_SETTING]
+        )
+
+
+@pytest.mark.asyncio
+class TestControllerLocks:
+    async def test_controllers_refresh_in_parallel(self, mock_client):
+        """Each controller has its own lock, so a slow controller doesn't hold up the others"""
+        both_started = asyncio.Event()
+        started: set[str] = set()
+
+        async def get_device_mode_settings(controller_id, port_index):
+            started.add(controller_id)
+            if len(started) == 2:
+                both_started.set()
+            await asyncio.wait_for(both_started.wait(), timeout=1)
+            return DEVICE_CONTROLS
+
+        mock_client.get_device_mode_settings.side_effect = get_device_mode_settings
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
+        service = ACInfinityService(mock_client, ACInfinityData())
+
+        await asyncio.gather(
+            service.refresh_device_settings("controller-a", [1]),
+            service.refresh_device_settings("controller-b", [1]),
+        )
+
+        assert started == {"controller-a", "controller-b"}
+
+    async def test_same_controller_is_serialized(self, mock_client):
+        service = ACInfinityService(mock_client, ACInfinityData())
+        assert service._controller_lock("1") is service._controller_lock(1)
+        assert service._controller_lock("1") is not service._controller_lock("2")

@@ -13,7 +13,11 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Configuration](#configuration)
   - [General Configuration](#general-configuration)
   - [Enable / Disable Entities](#enable--disable-entities)
-    
+  - [Choose Entities to Keep](#choose-entities-to-keep)
+- [Fan Entities](#fan-entities)
+- [Calibrating Against Another Sensor](#calibrating-against-another-sensor)
+- [Diagnostics](#diagnostics)
+
 # Compatibility
 
 This integration is compatible with the following UIS Controllers
@@ -22,6 +26,14 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro
 - Controller 69 Pro+
 - Controller AI+
+- AIRTAP AI Register Booster Fans (Wi-Fi models)
+- Room to Room Fan (AC-TWT6)
+
+AIRTAP fans have no ports; each fan shows up as its own device with the fan's mode (`AI` / `Off` / `On`), on/off power
+and current power on "port 0". Timer, cycle and schedule modes can still be set from the app but cannot be driven from Home Assistant.
+
+Room to room fans also have no ports; their inside / outside temperatures, mode, fan speed, target temperature, timer,
+power, direction, backlight and keypress sound are all attached to the fan's own device.
 
 This integration requires the controller be connected to Wi-fi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 
@@ -35,7 +47,9 @@ Please see the [official HACS documentation](https://hacs.xyz) for information o
 
 ## Manual Installation
 
-Copy `custom_components/acinfinity` into your Home Assistant `$HA_HOME/config` directory, then restart Home Assistant
+Copy `custom_components/ac_infinity` into your Home Assistant `$HA_HOME/config/custom_components` directory (creating it if it doesn't exist), so that `$HA_HOME/config/custom_components/ac_infinity/manifest.json` exists, then restart Home Assistant.
+
+Copying the files only makes the integration available; it must still be added from the integration section of the Home Assistant settings as described in [Initial Setup](#initial-setup).
 
 # Initial Setup
 Add an integration entry as normal from integration section of the home assistant settings.  You'll need the following configuration items
@@ -52,6 +66,7 @@ The following configurations can be modified via the configuration options dialo
 ## General Configuration
 - `Polling Interval (Seconds)`: The time between update calls to the AC Infinity API.  Minimum allowed polling interval is 5 seconds.
 - `Update Password`: When provided, updates the password used to connect to your AC Infinity account.  Requires Home Assistant restart.
+- `Number Display Type`: Show every number entity (power levels, triggers, durations, ...) as a `Box` you type a value into, as a `Slider`, or leave it `Automatic`.
 
 ## Enable / Disable Entities
 
@@ -66,4 +81,59 @@ You can enable or disable these entities as needed.  The following options are a
 
 New controllers added to the AC Infinity app will be added with `Sensors Only` by default during the next home assistant restart.
 
-Entities disabled after initial setup will no longer be provided by this integration, but will not be automatically removed from home assistant.  They can be cleaned up manually via `https://<your-ha-instance>/config/entities`.
+Entities disabled after initial setup are removed from Home Assistant the next time the integration loads.  Port and sensor devices left without any entities are removed too, and any stale device can be deleted from its device page.
+
+## Choose Entities to Keep
+
+Shown for each controller during initial setup, and available any time from the integration's `Configure` menu
+(`Choose Entities to Keep`, then pick a controller).  Nothing is ticked to start with: tick the entities you want for
+that controller and everything else is removed from Home Assistant.  It applies to the controller and all of its ports
+and sensors.
+
+- To keep most entities, tick `Tick every entity` and submit; the form comes back with everything ticked so you can
+  untick the few you don't want.
+- Leaving everything unticked keeps all entities, so submitting an empty form never removes everything.
+- Entities that are currently removed are still listed, so they can be ticked again later.
+
+Saving reloads the integration; no restart is needed.  The per-device options above still apply on top of this.
+
+# Fan Entities
+
+Every port with controls enabled also gets a regular Home Assistant `fan` entity, so it can be used with fan cards, voice
+assistants and the `fan.*` services.  Turning it on or off switches the port between `On` and `Off` mode, and the speed
+percentage maps to the `On Power` level (10% per step).  Any other active mode (Auto, VPD, Schedule, ...) is shown as on.
+
+Ports whose device type is set in the AC Infinity app to something that is not a fan (grow light, heater, pump, ...) do not
+get a fan entity.
+
+# Calibrating Against Another Sensor
+
+A controller's built-in temperature / humidity sensor can be calibrated to match any other sensor in Home Assistant,
+from the integration's `Configure` menu (`Calibrate Sensors`) or with the `ac_infinity.calibrate` action.  The offset is
+written to the controller's own calibration setting, so the controller's triggers and display use the corrected value too.
+
+It is computed from the uncalibrated reading, so it is safe to run repeatedly, e.g. from an automation. A controller
+can only be calibrated once every 10 minutes, giving it time to report a reading with the new offset:
+
+```yaml
+automation:
+  - alias: Keep tent controller calibrated
+    triggers:
+      - trigger: time_pattern
+        hours: "/6"
+    actions:
+      - action: ac_infinity.calibrate
+        data:
+          device_id: <your controller device>
+          temperature_entity: sensor.reference_temperature
+          humidity_entity: sensor.reference_humidity
+```
+
+Offsets are whole degrees / percent and limited to the controller's range (±10 °C, ±20 °F, ±10 %).  Calibration is
+supported on the 69 Wifi / Pro / Pro+ controllers; AI controllers and standalone fans don't accept it from Home Assistant.
+
+# Diagnostics
+
+The raw data the integration last received from the AC Infinity API can be downloaded from the integration's page in
+Home Assistant (`⋮` → `Download diagnostics`).  E-mail, password, MAC addresses and other identifiers are redacted.
+Please attach this file when reporting an issue with a device.

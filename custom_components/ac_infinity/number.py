@@ -13,17 +13,19 @@ from homeassistant.const import (
     Platform,
     UnitOfConductivity,
     UnitOfTemperature,
+    UnitOfTime,
     UnitOfRatio,
 )
-
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
+    ConfigurationKey,
     AtType,
     DOMAIN,
     AdvancedSettingsKey,
     DeviceControlKey,
     MdiIcon,
+    RoomToRoomFanMode,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -88,31 +90,52 @@ def __suitable_fn_controller_setting_temp_impl(
 def __suitable_fn_controller_setting_temp_f(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return not controller.is_ai_controller and __suitable_fn_controller_setting_temp_impl(entity, controller, 0)
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and __suitable_fn_controller_setting_temp_impl(entity, controller, 0)
+    )
 
 
 def __suitable_fn_controller_setting_temp_c(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return not controller.is_ai_controller and __suitable_fn_controller_setting_temp_impl(entity, controller, 1)
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and __suitable_fn_controller_setting_temp_impl(entity, controller, 1)
+    )
 
 
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return not controller.is_ai_controller and entity.service.get_controller_setting_exists(
-        controller.controller_id, entity.data_key
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and entity.service.get_controller_setting_exists(
+            controller.controller_id, entity.data_key
+        )
     )
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.service.get_device_control_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic/AI UIS controllers only; room-to-room fans use their own dedicated entities."""
+    return (
+        not device.controller.is_room_to_room_fan
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 def __suitable_fn_device_control_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.service.get_device_control_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic UIS controllers (tent controllers), not room-to-room fans or AI controllers"""
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 def __suitable_fn_device_control_ai_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
@@ -121,8 +144,13 @@ def __suitable_fn_device_control_ai_controller(entity: ACInfinityEntity, device:
     )
 
 def __suitable_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.service.get_device_setting_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic UIS controllers (tent controllers), not room-to-room fans or AI controllers"""
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and entity.service.get_device_setting_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
@@ -141,11 +169,30 @@ def __suitable_fn_device_setting_temp_impl(
 
 
 def __suitable_fn_device_setting_temp_f(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and __suitable_fn_device_setting_temp_impl(entity, device, 0)
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and __suitable_fn_device_setting_temp_impl(entity, device, 0)
+    )
 
 
 def __suitable_fn_device_setting_temp_c(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and __suitable_fn_device_setting_temp_impl(entity, device, 1)
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and __suitable_fn_device_setting_temp_impl(entity, device, 1)
+    )
+
+
+def __suitable_fn_room_to_room_fan_control(entity: ACInfinityEntity, device: ACInfinityDevice):
+    """Room-to-room fans expose their controls at device port 0 (controller level)"""
+    return (
+        device.controller.is_room_to_room_fan
+        and device.device_port == 0
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
+    )
 
 
 def __get_value_fn_controller_setting_default(
@@ -160,6 +207,14 @@ def __get_value_fn_device_control_default(entity: ACInfinityEntity, device: ACIn
     return entity.service.get_device_control(
         device.controller.controller_id, device.device_port, entity.data_key, 0
     )
+
+
+def __get_value_fn_room_to_room_timer_minutes(entity: ACInfinityEntity, device: ACInfinityDevice):
+    """Room-to-room fan timer duration is stored in seconds; convert to minutes for display."""
+    seconds = entity.service.get_device_control(
+        device.controller.controller_id, device.device_port, entity.data_key, 0
+    )
+    return math.floor((seconds or 0) / 60)
 
 
 def __get_value_fn_device_setting_default(entity: ACInfinityEntity, device: ACInfinityDevice):
@@ -278,6 +333,28 @@ def __set_value_fn_device_control_default(
     return entity.service.update_device_control(device, entity.data_key, int(value or 0))
 
 
+def __set_value_fn_room_to_room_target_temp(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    """Target temperature is held natively in °F; the API also expects the matching whole °C."""
+    fahrenheit = int(round(value or 0))
+    celsius = int(round((fahrenheit - 32) * 5 / 9))
+    return entity.service.update_device_controls(
+        device,
+        {
+            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F: fahrenheit,
+            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: celsius,
+        },
+    )
+
+
+def __set_value_fn_room_to_room_timer_minutes(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
+):
+    """Room-to-room fan timer duration is stored in seconds; convert from minutes."""
+    return entity.service.update_device_control(device, entity.data_key, int(value or 0) * 60)
+
+
 def __set_value_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController, value: float
 ):
@@ -379,45 +456,42 @@ def __set_value_fn_vpd_setting(
     return entity.service.update_device_setting(device, entity.data_key, int((value or 0) * 10))
 
 
-def __set_value_fn_temp_auto_low(
+# Auto mode temperature triggers are stored twice by the API, once per unit.  The entity's native unit follows
+# the controller's unit so whole-degree setpoints round-trip exactly (78°F must not snap through whole °C).
+FAHRENHEIT_KEYS = {
+    DeviceControlKey.AUTO_TEMP_LOW_TRIGGER: DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F,
+    DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
+    DeviceControlKey.TARGET_TEMP: DeviceControlKey.TARGET_TEMP_F,
+}
+
+
+def controller_uses_fahrenheit(entity: ACInfinityEntity, device: ACInfinityDevice) -> bool:
+    # same polarity as the calibration / dynamic response entities: devCompany > 0 means Celsius.
+    # When the unit isn't reported at all, keep the historical Celsius behaviour rather than guessing.
+    controller_id = device.controller.controller_id
+    if not entity.service.get_controller_setting_exists(controller_id, AdvancedSettingsKey.TEMP_UNIT):
+        return False
+    return entity.service.get_controller_setting(controller_id, AdvancedSettingsKey.TEMP_UNIT, 0) == 0
+
+
+def __get_value_fn_auto_temp(entity: ACInfinityEntity, device: ACInfinityDevice):
+    key = FAHRENHEIT_KEYS[entity.data_key] if controller_uses_fahrenheit(entity, device) else entity.data_key
+    return entity.service.get_device_control(device.controller.controller_id, device.device_port, key, 0)
+
+
+def __set_value_fn_auto_temp(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
+    # value is received from HA in the entity's native unit; both units must be written
+    if controller_uses_fahrenheit(entity, device):
+        fahrenheit = int(round(value or 0))
+        celsius = int(round((fahrenheit - 32) / 1.8))
+    else:
+        celsius = int(round(value or 0))
+        fahrenheit = int(round((celsius * 1.8) + 32))
+
     return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.AUTO_TEMP_LOW_TRIGGER: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
-        },
-    )
-
-
-def __set_value_fn_temp_auto_high(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
-):
-    return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F: int(round((value * 1.8) + 32, 0)),
-        },
-    )
-
-
-def __set_value_fn_target_temp(
-    entity: ACInfinityEntity, device: ACInfinityDevice, value: float
-):
-    return entity.service.update_device_controls(
-        device,
-        {
-            # value is received from HA as C
-            DeviceControlKey.TARGET_TEMP: int(value or 0),
-            # degrees F must be calculated and set in addition to C
-            DeviceControlKey.TARGET_TEMP_F: int(round((value * 1.8) + 32, 0)),
-        },
+        device, {entity.data_key: celsius, FAHRENHEIT_KEYS[entity.data_key]: fahrenheit}
     )
 
 
@@ -989,8 +1063,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="auto_mode_temp_low_trigger",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_temp_auto_low,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1005,8 +1079,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="auto_mode_temp_high_trigger",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_temp_auto_high,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1021,8 +1095,8 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         translation_key="target_temp",
         enabled_fn=enabled_fn_control,
         suitable_fn=__suitable_fn_device_control_default,
-        get_value_fn=__get_value_fn_device_control_default,
-        set_value_fn=__set_value_fn_target_temp,
+        get_value_fn=__get_value_fn_auto_temp,
+        set_value_fn=__set_value_fn_auto_temp,
         at_type_fn=lambda at_type: at_type == AtType.AUTO
     ),
     ACInfinityDeviceNumberEntityDescription(
@@ -1173,7 +1247,88 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
         set_value_fn=__set_value_fn_device_setting_default,
         at_type_fn=lambda at_type: True
     ),
+    # Room-to-room fan controls (AC-TWT6, devType 33).
+    # Field mapping confirmed via packet capture of the official app against a live unit
+    # (the existing UIS/AI atType and key semantics do not apply to this device type).
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.ON_SPEED,
+        device_class=NumberDeviceClass.POWER_FACTOR,
+        mode=NumberMode.SLIDER,
+        native_min_value=1,
+        native_max_value=10,
+        native_step=1,
+        icon=MdiIcon.KNOB,
+        translation_key="room_to_room_fan_speed",
+        native_unit_of_measurement=None,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: True,  # max speed the controller may reach; applies in every mode
+    ),
+    # Single target-temperature entity, stored natively in °F; Home Assistant converts display and
+    # input to the user's unit system. The setter writes both the °F and °C fields the API expects.
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F,
+        device_class=NumberDeviceClass.TEMPERATURE,
+        mode=NumberMode.BOX,
+        native_min_value=32,
+        native_max_value=104,
+        native_step=1,
+        icon=None,
+        translation_key="room_to_room_target_temp",
+        native_unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_room_to_room_target_temp,
+        at_type_fn=lambda at_type: at_type == RoomToRoomFanMode.TEMP_TARGET,
+    ),
+    # AI mode's temperature differential. Confirmed via capture: this reuses the UIS
+    # "targetHumi" field name, despite the value being a temperature differential in °F
+    # rather than a humidity percentage, for this device type.
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.TARGET_HUMI,
+        device_class=None,
+        mode=NumberMode.BOX,
+        native_min_value=1,
+        native_max_value=10,
+        native_step=1,
+        icon=MdiIcon.THERMOMETER_PLUS,
+        translation_key="room_to_room_ai_differential",
+        native_unit_of_measurement=UnitOfTemperature.FAHRENHEIT,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_device_control_default,
+        set_value_fn=__set_value_fn_device_control_default,
+        at_type_fn=lambda at_type: at_type == RoomToRoomFanMode.AI_DIFFERENTIAL,
+    ),
+    # Timer mode duration. The API stores this in seconds (confirmed: 1800=30min,
+    # 7200=2hr); this entity presents it in minutes for usability.
+    ACInfinityDeviceNumberEntityDescription(
+        key=DeviceControlKey.TIMER_DURATION_TO_OFF,
+        device_class=NumberDeviceClass.DURATION,
+        mode=NumberMode.BOX,
+        native_min_value=1,
+        native_max_value=480,
+        native_step=1,
+        icon=None,
+        translation_key="room_to_room_timer_duration",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_room_to_room_timer_minutes,
+        set_value_fn=__set_value_fn_room_to_room_timer_minutes,
+        at_type_fn=lambda at_type: at_type == RoomToRoomFanMode.TIMER,
+    ),
 ]
+
+
+def number_display_type(entity: ACInfinityEntity) -> NumberMode | None:
+    """The display type chosen in the options flow for every number entity, or None to keep each entity's default."""
+    entry = entity.coordinator.config_entry
+    value = entry.data.get(ConfigurationKey.NUMBER_DISPLAY_TYPE) if entry is not None else None
+    return NumberMode(value) if value in (NumberMode.BOX, NumberMode.SLIDER) else None
 
 
 class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity):
@@ -1196,6 +1351,10 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
             device_coordinator,
         )
         self.entity_description = description
+
+    @property
+    def mode(self) -> NumberMode:
+        return number_display_type(self) or super().mode
 
     @property
     def native_value(self) -> float | None:
@@ -1225,8 +1384,30 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
         self.entity_description = description
 
     @property
+    def mode(self) -> NumberMode:
+        return number_display_type(self) or super().mode
+
+    @property
     def native_value(self) -> float | None:
         return self.entity_description.get_value_fn(self, self.device_port)
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return UnitOfTemperature.FAHRENHEIT
+        return super().native_unit_of_measurement
+
+    @property
+    def native_min_value(self) -> float:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return 32
+        return super().native_min_value
+
+    @property
+    def native_max_value(self) -> float:
+        if self.data_key in FAHRENHEIT_KEYS and controller_uses_fahrenheit(self, self.device_port):
+            return 194
+        return super().native_max_value
 
     async def async_set_native_value(self, value: float) -> None:
         _LOGGER.info(
@@ -1244,7 +1425,7 @@ async def async_setup_entry(
     entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
     controllers = entry_data.service.get_all_controller_properties()
 
-    entities = ACInfinityEntities(config)
+    entities = ACInfinityEntities(config, entry_data)
     for controller in controllers:
 
         controller_device_coordinator = entry_data.device_coordinators[controller.controller_id]

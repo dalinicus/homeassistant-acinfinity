@@ -1,12 +1,17 @@
 import asyncio
+from typing import cast
+from unittest.mock import MagicMock
 from asyncio import Future
 
 import pytest
-from homeassistant.components.number import NumberDeviceClass
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
     DOMAIN,
+    AtType,
     AdvancedSettingsKey,
     DeviceControlKey,
 )
@@ -1038,6 +1043,80 @@ class TestNumbers:
         test_objects.refresh_mock.assert_not_called()
 
     @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F),
+            (DeviceControlKey.AUTO_TEMP_LOW_TRIGGER, DeviceControlKey.AUTO_TEMP_LOW_TRIGGER_F),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
+        ],
+    )
+    async def test_temp_trigger_fahrenheit_controller_reads_f_key(self, setup, setting, f_setting):
+        """A Fahrenheit controller exposes the F field natively, so 88°F reads as 88°F (not 0°C / 32°F)"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, setting)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = {
+            **test_objects.service.data.device_settings[(str(DEVICE_ID), 0)],
+            AdvancedSettingsKey.TEMP_UNIT: 0,
+        }
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][setting] = 0
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][f_setting] = 88
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.native_value == 88
+        assert entity.native_unit_of_measurement == UnitOfTemperature.FAHRENHEIT
+        assert entity.native_min_value == 32
+        assert entity.native_max_value == 194
+
+    async def test_temp_trigger_unknown_unit_keeps_celsius(self, setup):
+        """Without devCompany the unit is unknown; keep reading the Celsius key as before"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER)
+        settings = dict(test_objects.service.data.device_settings[(str(DEVICE_ID), 0)])
+        settings.pop(AdvancedSettingsKey.TEMP_UNIT, None)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = settings
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER] = 25
+        test_objects.service.data.device_controls[(str(DEVICE_ID), 1)][DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F] = 0
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.native_value == 25
+        assert entity.native_unit_of_measurement == UnitOfTemperature.CELSIUS
+
+    @pytest.mark.parametrize("f,c", [(78, 26), (77, 25), (32, 0), (194, 90)])
+    @pytest.mark.parametrize(
+        "setting, f_setting",
+        [
+            (DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER, DeviceControlKey.AUTO_TEMP_HIGH_TRIGGER_F),
+            (DeviceControlKey.TARGET_TEMP, DeviceControlKey.TARGET_TEMP_F),
+        ],
+    )
+    async def test_temp_trigger_fahrenheit_controller_writes_exact_f(self, setup, setting, f_setting, f, c):
+        """Whole °F setpoints round-trip exactly on a Fahrenheit controller"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, setting)
+        test_objects.service.data.device_settings[(str(DEVICE_ID), 0)] = {
+            **test_objects.service.data.device_settings[(str(DEVICE_ID), 0)],
+            AdvancedSettingsKey.TEMP_UNIT: 0,
+        }
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        await entity.async_set_native_value(f)
+
+        test_objects.port_control_sets_mock.assert_called_with(entity._device, {setting: c, f_setting: f})
+
+    @pytest.mark.parametrize(
+        "display_type,expected",
+        [(None, NumberMode.AUTO), ("auto", NumberMode.AUTO), ("box", NumberMode.BOX), ("slider", NumberMode.SLIDER)],
+    )
+    async def test_number_display_type_option_overrides_mode(self, setup, display_type, expected):
+        """The options flow display type applies to every number entity, so speeds can be typed in"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        entity.coordinator.config_entry = MagicMock(data={"number_display_type": display_type})
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.mode == expected
+
+    @pytest.mark.parametrize(
         "setting",
         [
             AdvancedSettingsKey.CALIBRATE_TEMP,
@@ -1520,3 +1599,79 @@ class TestNumbers:
             entity._device, AdvancedSettingsKey.SUNRISE_TIMER_DURATION, 156
         )
         test_objects.refresh_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+class TestEntityFilters:
+    """Integration wide filters from the "Remove unwanted entities" step"""
+
+    @staticmethod
+    def _entry(**data) -> ConfigEntry:
+        from types import SimpleNamespace
+        return cast(ConfigEntry, SimpleNamespace(data=data))
+
+    async def test_entity_type_filter_matches_platform_and_translation_key(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+
+        assert is_excluded_by_filters(self._entry(excluded_entity_types=["number.on_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(excluded_entity_types=["number.off_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(excluded_entity_types=["sensor.on_power"]), entity)
+        assert not is_excluded_by_filters(self._entry(), entity)
+
+    async def test_keep_list_is_per_controller(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        keep = {"included_entity_types": ["number.off_power"]}
+
+        # not in this controller's keep-list -> removed
+        assert is_excluded_by_filters(self._entry(entity_filters={str(DEVICE_ID): keep}), entity)
+        # kept when ticked
+        assert not is_excluded_by_filters(
+            self._entry(entity_filters={str(DEVICE_ID): {"included_entity_types": ["number.on_power"]}}), entity
+        )
+        # another controller's keep-list doesn't apply
+        assert not is_excluded_by_filters(self._entry(entity_filters={"other": keep}), entity)
+        # an empty keep-list keeps everything
+        assert not is_excluded_by_filters(
+            self._entry(entity_filters={str(DEVICE_ID): {"included_entity_types": []}}), entity
+        )
+
+    async def test_supported_types_are_recorded_even_when_not_kept(self, setup):
+        """the keep-list form must still offer types that are currently removed, so they can be ticked again"""
+        from custom_components.ac_infinity.const import DOMAIN as AC_DOMAIN
+        test_objects: ACTestObjects = setup
+        entry_data = test_objects.hass.data[AC_DOMAIN][test_objects.config_entry.entry_id]
+        object.__setattr__(test_objects.config_entry, "data", {
+            **test_objects.config_entry.data,
+            "entity_filters": {str(DEVICE_ID): {"included_entity_types": ["number.off_power"]}},
+        })
+
+        await async_setup_entry(test_objects.hass, test_objects.config_entry, test_objects.entities.add_entities_callback)
+
+        assert "number.on_power" in entry_data.available_entity_types[str(DEVICE_ID)]
+        assert not [
+            e for e in test_objects.entities.added_entities
+            if str(DEVICE_ID) == e.controller_id and e.translation_key == "on_power"
+        ]
+
+    async def test_entity_type_keys_match_the_option_list(self, setup):
+        """every entity the platform creates must be selectable in the filter option list"""
+        from custom_components.ac_infinity.entity_filter import all_entity_types
+        test_objects: ACTestObjects = setup
+        await async_setup_entry(test_objects.hass, test_objects.config_entry, test_objects.entities.add_entities_callback)
+
+        offered = {f"{platform}.{key}" for platform, key in all_entity_types()}
+        created = {f"{e.platform_name}.{e.translation_key}" for e in test_objects.entities.added_entities}
+        assert created and created <= offered
+
+    async def test_mode_filter_removes_only_mode_specific_entities(self, setup):
+        from custom_components.ac_infinity.core import is_excluded_by_filters
+        timer_on = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.TIMER_DURATION_TO_ON)
+        on_power = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        entry = self._entry(excluded_modes=[str(AtType.TIMER_TO_ON)])
+
+        assert is_excluded_by_filters(entry, timer_on)
+        # shown in every mode, so never removed by a mode filter
+        assert not is_excluded_by_filters(self._entry(excluded_modes=[str(m) for m in range(16)]), on_power)
+        assert not is_excluded_by_filters(self._entry(excluded_modes=[str(AtType.CYCLE)]), timer_on)

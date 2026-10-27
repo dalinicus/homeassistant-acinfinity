@@ -15,6 +15,17 @@
           "password": "Passwort",
           "polling_interval": "Abfrageintervall (Sekunden)"
         }
+      },
+      "entity_filters": {
+        "title": "{controller}: Entitäten behalten",
+        "description": "Wähle die Entitäten, die du für {controller} behalten willst; alles nicht Angehakte wird aus Home Assistant entfernt. Nichts anhaken behält alle Entitäten. \"Alle Entitäten anhaken\" anhaken und absenden, um alle anzuhaken und dann einzelne abzuwählen.",
+        "data": {
+          "select_all_entity_types": "Alle Entitäten anhaken",
+          "included_entity_types": "Zu behaltende Entitäten"
+        },
+        "data_description": {
+          "included_entity_types": "Gilt für diesen Controller und alle seine Ports und Sensoren."
+        }
       }
     }
   },
@@ -28,6 +39,10 @@
         },
         "data_description": {
           "update_password": "Die Aktualisierung des Passworts erfordert einen Neustart von Home Assistant."
+        },
+        "menu_options": {
+          "entity_filters": "Entitäten auswählen",
+          "calibrate": "Sensoren kalibrieren"
         }
       },
       "notify_restart": {
@@ -37,13 +52,53 @@
           "restart_yes": "Jetzt neu starten",
           "restart_no": "Später neu starten"
         }
+      },
+      "entity_filters": {
+        "title": "Entitäten auswählen",
+        "data": {
+          "device_id": "Controller"
+        }
+      },
+      "general_config": {
+        "data": {
+          "number_display_type": "Anzeigeart für Zahlen"
+        },
+        "data_description": {
+          "number_display_type": "Ob Zahlen-Entitäten (z.B. Leistung) als Eingabefeld oder Schieberegler angezeigt werden."
+        }
+      },
+      "calibrate": {
+        "title": "Sensoren kalibrieren",
+        "description": "Gleicht den eingebauten Sensor eines Controllers an einen Referenzsensor an. {error}",
+        "data": {
+          "device_id": "Controller",
+          "temperature_entity": "Referenz-Temperatur",
+          "humidity_entity": "Referenz-Feuchte"
+        }
+      },
+      "controller_entity_filters": {
+        "title": "{controller}: Entitäten behalten",
+        "description": "Wähle die Entitäten, die du für {controller} behalten willst; alles nicht Angehakte wird aus Home Assistant entfernt. Nichts anhaken behält alle Entitäten. \"Alle Entitäten anhaken\" anhaken und absenden, um alle anzuhaken und dann einzelne abzuwählen.",
+        "data": {
+          "select_all_entity_types": "Alle Entitäten anhaken",
+          "included_entity_types": "Zu behaltende Entitäten"
+        },
+        "data_description": {
+          "included_entity_types": "Gilt für diesen Controller und alle seine Ports und Sensoren."
+        }
       }
     },
     "error": {
       "invalid_polling_interval": "Das Abfrageintervall darf nicht weniger als 5 Sekunden betragen",
       "cannot_connect": "Verbindung fehlgeschlagen",
       "invalid_auth": "Ungültige Authentifizierung",
-      "unknown": "Unerwarteter Fehler"
+      "unknown": "Unerwarteter Fehler",
+      "no_reference": "Wähle mindestens einen Referenzsensor.",
+      "calibration_failed": "Kalibrierung fehlgeschlagen."
+    },
+    "abort": {
+      "calibrated": "Kalibriert. Temperatur-Offset: {temperature}, Feuchte-Offset: {humidity}{clamped}",
+      "no_calibratable_controllers": "Keiner deiner Controller unterstützt Kalibrierung aus Home Assistant."
     }
   },
   "entity": {
@@ -238,6 +293,9 @@
       },
       "sunrise_timer_enabled": {
         "name": "Sonnenaufgang/-untergang aktiviert"
+      },
+      "dynamic_wind": {
+        "name": "Dynamischer Wind"
       }
     },
     "time": {
@@ -246,6 +304,31 @@
       },
       "schedule_mode_off_time": {
         "name": "Geplante Aus-Zeit"
+      }
+    },
+    "fan": {
+      "fan": {
+        "name": "Lüfter"
+      }
+    }
+  },
+  "services": {
+    "calibrate": {
+      "name": "Sensor kalibrieren",
+      "description": "Setzt die Kalibrierung des Controllers so, dass sein eingebauter Temperatur-/Feuchtesensor dem Referenzsensor entspricht.",
+      "fields": {
+        "device_id": {
+          "name": "Controller",
+          "description": "Der zu kalibrierende AC Infinity Controller."
+        },
+        "temperature_entity": {
+          "name": "Referenz-Temperatur",
+          "description": "Sensor, dem die Temperatur angeglichen wird."
+        },
+        "humidity_entity": {
+          "name": "Referenz-Feuchte",
+          "description": "Sensor, dem die Luftfeuchte angeglichen wird."
+        }
       }
     }
   }

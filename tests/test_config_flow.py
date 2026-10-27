@@ -16,6 +16,7 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientRequestFailed,
 )
 from custom_components.ac_infinity.config_flow import (
+    NUMBER_DISPLAY_TYPE_SELECTOR,
     CONFIG_SCHEMA,
     ConfigFlow,
     OptionsFlow,
@@ -257,12 +258,21 @@ class TestConfigFlow:
             "sensors": "sensors_only"
         }
 
-        result = await flow.async_step_enable_entities(user_input)
+        mocker.patch(
+            "custom_components.ac_infinity.config_flow.async_keep_list_schema", new_callable=mocker.AsyncMock
+        )
+        await flow.async_step_enable_entities(user_input)
 
-        # Verify that entities were stored for the first device
+        # Verify that entities were stored for the first device, then its keep-list is shown
         assert flow.entities[str(DEVICE_ID)] == user_input
+        assert flow.async_show_form.call_args[1]["step_id"] == "entity_filters"
+        assert flow.device_index == 0
 
-        # Verify that device index was incremented
+        flow.async_show_form.reset_mock()
+        await flow.async_step_entity_filters({"included_entity_types": ["sensor.temperature"]})
+
+        # Verify the keep-list was stored per controller and the next device is shown
+        assert flow.filters[str(DEVICE_ID)] == {"included_entity_types": ["sensor.temperature"]}
         assert flow.device_index == 1
 
         # Verify that the form is shown for the next device
@@ -301,10 +311,22 @@ class TestConfigFlow:
             "sensors": "all"
         }
 
-        result = await flow.async_step_enable_entities(user_input)
+        mocker.patch(
+            "custom_components.ac_infinity.config_flow.async_keep_list_schema", new_callable=mocker.AsyncMock
+        )
+        mocker.patch.object(mock_service, "get_controller_property", return_value="AI Controller")
+        await flow.async_step_enable_entities(user_input)
 
-        # Verify that entities were stored for the last device
+        # Verify that entities were stored for the last device, then its keep-list is shown
         assert flow.entities[str(AI_DEVICE_ID)] == user_input
+        assert flow.async_show_form.call_args[1]["step_id"] == "entity_filters"
+        flow.async_create_entry.assert_not_called()
+
+        # "tick every entity" re-shows the form with everything ticked instead of saving
+        await flow.async_step_entity_filters({"select_all_entity_types": True, "included_entity_types": []})
+        flow.async_create_entry.assert_not_called()
+
+        result = await flow.async_step_entity_filters({"included_entity_types": ["sensor.temperature"]})
 
         # Verify config entry was created
         flow.async_create_entry.assert_called_once()
@@ -315,6 +337,7 @@ class TestConfigFlow:
         config_data = call_args[1]["data"]
         assert config_data[CONF_EMAIL] == EMAIL
         assert config_data[CONF_PASSWORD] == PASSWORD
+        assert config_data["entity_filters"] == {str(AI_DEVICE_ID): {"included_entity_types": ["sensor.temperature"]}}
         assert config_data["entities"] == {
             str(DEVICE_ID): {"controller": "all", "sensors": "sensors_only"},
             str(AI_DEVICE_ID): {"controller": "sensors_only", "sensors": "all"}
@@ -377,6 +400,7 @@ class TestConfigFlow:
                 {
                     vol.Required(ConfigurationKey.POLLING_INTERVAL, default=expected_value): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={},
@@ -416,6 +440,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={},
@@ -456,6 +481,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={ConfigurationKey.POLLING_INTERVAL: "invalid_polling_interval"},
@@ -577,8 +603,39 @@ class TestConfigFlow:
         await flow.async_step_init()
 
         flow.async_show_menu.assert_called_with(
-            step_id="init", menu_options=["general_config", "controller_select"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters", "calibrate"]
         )
+
+    async def test_options_flow_keep_list_saves_per_controller_and_reloads(self, setup_options_flow, mocker):
+        """Saving one controller's keep-list stores it under that controller only and reloads the entry"""
+        _, test_objects = setup_options_flow
+        flow = test_objects.options_flow
+        update_mock = mocker.patch.object(flow.hass.config_entries, "async_update_entry", create=True)
+        reload_mock = mocker.patch.object(flow.hass.config_entries, "async_schedule_reload", create=True)
+        flow.current_device_id = str(DEVICE_ID)
+
+        await flow.async_step_controller_entity_filters({"included_entity_types": ["sensor.temperature"]})
+
+        new_data = update_mock.call_args[1]["data"]
+        assert new_data["entity_filters"] == {str(DEVICE_ID): {"included_entity_types": ["sensor.temperature"]}}
+        reload_mock.assert_called_once()
+        flow.async_create_entry.assert_called_once()
+
+    async def test_options_flow_keep_list_select_all_reshows_form(self, setup_options_flow, mocker):
+        """"Tick every entity" re-shows the form with all of the controller's types ticked instead of saving"""
+        _, test_objects = setup_options_flow
+        flow = test_objects.options_flow
+        schema_mock = mocker.patch(
+            "custom_components.ac_infinity.config_flow.async_keep_list_schema", new_callable=mocker.AsyncMock
+        )
+        update_mock = mocker.patch.object(flow.hass.config_entries, "async_update_entry", create=True)
+        flow.current_device_id = str(DEVICE_ID)
+
+        await flow.async_step_controller_entity_filters({"select_all_entity_types": True, "included_entity_types": []})
+
+        assert schema_mock.call_args[1]["select_all"] is True
+        update_mock.assert_not_called()
+        assert flow.async_show_form.call_args[1]["step_id"] == "controller_entity_filters"
 
     async def test_options_flow_controller_select_shows_form_with_devices(self, setup_options_flow):
         """When async_step_controller_select is called without user input, it should show form with device options"""
@@ -734,6 +791,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={ConfigurationKey.UPDATE_PASSWORD: expected},

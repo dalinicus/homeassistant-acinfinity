@@ -27,6 +27,7 @@ from custom_components.ac_infinity.core import (
     ACInfinityController,
     ACInfinityControllerEntity,
     ACInfinityControllerReadOnlyMixin,
+    ACInfinityDeviceCoordinator,
     ACInfinityDeviceListCoordinator,
     ACInfinityEntities,
     ACInfinityEntity,
@@ -45,7 +46,9 @@ from .const import (
     ISSUE_URL,
     ControllerPropertyKey,
     CustomDevicePropertyKey,
+    DeviceControlKey,
     DevicePropertyKey,
+    RoomToRoomFanMode,
     SensorPropertyKey,
     SensorReferenceKey,
     SensorType, ControllerType,
@@ -95,7 +98,34 @@ def __suitable_fn_controller_property_default(
     # These values are available in the sensor array.  The external values are duplicated on the base fields used by
     # the non-AI controllers. We use the sensor array values as the source of truth, and choose not to duplicate them here
     # by skipping the controller descriptions for the base values.
-    return not controller.is_ai_controller and entity.service.get_controller_property_exists(
+    #
+    # Room-to-room fans (e.g. AC-TWT6) don't report humidity/VPD at all; their only
+    # environmental readings are the dedicated insideTemp/outsideTemp zone sensors.
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and entity.service.get_controller_property_exists(
+            controller.controller_id, entity.data_key
+        )
+    )
+
+
+def __suitable_fn_controller_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    # Standalone room-to-room/through-wall fans (e.g. AC-TWT6) populate the top-level
+    # "temperature" field with a stale/unused value that doesn't match either zone's
+    # actual reading. Their real temperatures live in insideTemp/outsideTemp instead,
+    # exposed via the dedicated descriptions below.
+    if controller.is_room_to_room_fan:
+        return False
+    return __suitable_fn_controller_property_default(entity, controller)
+
+
+def __suitable_fn_room_to_room_zone_temperature(
+    entity: ACInfinityEntity, controller: ACInfinityController
+):
+    return controller.is_room_to_room_fan and entity.service.get_controller_property_exists(
         controller.controller_id, entity.data_key
     )
 
@@ -199,6 +229,14 @@ def __suitable_fn_device_property_default(entity: ACInfinityEntity, device: ACIn
     )
 
 
+def __suitable_fn_device_property_not_room_to_room(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return not device.controller.is_room_to_room_fan and __suitable_fn_device_property_default(entity, device)
+
+
+def __suitable_fn_device_property_room_to_room(entity: ACInfinityEntity, device: ACInfinityDevice):
+    return device.controller.is_room_to_room_fan and __suitable_fn_device_property_default(entity, device)
+
+
 def __get_value_fn_device_property_default(
     entity: ACInfinityEntity, device: ACInfinityDevice
 ):
@@ -226,6 +264,16 @@ def __get_next_mode_change_timestamp(
         device.controller.controller_id, device.device_port, DevicePropertyKey.REMAINING_TIME, 0
     )
 
+    # a room-to-room fan only counts down to a state change while its Timer mode is active
+    if (
+        device.controller.is_room_to_room_fan
+        and entity.service.get_device_control(
+            device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 0
+        )
+        != RoomToRoomFanMode.TIMER
+    ):
+        return None
+
     timezone = entity.service.get_controller_property(
         device.controller.controller_id, ControllerPropertyKey.TIME_ZONE
     )
@@ -246,7 +294,31 @@ CONTROLLER_DESCRIPTIONS: list[ACInfinityControllerSensorEntityDescription] = [
         icon=None,  # default
         translation_key="temperature",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_controller_property_default,
+        suitable_fn=__suitable_fn_controller_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.INSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="inside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
+        get_value_fn=__get_value_fn_floating_point_as_int,
+    ),
+    ACInfinityControllerSensorEntityDescription(
+        key=ControllerPropertyKey.OUTSIDE_TEMP,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_unit_of_measurement=None,
+        icon=None,  # default
+        translation_key="outside_temperature",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_room_to_room_zone_temperature,
         get_value_fn=__get_value_fn_floating_point_as_int,
     ),
     ACInfinityControllerSensorEntityDescription(
@@ -504,7 +576,21 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
         icon=None,  # default
         translation_key="current_power",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=__suitable_fn_device_property_default,
+        suitable_fn=__suitable_fn_device_property_not_room_to_room,
+        get_value_fn=__get_value_fn_device_property_default,
+    ),
+    # Room-to-room fans report the speed the fan is actually running at (0-10, bounded by the
+    # configured max fan speed) in the same field UIS ports use for current power.
+    ACInfinityDeviceSensorEntityDescription(
+        key=DevicePropertyKey.SPEAK,
+        device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        suggested_unit_of_measurement=None,
+        icon=MdiIcon.KNOB,
+        translation_key="current_fan_speed",
+        enabled_fn=enabled_fn_sensor,
+        suitable_fn=__suitable_fn_device_property_room_to_room,
         get_value_fn=__get_value_fn_device_property_default,
     ),
     ACInfinityDeviceSensorEntityDescription(
@@ -528,7 +614,7 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSensorEntityDescription] = [
         icon=None,  # default
         translation_key="next_state_change",
         enabled_fn=enabled_fn_sensor,
-        suitable_fn=lambda x, y: True,
+        suitable_fn=lambda entity, device: True,
         get_value_fn=__get_next_mode_change_timestamp,
     ),
 ]
@@ -590,9 +676,10 @@ class ACInfinityDeviceSensorEntity(ACInfinityDeviceEntity, SensorEntity):
         list_coordinator: ACInfinityDeviceListCoordinator,
         description: ACInfinityDeviceSensorEntityDescription,
         device: ACInfinityDevice,
+        device_coordinator: ACInfinityDeviceCoordinator | None = None,
     ) -> None:
         super().__init__(
-            device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR, list_coordinator
+            device, description.enabled_fn, description.suitable_fn, None, description.key, Platform.SENSOR, list_coordinator, device_coordinator
         )
         self.entity_description = description
 
@@ -610,7 +697,7 @@ async def async_setup_entry(
 
     controllers = entry_data.service.get_all_controller_properties()
 
-    entities = ACInfinityEntities(config)
+    entities = ACInfinityEntities(config, entry_data)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerSensorEntity(
@@ -635,7 +722,9 @@ async def async_setup_entry(
         for device in controller.devices:
             for device_description in DEVICE_DESCRIPTIONS:
                 device_entity = ACInfinityDeviceSensorEntity(
-                    entry_data.list_coordinator, device_description, device
+                    entry_data.list_coordinator, device_description, device,
+                    # a room-to-room fan's port state only exists in its mode settings, polled by the device coordinator
+                    entry_data.device_coordinators[controller.controller_id] if controller.is_room_to_room_fan else None,
                 )
                 entities.append_if_suitable(device_entity)
 

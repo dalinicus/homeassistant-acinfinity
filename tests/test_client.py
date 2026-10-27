@@ -4,29 +4,9 @@ import sys
 from unittest.mock import MagicMock
 from urllib.parse import parse_qsl, unquote, urlparse
 
-import aioresponses.core as aioresponses_core
 import pytest
-from aiohttp import ClientResponse
 from aioresponses import aioresponses
-from aioresponses.compat import AIOHTTP_VERSION
-from packaging.version import Version
 
-# aiohttp 3.14 made `stream_writer` a required keyword-only argument of
-# ClientResponse.__init__, but the released aioresponses (0.7.9) still builds
-# mock responses without it, raising TypeError on every mocked request.
-# See https://github.com/pnuckowski/aioresponses/issues/289. Supply a default
-# until aioresponses ships an aiohttp 3.14 compatible release.
-if AIOHTTP_VERSION >= Version("3.14"):
-
-    class _StreamWriterStub:
-        output_size = 0
-
-    class _CompatClientResponse(ClientResponse):
-        def __init__(self, *args, **kwargs):
-            kwargs.setdefault("stream_writer", _StreamWriterStub())
-            super().__init__(*args, **kwargs)
-
-    setattr(aioresponses_core, "ClientResponse", _CompatClientResponse)
 
 from custom_components.ac_infinity.client import (
     API_URL_ADD_DEV_MODE,
@@ -316,6 +296,37 @@ class TestACInfinityClient:
         client = ACInfinityClient(HOST, EMAIL, PASSWORD)
         with pytest.raises(ACInfinityClientCannotConnect):
             await client.get_device_mode_settings(DEVICE_ID, 0)
+
+    @pytest.mark.parametrize("port", [0, 1, 2, 3, 4])
+    async def test_get_device_advanced_settings_returns_settings(self, port: int):
+        """When logged in, get device settings should return the port's advanced settings"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                mocked.post(
+                    re.compile(rf"{HOST}{API_URL_GET_DEV_SETTING}.*"),
+                    status=200,
+                    payload=GET_DEV_SETTINGS_PAYLOAD,
+                )
+
+                result = await client.get_device_settings(DEVICE_ID, port)
+
+                assert result is not None
+                assert result[AdvancedSettingsKey.DEVICE_LOAD_TYPE] == 8
+
+                gen = (request for request in mocked.requests.values())
+                found = next(gen)
+
+                assert found[0].kwargs["data"]["port"] == port
+        finally:
+            await client.close()
+
+    async def test_get_device_advanced_settings_connect_error_on_not_logged_in(self):
+        """When not logged in, get device settings should throw a connect error"""
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        with pytest.raises(ACInfinityClientCannotConnect):
+            await client.get_device_settings(DEVICE_ID, 0)
 
     @staticmethod
     async def __make_generic_update_advanced_settings_call_and_get_sent_payload(
@@ -616,3 +627,48 @@ class TestACInfinityClient:
         # Decode the URL-encoded value for comparison
         actual_value = unquote(payload[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR])
         assert actual_value == expected_id_str
+
+
+@pytest.mark.asyncio
+class TestLoginExpired:
+    """The API expires sessions server side: every request then answers
+    {'msg': 'Login Expired Please login again!', 'code': 403} until the client logs in again."""
+
+    EXPIRED = {"msg": "Login Expired Please login again!", "code": 403}
+
+    async def test_expired_session_logs_in_again_and_replays_request(self):
+        from tests.data_models import DEVICE_INFO_LIST_ALL_PAYLOAD
+
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                list_url = re.compile(rf"{HOST}{API_URL_GET_DEVICE_INFO_LIST_ALL}.*")
+                mocked.post(list_url, status=200, payload=self.EXPIRED)
+                mocked.post(re.compile(rf"{HOST}{API_URL_LOGIN}.*"), status=200, payload=LOGIN_PAYLOAD)
+                mocked.post(list_url, status=200, payload=DEVICE_INFO_LIST_ALL_PAYLOAD)
+
+                result = await client.get_account_controllers()
+
+                assert result == DEVICE_INFO_LIST_ALL_PAYLOAD["data"]
+                logins = [c for (m, u), c in mocked.requests.items() if API_URL_LOGIN in str(u)]
+                assert len(logins) == 1 and len(logins[0]) == 1
+        finally:
+            await client.close()
+
+    async def test_still_expired_after_relogin_fails_instead_of_looping(self):
+        client = ACInfinityClient(HOST, EMAIL, PASSWORD)
+        client._user_id = USER_ID
+        try:
+            with aioresponses() as mocked:
+                list_url = re.compile(rf"{HOST}{API_URL_GET_DEVICE_INFO_LIST_ALL}.*")
+                mocked.post(list_url, status=200, payload=self.EXPIRED, repeat=True)
+                mocked.post(re.compile(rf"{HOST}{API_URL_LOGIN}.*"), status=200, payload=LOGIN_PAYLOAD, repeat=True)
+
+                with pytest.raises(ACInfinityClientRequestFailed):
+                    await client.get_account_controllers()
+
+                logins = [c for (m, u), c in mocked.requests.items() if API_URL_LOGIN in str(u)]
+                assert len(logins[0]) == 1
+        finally:
+            await client.close()

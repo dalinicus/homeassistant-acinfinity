@@ -1,12 +1,28 @@
 import json
 import logging
+from typing import Any
 from urllib.parse import urlencode
 
 import aiohttp
 import async_timeout
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.ac_infinity.const import AdvancedSettingsKey, AtType, DeviceControlKey, ModeAndSettingKeys
+from custom_components.ac_infinity.const import (
+    AIRTAP_AT_TYPES,
+    AdvancedSettingsKey,
+    AtType,
+    DeviceControlKey,
+    ModeAndSettingKeys,
+    ROOM_TO_ROOM_FAN_DIRECTION_ID_STR,
+    ROOM_TO_ROOM_FAN_DISPLAY_SETTING_ID_STR,
+    ROOM_TO_ROOM_FAN_DISPLAY_SETTING_KEYS,
+    ROOM_TO_ROOM_FAN_MODE_ID_STR,
+    ROOM_TO_ROOM_FAN_MODE_MANUAL_STEADY_ID_STR,
+    ROOM_TO_ROOM_FAN_POWER_ACTION_ID_STR,
+    ROOM_TO_ROOM_FAN_UNSENT_KEYS,
+    RoomToRoomFanExtraKeys,
+    RoomToRoomFanMode,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,6 +33,8 @@ API_URL_ADD_DEV_MODE = "/api/dev/addDevMode"
 API_URL_MODE_AND_SETTINGS = "/api/dev/modeAndSetting"
 API_URL_GET_DEV_SETTING = "/api/dev/getDevSetting"
 API_URL_UPDATE_ADV_SETTING = "/api/dev/updateAdvSetting"
+
+API_CODE_LOGIN_EXPIRED = 403
 
 
 class ACInfinityClient:
@@ -69,7 +87,7 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEVICE_INFO_LIST_ALL, {"userId": self._user_id}, headers
         )
-        return body["data"]
+        return self.__get_data(body)
 
     async def get_device_mode_settings(self, controller_id: str | int, device_port: int):
         """Obtains the settings for a particular port on a controller, which includes information
@@ -85,6 +103,39 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
+        if body.get("data") is None:
+            # Some devices (e.g. Controller 69 Pro on older firmware) only return settings when the
+            # newer API version header is sent.  Retry with it rather than failing the whole refresh.
+            headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+            body = await self.__post(
+                API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
+            )
+        return self.__get_data(body)
+
+    async def get_device_settings(self, controller_id: str | int, device_port: int):
+        """Obtains the advanced settings for a particular port on a controller, which includes
+        information like the load type, device name, speed limits, and transition/buffer values.
+
+        The mode settings endpoint returns the same keys but leaves some of them (notably
+        loadType) at their default of 0, so settings must be read from this endpoint instead.
+
+        Args:
+            controller_id: The parent controller id of the port
+            device_port: The port on the controller of the settings to grab
+        """
+        self.__ensure_logged_in()
+
+        headers = self.__create_headers(use_auth_token=True)
+        body = await self.__post(
+            API_URL_GET_DEV_SETTING, {"devId": controller_id, "port": device_port}, headers
+        )
+        return self.__get_data(body)
+
+    @staticmethod
+    def __get_data(body: dict):
+        """Returns the data field of a response; the API occasionally answers code 200 without one."""
+        if body.get("data") is None:
+            raise ACInfinityClientRequestFailed(body)
         return body["data"]
 
     @staticmethod
@@ -104,7 +155,7 @@ class ACInfinityClient:
         return updated
 
     async def update_device_controls(
-        self, controller_id: str | int, device_port: int, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -119,7 +170,7 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
-        existing_values = body["data"]
+        existing_values = self.__get_data(body)
 
         device_control_keys: list[str] = [
             getattr(DeviceControlKey, attr)
@@ -131,7 +182,7 @@ class ACInfinityClient:
         _ = await self.__post(f"{API_URL_ADD_DEV_MODE}?{urlencode(updated)}", None, headers)
 
     async def update_device_settings(
-        self, controller_id: str | int, device_port: int, device_name: str, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, device_name: str, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -147,7 +198,7 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEV_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
-        existing_values = body["data"]
+        existing_values = self.__get_data(body)
 
         device_settings_keys: list[str] = [
             getattr(AdvancedSettingsKey, attr)
@@ -161,7 +212,7 @@ class ACInfinityClient:
         _ = await self.__post(f"{API_URL_UPDATE_ADV_SETTING}?{urlencode(updated)}", None, headers)
 
     async def update_ai_device_control_and_settings(
-        self, controller_id: str | int, device_port: int, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -176,7 +227,7 @@ class ACInfinityClient:
         body = await self.__post(
             API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
         )
-        existing_values = body["data"]
+        existing_values = self.__get_data(body)
 
         flattened = existing_values[DeviceControlKey.DEV_SETTING].copy()
         flattened.update(existing_values)
@@ -209,6 +260,185 @@ class ACInfinityClient:
         url = f"{API_URL_MODE_AND_SETTINGS}?{urlencode(updated)}"
         _ = await self.__put(url, headers)
 
+    async def update_room_to_room_fan_control(
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
+    ):
+        """Sets control values for a room-to-room/through-wall fan (e.g. AC-TWT6, devType 33).
+
+        These devices use the same /api/dev/modeAndSetting endpoint and response shape as
+        AI controllers (a flat top-level payload merged with a nested "devSetting" object),
+        but the "atType" mode values and their corresponding modeAndSettingIdStr strings are
+        entirely different - confirmed via packet capture of the official app. See
+        RoomToRoomFanMode and ROOM_TO_ROOM_FAN_MODE_ID_STR in const.py.
+
+        Args:
+            controller_id: id of the controller
+            device_port: port of the device (always 0 for this device type)
+            key_values: The key value pairs of settings to set
+        """
+        self.__ensure_logged_in()
+
+        headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+        body = await self.__post(
+            API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
+        )
+        existing_values = self.__get_data(body)
+
+        flattened = existing_values[DeviceControlKey.DEV_SETTING].copy()
+        flattened.update(existing_values)
+        previous_at_type = flattened.get(DeviceControlKey.AT_TYPE)
+
+        # Includes RoomToRoomFanExtraKeys - fields this device's firmware requires that
+        # aren't part of the general ModeAndSettingKeys set (omitting them
+        # causes the API to reject the request with a generic failure code).
+        device_control_keys: list[str] = [
+            getattr(ModeAndSettingKeys, attr)
+            for attr in dir(ModeAndSettingKeys)
+            if not attr.startswith('_')
+        ] + [
+            getattr(RoomToRoomFanExtraKeys, attr)
+            for attr in dir(RoomToRoomFanExtraKeys)
+            if not attr.startswith('_')
+        ]
+
+        updated = self.__transfer_values(device_control_keys, key_values, flattened)
+
+        # The official app never sends these on this device (confirmed via packet capture);
+        # they exist in the shared key set for other controller types.
+        for unused_key in ROOM_TO_ROOM_FAN_UNSENT_KEYS:
+            updated.pop(unused_key, None)
+
+        at_type = updated[DeviceControlKey.AT_TYPE]
+        if at_type not in ROOM_TO_ROOM_FAN_MODE_ID_STR:
+            raise ValueError(f"Unable to find setting id string - Unknown room-to-room fan atType {at_type}")
+
+        # Confirmed via capture: a request that's specifically toggling power uses a fixed
+        # idStr regardless of atType, distinct from mode/value changes which are keyed by
+        # atType. Check the caller's original key_values (not the merged `updated`), since
+        # every field is present in `updated` after merging with existing values.
+        is_power_action = DeviceControlKey.POWER_STATE in key_values
+        if is_power_action:
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_POWER_ACTION_ID_STR
+        elif set(key_values) == {DeviceControlKey.TOWARD}:
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_DIRECTION_ID_STR
+        elif set(key_values) == {DeviceControlKey.ON_SPEED} and at_type == previous_at_type:
+            # Max fan speed adjusted on its own, in any mode
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_MODE_MANUAL_STEADY_ID_STR
+        elif at_type == RoomToRoomFanMode.MANUAL and at_type == previous_at_type:
+            # Confirmed via capture: Manual mode is the one confirmed exception where
+            # adjusting a value (fan speed) while already in the mode uses a different
+            # idStr than entering the mode itself.
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_MODE_MANUAL_STEADY_ID_STR
+        else:
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_MODE_ID_STR[at_type]
+
+        _LOGGER.debug(
+            "Room-to-room fan control update: previous_at_type=%s new_at_type=%s "
+            "is_power_action=%s idStr=%s key_values=%s",
+            previous_at_type, at_type, is_power_action,
+            updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR], key_values,
+        )
+
+        url = f"{API_URL_MODE_AND_SETTINGS}?{urlencode(updated)}"
+        _ = await self.__put(url, headers)
+
+    async def update_room_to_room_fan_display_setting(
+        self,
+        controller_id: str | int,
+        device_port: int,
+        dev_name: str,
+        inside_room_name: str,
+        outside_room_name: str,
+        key_values: dict[str, Any],
+    ):
+        """Sets display/panel settings (backlight, keytone/keypress sound, brightness) for
+        a room-to-room/through-wall fan (e.g. AC-TWT6, devType 33).
+
+        Confirmed via packet capture: these use a fundamentally different, much smaller
+        modeAndSetting payload than mode/fan-speed/power changes - built from the device's
+        own "devSetting" object (from getdevModeSettingList) rather than the full
+        ~172-field payload, plus a handful of identity fields (device/room names) that
+        getdevModeSettingList doesn't return, so the caller must supply them (they're
+        available from the cached controller properties).
+
+        Args:
+            controller_id: id of the controller
+            device_port: port of the device (always 0 for this device type)
+            dev_name: the controller's display name, as configured in the app
+            inside_room_name: the "inside" zone's room name, as configured in the app
+            outside_room_name: the "outside" zone's room name, as configured in the app
+            key_values: The key value pairs of settings to set
+        """
+        self.__ensure_logged_in()
+
+        headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+        body = await self.__post(
+            API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": device_port}, headers
+        )
+        existing_values = self.__get_data(body)
+
+        flattened = existing_values[DeviceControlKey.DEV_SETTING].copy()
+        flattened.update(existing_values)
+        flattened["devName"] = dev_name
+        flattened["insideRoomName"] = inside_room_name
+        flattened["outsideRoomName"] = outside_room_name
+
+        updated = self.__transfer_values(list(ROOM_TO_ROOM_FAN_DISPLAY_SETTING_KEYS), key_values, flattened)
+        updated[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = ROOM_TO_ROOM_FAN_DISPLAY_SETTING_ID_STR
+
+        _LOGGER.debug("Room-to-room fan display setting update: key_values=%s", key_values)
+
+        url = f"{API_URL_MODE_AND_SETTINGS}?{urlencode(updated)}"
+        _ = await self.__put(url, headers)
+
+    async def update_airtap_controls(
+        self, controller_id: str | int, key_values: dict[str, Any]
+    ):
+        """Sets the mode and/or speeds of an AIRTAP register fan.
+
+        AIRTAP fans reject the full payloads used by controllers (addDevMode answers 100001, the
+        AI-controller modeAndSetting payload answers 999999).  They accept the minimal PUT the mobile
+        app sends: the target mode, the speed being changed, and modeAndSettingIdStr listing the ids
+        of the fields being written (16 = atType, 17 = offSpeed, 18 = onSpeed).
+
+        Args:
+            controller_id: id of the fan (it is its own controller, with the fan on port 0)
+            key_values: subset of atType / onSpead / offSpead to change
+        """
+        self.__ensure_logged_in()
+
+        unsupported = set(key_values) - {
+            DeviceControlKey.AT_TYPE, DeviceControlKey.ON_SPEED, DeviceControlKey.OFF_SPEED
+        }
+        if unsupported:
+            raise ValueError(f"AIRTAP fans do not support updating {sorted(unsupported)}")
+
+        headers = self.__create_headers(use_auth_token=True, use_min_version=True)
+        body = await self.__post(
+            API_URL_GET_DEV_MODE_SETTING, {"devId": controller_id, "port": 0}, headers
+        )
+        existing_values = self.__get_data(body)
+
+        at_type = key_values.get(DeviceControlKey.AT_TYPE, existing_values.get(DeviceControlKey.AT_TYPE))
+        if at_type not in AIRTAP_AT_TYPES:
+            raise ValueError(f"AIRTAP fans cannot be switched to atType {at_type} from Home Assistant")
+
+        params: dict[str, str | int] = {
+            DeviceControlKey.AT_TYPE: at_type,
+            DeviceControlKey.DEV_ID: controller_id,
+            "port": 0,
+        }
+        field_ids = [16]
+        if at_type == AtType.OFF or DeviceControlKey.OFF_SPEED in key_values:
+            params["offSpeed"] = key_values.get(DeviceControlKey.OFF_SPEED, existing_values.get(DeviceControlKey.OFF_SPEED) or 0)
+            field_ids.append(17)
+        if at_type == AtType.ON or DeviceControlKey.ON_SPEED in key_values:
+            params["onSpeed"] = key_values.get(DeviceControlKey.ON_SPEED, existing_values.get(DeviceControlKey.ON_SPEED) or 0)
+            field_ids.append(18)
+        params[ModeAndSettingKeys.MODE_AND_SETTING_ID_STR] = json.dumps(field_ids, separators=(",", ":"))
+
+        _ = await self.__put(f"{API_URL_MODE_AND_SETTINGS}?{urlencode(params)}", headers)
+
     async def close(self) -> None:
         """Close the session when done"""
         if self._session and not self._session.closed:
@@ -223,36 +453,37 @@ class ACInfinityClient:
 
     async def __post(self, path, post_data, headers):
         """generically make a post request to the AC Infinity API"""
-        session = await self.__get_session()
-        async with async_timeout.timeout(10), session.post(
-            f"{self._host}{path}", data=post_data, headers=headers
-        ) as response:
-            if response.status != 200:
-                raise ACInfinityClientCannotConnect
-
-            body = await response.json()
-            if body["code"] != 200:
-                if path == API_URL_LOGIN:
-                    raise ACInfinityClientInvalidAuth
-                else:
-                    raise ACInfinityClientRequestFailed(body)
-
-            return body
+        return await self.__request("POST", path, post_data, headers)
 
     async def __put(self, path, headers):
         """generically make a put request to the AC Infinity API"""
+        return await self.__request("PUT", path, None, headers)
+
+    async def __request(self, method: str, path: str, data, headers: dict, relogin: bool = True):
         session = await self.__get_session()
-        async with async_timeout.timeout(10), session.put(
-            f"{self._host}{path}", headers=headers
+        async with async_timeout.timeout(10), session.request(
+            method, f"{self._host}{path}", data=data, headers=headers
         ) as response:
             if response.status != 200:
                 raise ACInfinityClientCannotConnect
 
             body = await response.json()
-            if body["code"] != 200:
-                raise ACInfinityClientRequestFailed(body)
 
+        if body["code"] == 200:
             return body
+        if path == API_URL_LOGIN:
+            raise ACInfinityClientInvalidAuth
+
+        # The session expires server side after a while ("Login Expired Please login again!", code 403) and
+        # every request fails until the user logs in again.  Log in once and replay the request.
+        if relogin and body["code"] == API_CODE_LOGIN_EXPIRED and "token" in headers:
+            _LOGGER.info("AC Infinity session expired; logging in again")
+            await self.login()
+            if isinstance(data, dict) and "userId" in data:
+                data = {**data, "userId": self._user_id}
+            return await self.__request(method, path, data, {**headers, "token": self._user_id}, relogin=False)
+
+        raise ACInfinityClientRequestFailed(body)
 
     def __create_headers(self, use_auth_token: bool, use_min_version: bool = False) -> dict:
         """Creates a header object to use in a request to the AC Infinity API"""

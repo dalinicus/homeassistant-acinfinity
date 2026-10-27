@@ -24,6 +24,7 @@
         "data": {
           "controller": "{controller} (Controller)",
           "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
           "port_1": "{port_1} (Port 1)",
           "port_2": "{port_2} (Port 2)",
           "port_3": "{port_3} (Port 3)",
@@ -32,6 +33,17 @@
           "port_6": "{port_6} (Port 6)",
           "port_7": "{port_7} (Port 7)",
           "port_8": "{port_8} (Port 8)"
+        }
+      },
+      "entity_filters": {
+        "title": "{controller}: entities to keep",
+        "description": "Tick the entities you want for {controller}; everything you leave unticked is removed from Home Assistant. Leave everything unticked to keep all entities. Tick \"Tick every entity\" and submit to tick them all, then untick the ones you don't want.",
+        "data": {
+          "select_all_entity_types": "Tick every entity",
+          "included_entity_types": "Entities to keep"
+        },
+        "data_description": {
+          "included_entity_types": "Applies to this controller and all of its ports and sensors."
         }
       }
     }
@@ -42,7 +54,9 @@
         "title": "AC Infinity Configuration",
         "menu_options": {
           "general_config": "General Configuration",
-          "controller_select": "Enable / Disable Entities"
+          "controller_select": "Enable / Disable Entities",
+          "entity_filters": "Choose Entities to Keep",
+          "calibrate": "Calibrate Sensors"
         }
       },
       "general_config": {
@@ -54,7 +68,7 @@
         },
         "data_description": {
           "update_password": "Requires a restart of Home Assistant.",
-          "number_display_type": "How to display Number based entities. Requires a restart of Home Assistant"
+          "number_display_type": "Show number entities (power levels, triggers, durations, ...) as a box you type into, or as a slider."
         }
       },
       "controller_select": {
@@ -69,6 +83,7 @@
         "data": {
           "controller": "{controller} (Controller)",
           "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
           "port_1": "{port_1} (Port 1)",
           "port_2": "{port_2} (Port 2)",
           "port_3": "{port_3} (Port 3)",
@@ -83,8 +98,51 @@
         "title": "Restart required",
         "description": "Restart of Home Assistant is required for this change to take effect.",
         "menu_options": {
-            "restart_yes": "Restart Now",
-            "restart_no": "Restart Later"
+          "restart_yes": "Restart Now",
+          "restart_no": "Restart Later"
+        }
+      },
+      "entity_filters": {
+        "title": "Choose entities",
+        "data": {
+          "device_id": "Controller"
+        }
+      },
+      "enable_entities": {
+        "title": "{device_name} ({device_code})",
+        "description": "Enable/Disable entity types for each device.",
+        "data": {
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
+        }
+      },
+      "calibrate": {
+        "title": "Calibrate sensors",
+        "description": "Sets the controller's calibration so its built-in temperature / humidity sensor reads the same as a reference sensor in Home Assistant. The offset is written to the controller, so its own triggers use the corrected value. For ongoing calibration, call the `ac_infinity.calibrate` action from an automation. {error}",
+        "data": {
+          "device_id": "Controller",
+          "temperature_entity": "Reference temperature sensor",
+          "humidity_entity": "Reference humidity sensor"
+        }
+      },
+      "controller_entity_filters": {
+        "title": "{controller}: entities to keep",
+        "description": "Tick the entities you want for {controller}; everything you leave unticked is removed from Home Assistant. Leave everything unticked to keep all entities. Tick \"Tick every entity\" and submit to tick them all, then untick the ones you don't want.",
+        "data": {
+          "select_all_entity_types": "Tick every entity",
+          "included_entity_types": "Entities to keep"
+        },
+        "data_description": {
+          "included_entity_types": "Applies to this controller and all of its ports and sensors."
         }
       }
     },
@@ -92,7 +150,13 @@
       "invalid_polling_interval": "Polling interval cannot be less than 5 seconds",
       "cannot_connect": "Failed to connect",
       "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_reference": "Choose a reference temperature and/or humidity sensor.",
+      "calibration_failed": "Calibration failed."
+    },
+    "abort": {
+      "calibrated": "Calibrated. Temperature offset: {temperature}, humidity offset: {humidity}{clamped}",
+      "no_calibratable_controllers": "None of your controllers support calibration from Home Assistant (AI controllers and standalone fans don't)."
     }
   },
   "entity": {
@@ -186,7 +250,7 @@
       "humidity_calibration": {
         "name": "Humidity Calibration"
       },
-      "vpd_leaf_temperature_offset" : {
+      "vpd_leaf_temperature_offset": {
         "name": "VPD Leaf Temperature Offset"
       },
       "dynamic_transition_temp": {
@@ -209,6 +273,18 @@
       },
       "sunrise_timer_minutes": {
         "name": "Sunrise/Sunset Minutes"
+      },
+      "room_to_room_fan_speed": {
+        "name": "Fan Speed"
+      },
+      "room_to_room_target_temp": {
+        "name": "Temperature Target"
+      },
+      "room_to_room_ai_differential": {
+        "name": "AI Temperature Differential"
+      },
+      "room_to_room_timer_duration": {
+        "name": "Timer Duration"
       }
     },
     "select": {
@@ -232,6 +308,9 @@
       },
       "vpd_settings_mode": {
         "name": "VPD Settings Mode"
+      },
+      "room_to_room_mode": {
+        "name": "Fan Mode"
       }
     },
     "sensor": {
@@ -283,6 +362,9 @@
       "hydro_water_temperature_sensor": {
         "name": "Water Temperature"
       },
+      "current_fan_speed": {
+        "name": "Current Fan Speed"
+      },
       "current_power": {
         "name": "Current Power"
       },
@@ -291,6 +373,12 @@
       },
       "next_state_change": {
         "name": "Next State Change"
+      },
+      "inside_temperature": {
+        "name": "Inside Temperature"
+      },
+      "outside_temperature": {
+        "name": "Outside Temperature"
       }
     },
     "switch": {
@@ -330,6 +418,18 @@
       "sunrise_timer_enabled": {
         "name": "Sunrise/Sunset Enabled"
       },
+      "room_to_room_power": {
+        "name": "Power"
+      },
+      "room_to_room_backlight": {
+        "name": "Display Backlight"
+      },
+      "room_to_room_direction": {
+        "name": "Direction"
+      },
+      "room_to_room_keytone": {
+        "name": "Keypress Sound"
+      },
       "photocell_enabled": {
         "name": "Photocell Enabled"
       },
@@ -359,6 +459,9 @@
       },
       "water_detection_enabled": {
         "name": "Water Detection Enabled"
+      },
+      "dynamic_wind": {
+        "name": "Dynamic Wind"
       }
     },
     "time": {
@@ -367,6 +470,31 @@
       },
       "schedule_mode_off_time": {
         "name": "Scheduled Off-Time"
+      }
+    },
+    "fan": {
+      "fan": {
+        "name": "Fan"
+      }
+    }
+  },
+  "services": {
+    "calibrate": {
+      "name": "Calibrate sensor",
+      "description": "Sets the controller's calibration so its built-in temperature / humidity sensor reads the same as a reference sensor. Written to the controller, so its own triggers use the corrected value. Safe to run repeatedly.",
+      "fields": {
+        "device_id": {
+          "name": "Controller",
+          "description": "The AC Infinity controller to calibrate."
+        },
+        "temperature_entity": {
+          "name": "Reference temperature",
+          "description": "Sensor the controller's temperature should match."
+        },
+        "humidity_entity": {
+          "name": "Reference humidity",
+          "description": "Sensor the controller's humidity should match."
+        }
       }
     }
   }

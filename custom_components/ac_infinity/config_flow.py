@@ -10,6 +10,7 @@ import probatio as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import selector
 from probatio import Required
 
@@ -19,7 +20,9 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientInvalidAuth,
 )
 from . import ACInfinityService
-from .core import ACInfinityData, ACInfinityEntryData
+from .core import ACInfinityData, ACInfinityEntryData, get_entity_filters
+from .calibration import async_calibrate, read_reference
+from .entity_filter import async_keep_list_schema
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -60,8 +63,25 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
+NUMBER_DISPLAY_TYPE_SELECTOR = selector({
+    "select": {
+        "options": [
+            {"value": "auto", "label": "Automatic (each entity's default)"},
+            {"value": "box", "label": "Box (type a number)"},
+            {"value": "slider", "label": "Slider"},
+        ],
+        "mode": "list",
+    }
+})
+
+
 class ACInfinityFlowBase:
     """Base class for AC Infinity config and options flows."""
+
+    @staticmethod
+    def _keep_list_from_input(user_input: dict[str, Any]) -> dict[str, list[str]]:
+        # an empty keep-list means no filtering, so submitting without ticking anything can't remove everything
+        return {ConfigurationKey.INCLUDED_ENTITY_TYPES: user_input.get(ConfigurationKey.INCLUDED_ENTITY_TYPES, [])}
 
     @staticmethod
     def __get_saved_entity_conf_value(data: dict[str, Any] | None, device_id: str, entity_config_key: str):
@@ -70,8 +90,11 @@ class ACInfinityFlowBase:
             # ConfigFlow - we are setting the integration up for the first time.  Don't add excessive entities.
             return EntityConfigValue.SENSORS_ONLY
 
+        # devices / ports added to the account after setup have no saved value yet
         return (
-            data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+            data.get(ConfigurationKey.ENTITIES, {})
+            .get(device_id, {})
+            .get(entity_config_key, EntityConfigValue.SENSORS_ONLY)
         )
 
     def _build_entity_config_schema(
@@ -91,7 +114,6 @@ class ACInfinityFlowBase:
         """
         device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
         device_code = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
-        port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         entities = {}
         description_placeholders = {
@@ -117,7 +139,7 @@ class ACInfinityFlowBase:
             }
         })
 
-        for i in range(1, port_count + 1):
+        for i in service.get_device_ports(device_id):
             entity_config_key = f"port_{i}"
             description_placeholders[entity_config_key] = service.get_device_property(device_id, i, DevicePropertyKey.NAME)
             entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(data, str(device_id), entity_config_key))] = selector(
@@ -145,6 +167,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         self.device_ids: list[str] | None = None
         self.device_index: int = 0
         self.entities: dict[str, Any] = {}
+        self.filters: dict[str, Any] = {}
 
     @staticmethod
     @callback
@@ -205,13 +228,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
         if user_input is not None:
             self.entities[str(device_id)] = user_input
-
-            if self.device_index < len(self.device_ids) - 1:
-                self.device_index += 1
-                return await self.async_step_enable_entities()
-
-            else:
-                return await self.async_create_config_entry()
+            return await self.async_step_entity_filters()
 
         entities, description_placeholders = self._build_entity_config_schema(
             self.service,
@@ -223,6 +240,28 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
+        )
+
+    async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """Each controller's keep-list, shown after its entity step: tick the entity types to keep."""
+        if self.service is None or self.device_ids is None:
+            return self.async_abort(reason="not_initialized")
+
+        device_id = str(self.device_ids[self.device_index])
+        select_all = bool(user_input and user_input.get(ConfigurationKey.SELECT_ALL_ENTITY_TYPES))
+        if user_input is not None and not select_all:
+            self.filters[device_id] = self._keep_list_from_input(user_input)
+            if self.device_index < len(self.device_ids) - 1:
+                self.device_index += 1
+                return await self.async_step_enable_entities()
+            return await self.async_create_config_entry()
+
+        return self.async_show_form(
+            step_id="entity_filters",
+            data_schema=await async_keep_list_schema(self.hass, None, select_all=select_all),
+            description_placeholders={
+                "controller": self.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            },
         )
 
     async def async_create_config_entry(self):
@@ -238,6 +277,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 CONF_PASSWORD: self.password,
                 ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
                 ConfigurationKey.ENTITIES: self.entities,
+                ConfigurationKey.ENTITY_FILTERS: self.filters,
                 ConfigurationKey.MODIFIED_AT: datetime.now().isoformat()
             }
         )
@@ -253,7 +293,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         return self.async_show_menu(
-            step_id="init", menu_options=["general_config", "controller_select"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters", "calibrate"]
         )
 
     async def async_step_general_config(self, user_input: dict[str, Any] | None = None):
@@ -263,6 +303,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
                 ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
             )
             password: str | None = user_input.get(ConfigurationKey.UPDATE_PASSWORD, None)
+            number_display_type = user_input.get(ConfigurationKey.NUMBER_DISPLAY_TYPE, "auto")
 
             if polling_interval < 5:
                 errors[ConfigurationKey.POLLING_INTERVAL] = "invalid_polling_interval"
@@ -294,6 +335,10 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 new_data = self.config_entry.data.copy()
                 new_data[ConfigurationKey.POLLING_INTERVAL] = polling_interval
+                display_type_changed = (
+                    new_data.get(ConfigurationKey.NUMBER_DISPLAY_TYPE, "auto") != number_display_type
+                )
+                new_data[ConfigurationKey.NUMBER_DISPLAY_TYPE] = number_display_type
                 if password:
                     new_data[CONF_PASSWORD] = password
 
@@ -310,6 +355,9 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 if password:
                     return await self.async_step_notify_restart()
+                if display_type_changed:
+                    # number entities report their display type when added; reload so they pick up the new one
+                    self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
                 return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
@@ -319,7 +367,10 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
                     vol.Required(ConfigurationKey.POLLING_INTERVAL,
                                  default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL,
                                                                      DEFAULT_POLLING_INTERVAL)): int,
-                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE,
+                                 default=self.__get_saved_conf_value(ConfigurationKey.NUMBER_DISPLAY_TYPE,
+                                                                     "auto")): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors=errors
@@ -385,6 +436,115 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
+        )
+
+    async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """Pick the controller whose entities to choose."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        if user_input is not None:
+            self.current_device_id = user_input["device_id"]
+            return await self.async_step_controller_entity_filters()
+
+        return self.async_show_form(
+            step_id="entity_filters",
+            data_schema=vol.Schema({
+                vol.Required("device_id"): selector({
+                    "select": {
+                        "options": [
+                            {"value": c.controller_id, "label": c.controller_name}
+                            for c in entry_data.service.get_all_controller_properties()
+                        ]
+                    }
+                })
+            }),
+        )
+
+    async def async_step_controller_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """One controller's keep-list.  Saving reloads the integration, which removes everything not kept."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        device_id = str(self.current_device_id)
+        select_all = bool(user_input and user_input.get(ConfigurationKey.SELECT_ALL_ENTITY_TYPES))
+        if user_input is not None and not select_all:
+            new_data = self.config_entry.data.copy()
+            new_data[ConfigurationKey.ENTITY_FILTERS] = {
+                **(new_data.get(ConfigurationKey.ENTITY_FILTERS) or {}),
+                device_id: self._keep_list_from_input(user_input),
+            }
+            self.__update_config_entry_data(new_data)
+            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="controller_entity_filters",
+            data_schema=await async_keep_list_schema(
+                self.hass,
+                get_entity_filters(self.config_entry.data, device_id),
+                entry_data.available_entity_types.get(device_id),
+                select_all=select_all,
+            ),
+            description_placeholders={
+                "controller": entry_data.service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
+            },
+        )
+
+    async def async_step_calibrate(self, user_input: dict[str, Any] | None = None):
+        """Calibrate a controller's built-in sensor against another sensor in Home Assistant."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        controllers = {
+            c.controller_id: c
+            for c in entry_data.service.get_all_controller_properties()
+            if not (c.is_ai_controller or c.is_airtap or c.is_room_to_room_fan)
+        }
+        if not controllers:
+            return self.async_abort(reason="no_calibratable_controllers")
+
+        errors: dict[str, str] = {}
+        placeholders = {"error": ""}
+        if user_input is not None:
+            temperature_entity = user_input.get("temperature_entity")
+            humidity_entity = user_input.get("humidity_entity")
+            if not temperature_entity and not humidity_entity:
+                errors["base"] = "no_reference"
+            else:
+                try:
+                    result = await async_calibrate(
+                        entry_data.service,
+                        controllers[user_input["device_id"]],
+                        read_reference(self.hass, temperature_entity, temperature=True) if temperature_entity else None,
+                        read_reference(self.hass, humidity_entity, temperature=False) if humidity_entity else None,
+                    )
+                except HomeAssistantError as ex:
+                    errors["base"] = "calibration_failed"
+                    placeholders["error"] = str(ex)
+                else:
+                    await entry_data.list_coordinator.async_request_refresh()
+                    return self.async_abort(
+                        reason="calibrated",
+                        description_placeholders={
+                            "temperature": "-" if result.temperature_offset is None
+                            else f"{result.temperature_offset:+d} {result.temperature_unit}",
+                            "humidity": "-" if result.humidity_offset is None else f"{result.humidity_offset:+d} %",
+                            "clamped": " (limited to the controller's calibration range)" if result.clamped else "",
+                        },
+                    )
+
+        return self.async_show_form(
+            step_id="calibrate",
+            data_schema=self.add_suggested_values_to_schema(vol.Schema({
+                vol.Required("device_id"): selector({
+                    "select": {
+                        "options": [{"value": i, "label": c.controller_name} for i, c in controllers.items()]
+                    }
+                }),
+                vol.Optional("temperature_entity"): selector(
+                    {"entity": {"domain": "sensor", "device_class": "temperature"}}
+                ),
+                vol.Optional("humidity_entity"): selector(
+                    {"entity": {"domain": "sensor", "device_class": "humidity"}}
+                ),
+            }), user_input or {}),
+            errors=errors,
+            description_placeholders=placeholders,
         )
 
     async def async_step_notify_restart(self):

@@ -1596,6 +1596,7 @@ class TestRefreshDeviceSettings:
             return DEVICE_CONTROLS
 
         mock_client.get_device_mode_settings.side_effect = side_effect
+        mock_client.get_device_settings.return_value = DEVICE_SETTINGS
 
         service = ACInfinityService(mock_client, ACInfinityData())
         with pytest.raises(ACInfinityClientRequestFailed):

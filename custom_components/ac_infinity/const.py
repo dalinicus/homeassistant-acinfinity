@@ -56,6 +56,7 @@ class CustomDevicePropertyKey:
 
 
 class AtType:
+    AI = 0  # AIRTAP register fans only: follow the HVAC system automatically
     OFF = 1
     ON = 2
     AUTO = 3
@@ -101,6 +102,7 @@ class ControllerPropertyKey:
     # ACInfinityClient.update_room_to_room_fan_display_setting.
     INSIDE_ROOM_NAME = "insideRoomName"
     OUTSIDE_ROOM_NAME = "outsideRoomName"
+    IS_AIRTAP = "airTap"
 
 
 class ControllerType:
@@ -113,6 +115,7 @@ class ControllerType:
     # UIS tent controllers, it has no ports and reports two independent zone
     # readings (insideTemp/outsideTemp) instead of one top-level "temperature".
     UIS_ROOM_TO_ROOM_FAN = 33
+    AIRTAP_AI = 48
 
 
 AI_CONTROLLER_TYPES = frozenset({
@@ -242,6 +245,17 @@ ROOM_TO_ROOM_FAN_DISPLAY_SETTING_KEYS = frozenset({
 # The fields our own entities ever write that should route through the display-setting
 # path above rather than the general mode/control path.
 ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS = frozenset({"backlightSwitch", "keytoneSwitch", "devLight"})
+
+AIRTAP_CONTROLLER_TYPES = frozenset({
+    ControllerType.AIRTAP_AI
+})
+
+# Modes an AIRTAP fan can be switched to from Home Assistant.  Each has been verified against the cloud API.
+AIRTAP_AT_TYPES = frozenset({
+    AtType.AI,
+    AtType.OFF,
+    AtType.ON
+})
 
 
 class SensorPropertyKey:
@@ -709,4 +723,21 @@ ROOM_TO_ROOM_FAN_UNSENT_KEYS = frozenset({
     "sensorSettingStr",
     "sensorTransBuffStr",
     "subDeviceVersion",
+})
+
+# AIRTAP register fans have no ports; the fan is modeled as port 0 of its own device.  Only the fields verified
+# against the cloud API are exposed as entities, everything else in the (controller-shaped) payload is ignored.
+# Online status is reported once, by the controller level binary sensor, since port 0 is the same device.
+AIRTAP_DEVICE_KEYS = frozenset({
+    DeviceControlKey.AT_TYPE,
+    DeviceControlKey.ON_SPEED,
+    DeviceControlKey.OFF_SPEED,
+    DevicePropertyKey.SPEAK,
+    DevicePropertyKey.REMAINING_TIME,
+    CustomDevicePropertyKey.NEXT_STATE_CHANGE,
+})
+
+AIRTAP_CONTROLLER_KEYS = frozenset({
+    ControllerPropertyKey.TEMPERATURE,
+    ControllerPropertyKey.ONLINE,
 })

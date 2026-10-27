@@ -25,6 +25,9 @@ from .const import (
     AI_CONTROLLER_TYPES,
     ROOM_TO_ROOM_FAN_CONTROLLER_TYPES,
     ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS,
+    AIRTAP_CONTROLLER_KEYS,
+    AIRTAP_CONTROLLER_TYPES,
+    AIRTAP_DEVICE_KEYS,
     DOMAIN,
     MANUFACTURER,
     ControllerPropertyKey,
@@ -62,6 +65,7 @@ class ACInfinityController:
         self._controller_name = controller_json[ControllerPropertyKey.DEVICE_NAME]
         self._controller_type = controller_json[ControllerPropertyKey.DEVICE_TYPE]
         self._identifier = (DOMAIN, self._controller_id)
+        self._is_airtap = ACInfinityController.is_airtap_json(controller_json)
 
         self._device_info = DeviceInfo(
             identifiers={self._identifier},
@@ -74,27 +78,63 @@ class ACInfinityController:
             ),
         )
 
-        devices = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
-        self._devices = [ACInfinityDevice(self, device)for device in devices]
-
-        # Room-to-room fans (e.g. AC-TWT6) have no ports but expose controls at port 0.
-        # Create a synthetic device entry to enable control entities.
-        if not devices and controller_json.get(ControllerPropertyKey.DEVICE_TYPE) in [33]:  # UIS_ROOM_TO_ROOM_FAN
-            synthetic_device = {
-                DevicePropertyKey.PORT: 0,
-                DevicePropertyKey.NAME: "Main",
-                DevicePropertyKey.SPEAK: 0,
-                DevicePropertyKey.ONLINE: controller_json[ControllerPropertyKey.ONLINE],
-                DevicePropertyKey.STATE: 0,
-                DevicePropertyKey.REMAINING_TIME: 0,
-            }
-            self._devices = [ACInfinityDevice(self, synthetic_device)]
-
         # controller AI will have a sensor array.
         self._sensors = []
         if ControllerPropertyKey.SENSORS in controller_json[ControllerPropertyKey.DEVICE_INFO]:
             sensors = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.SENSORS] or []
             self._sensors = [ACInfinitySensor(self, sensor) for sensor in sensors]
+
+        # devices are created last; a portless fan's port 0 device shares this controller's device info.
+        self._devices = [
+            ACInfinityDevice(self, device) for device in ACInfinityController.get_port_jsons(controller_json)
+        ]
+
+    @staticmethod
+    def is_airtap_json(controller_json: dict[str, Any]) -> bool:
+        """Returns true if the devInfoListAll json describes an AIRTAP register fan"""
+        return bool(controller_json.get(ControllerPropertyKey.IS_AIRTAP)) or (
+            controller_json.get(ControllerPropertyKey.DEVICE_TYPE) in AIRTAP_CONTROLLER_TYPES
+        )
+
+    @staticmethod
+    def get_port_jsons(controller_json: dict[str, Any]) -> list[dict[str, Any]]:
+        """Returns the port json objects of a controller from its devInfoListAll json.
+
+        AIRTAP register fans and room-to-room fans have no ports; the fan itself is exposed as port 0
+        so the port level mode and speed entities apply to it.  An AIRTAP's deviceInfo already carries
+        the port style fields (speak, online, remainTime, ...), so it is reused as the port json.
+        A room-to-room fan's port 0 properties are derived from its mode settings during refresh.
+
+        Some controllers (e.g. a 69 Pro on firmware 3.2.56) report ports as null while still reporting
+        a port count; their mode settings are still available per port, so placeholder ports are used.
+        """
+        device_info = controller_json[ControllerPropertyKey.DEVICE_INFO]
+        ports = device_info.get(ControllerPropertyKey.PORTS) or []
+        if ports:
+            return ports
+        if ACInfinityController.is_airtap_json(controller_json):
+            return [{
+                **device_info,
+                DevicePropertyKey.PORT: 0,
+                DevicePropertyKey.NAME: controller_json[ControllerPropertyKey.DEVICE_NAME],
+            }]
+        if controller_json.get(ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES:
+            return [{
+                DevicePropertyKey.PORT: 0,
+                DevicePropertyKey.NAME: "Main",
+                DevicePropertyKey.SPEAK: 0,
+                DevicePropertyKey.ONLINE: controller_json.get(ControllerPropertyKey.ONLINE, 0),
+                DevicePropertyKey.STATE: 0,
+                DevicePropertyKey.REMAINING_TIME: 0,
+            }]
+        return [
+            {
+                DevicePropertyKey.PORT: port,
+                DevicePropertyKey.NAME: f"Port {port}",
+                DevicePropertyKey.ONLINE: controller_json.get(ControllerPropertyKey.ONLINE, 0),
+            }
+            for port in range(1, (controller_json.get(ControllerPropertyKey.PORT_COUNT) or 0) + 1)
+        ]
 
     @property
     def controller_id(self) -> str:
@@ -115,6 +155,11 @@ class ACInfinityController:
     def is_room_to_room_fan(self) -> bool:
         """Returns true if this is a standalone room-to-room/through-wall fan (e.g. AC-TWT6)"""
         return self._controller_type in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
+
+    @property
+    def is_airtap(self) -> bool:
+        """Returns true if this device is an AIRTAP register fan rather than a controller with ports"""
+        return self._is_airtap
 
     @property
     def mac_addr(self) -> str:
@@ -156,6 +201,8 @@ class ACInfinityController:
                 return "UIS Controller Outlet AI+ (AC-ADA8)"
             case ControllerType.UIS_ROOM_TO_ROOM_FAN:
                 return "Room to Room Fan (AC-TWT6)"
+            case ControllerType.AIRTAP_AI:
+                return "AIRTAP AI Register Booster Fan"
             case _:
                 return f"UIS Controller Type {device_type}"
 
@@ -305,9 +352,9 @@ class ACInfinityDevice:
         self._device_port = device_json[DevicePropertyKey.PORT]
         self._device_name = device_json[DevicePropertyKey.NAME]
 
-        if controller.is_room_to_room_fan and self._device_port == 0:
-            # A room-to-room fan is a single physical unit: its controls (synthetic port 0) and its
-            # controller-level sensors belong on one device, not a separate "<name> Main" device.
+        if self._device_port == 0:
+            # Port 0 only exists for portless fans (AIRTAP, room-to-room). The fan is a single physical
+            # unit: its controls and its controller-level sensors belong on one device.
             self._device_info = controller.device_info
             return
 
@@ -371,6 +418,15 @@ class ACInfinityService:
         returns a list of devices associated with the account
         """
         return list(self.data.controller_properties.keys())
+
+    def get_device_ports(self, controller_id: str | int) -> list[int]:
+        """
+        returns the port indexes known for a controller (0 for a portless fan, 1..n for controllers)
+        """
+        controller_json = self.data.controller_properties.get(str(controller_id))
+        if controller_json is None:
+            return []
+        return sorted(port_json[DevicePropertyKey.PORT] for port_json in ACInfinityController.get_port_jsons(controller_json))
 
     def get_controller_property_exists(
         self, controller_id: str | int, property_key: str
@@ -668,10 +724,11 @@ class ACInfinityService:
 
             all_devices_json = await self.client.get_account_controllers()
             for controller_properties_json in all_devices_json:
-                controller_id = controller_properties_json[ControllerPropertyKey.DEVICE_ID]
+                # cache keys are always the string id; every getter looks values up by str(controller_id)
+                controller_id = str(controller_properties_json[ControllerPropertyKey.DEVICE_ID])
 
                 # set controller properties; readings for temp, vpd, humidity, etc...
-                self.data.controller_properties[str(controller_id)] = controller_properties_json
+                self.data.controller_properties[controller_id] = controller_properties_json
 
                 # Room-to-room fans (e.g. AC-TWT6) have no ports, so the loop below never runs for
                 # them. Synthesize the port 0 device properties here; _device_properties gates entity
@@ -680,13 +737,7 @@ class ACInfinityService:
                     # State/speed/remaining time for this device come from its mode settings (see
                     # refresh_device_settings), so keep whatever that last stored and only update ONLINE.
                     synthetic_properties = self.data.device_properties.setdefault(
-                        (controller_id, 0),
-                        {
-                            DevicePropertyKey.PORT: 0,
-                            DevicePropertyKey.STATE: 0,
-                            DevicePropertyKey.SPEAK: 0,
-                            DevicePropertyKey.REMAINING_TIME: 0,
-                        },
+                        (controller_id, 0), ACInfinityController.get_port_jsons(controller_properties_json)[0]
                     )
                     synthetic_properties[DevicePropertyKey.ONLINE] = controller_properties_json[ControllerPropertyKey.ONLINE]
 
@@ -700,7 +751,10 @@ class ACInfinityService:
                         # set sensor properties; sensor value, unit, and display precision
                         self.data.sensor_properties[(controller_id, access_port_index, sensor_type)] = sensor_properties_json
 
-                for device_properties_json in controller_properties_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []:
+                if controller_properties_json.get(ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES:
+                    continue
+
+                for device_properties_json in ACInfinityController.get_port_jsons(controller_properties_json):
                     device_port = device_properties_json[DevicePropertyKey.PORT]
 
                     # set port properties; current power and remaining time until a mode switch
@@ -718,18 +772,18 @@ class ACInfinityService:
         has subscribed to the coordinator yet).
         """
         if not (port_indexes := set(port_indexes)):
-            # port 0 holds controller-level settings; ports 1-PORT_COUNT are the physical ports
-            port_count = self.get_controller_property(controller_id, ControllerPropertyKey.PORT_COUNT, 0)
-            port_indexes = set(range(port_count + 1))
+            # port 0 holds controller-level settings (or the fan itself on portless fans)
+            port_indexes = {0, *self.get_device_ports(controller_id)}
 
         port_indexes = list(port_indexes)
 
         # AI controllers read and write settings through the mode endpoint, while standard
         # controllers use the advanced settings endpoint (mirrors update_device_setting).
-        controller_properties = (self.data.controller_properties or {}).get(str(controller_id))
-        is_ai_controller = (
-            controller_properties is not None
-            and ACInfinityController(controller_properties).is_ai_controller
+        # Portless fans (AIRTAP, room-to-room) are also written through the mode endpoint.
+        controller_properties = self.data.controller_properties.get(str(controller_id))
+        controller = ACInfinityController(controller_properties) if controller_properties is not None else None
+        settings_from_mode_endpoint = controller is not None and (
+            controller.is_ai_controller or controller.is_airtap or controller.is_room_to_room_fan
         )
 
         async def _refresh_port(port_index: int) -> None:
@@ -737,7 +791,7 @@ class ACInfinityService:
                 lambda: self.client.get_device_mode_settings(controller_id, port_index),
                 f"refresh device controls for controller {controller_id} port {port_index}",
             )
-            if is_ai_controller:
+            if settings_from_mode_endpoint:
                 settings = controls[DeviceControlKey.DEV_SETTING]
             else:
                 settings = await self._execute_with_retry(
@@ -753,10 +807,10 @@ class ACInfinityService:
                 port_index == 0
                 and self.get_controller_property(controller_id, ControllerPropertyKey.DEVICE_TYPE) in ROOM_TO_ROOM_FAN_CONTROLLER_TYPES
             ):
-                dev_setting = result.get(DeviceControlKey.DEV_SETTING) or {}
+                dev_setting = controls.get(DeviceControlKey.DEV_SETTING) or {}
 
                 def _value(key: str, default: int = 0) -> int:
-                    value = result.get(key)
+                    value = controls.get(key)
                     if value is None:
                         value = dev_setting.get(key)
                     return default if value is None else value
@@ -818,6 +872,8 @@ class ACInfinityService:
         """
         if controller.is_ai_controller:
             raise NotImplementedError("AI controllers do not support updating controller settings: %s", key_values)
+        elif controller.is_airtap:
+            raise NotImplementedError("AIRTAP fans do not support updating controller settings: %s", key_values)
         else:
             await self.__update_advanced_settings(controller.controller_id, 0, controller.controller_name, key_values)
 
@@ -849,6 +905,8 @@ class ACInfinityService:
         """
         if device.controller.is_ai_controller:
             await self.__update_ai_control_and_settings(device.controller.controller_id, device.device_port, key_values)
+        elif device.controller.is_airtap:
+            raise NotImplementedError("AIRTAP fans do not support updating device settings: %s", key_values)
         else:
             await self.__update_advanced_settings(device.controller.controller_id, device.device_port, device.device_name, key_values)
 
@@ -887,6 +945,8 @@ class ACInfinityService:
                 )
             else:
                 await self.__update_room_to_room_fan_controls(device.controller.controller_id, device.device_port, key_values)
+        elif device.controller.is_airtap:
+            await self.__update_airtap_controls(device.controller.controller_id, key_values)
         else:
             await self.__update_device_controls(device.controller.controller_id, device.device_port, key_values)
 
@@ -1019,6 +1079,25 @@ class ACInfinityService:
                 "update room-to-room fan display setting",
             )
             self.__cache_updated_values(self.data.device_controls, controller_id, device_port, key_values)
+
+    async def __update_airtap_controls(
+        self,
+        controller_id: str | int,
+        key_values: dict[str, int],
+    ):
+        """Update the mode and/or speeds of an AIRTAP register fan via the AC Infinity API
+
+        Args:
+            controller_id: the device id of the fan
+            key_values: a list of key/value pairs to update, as a tuple of (setting_key, new_value)
+        """
+        async with self._update_lock:
+            await self._execute_with_retry(
+                lambda: self.client.update_airtap_controls(controller_id, key_values),
+                "update AIRTAP controls",
+            )
+            self.__cache_updated_values(self.data.device_controls, controller_id, 0, key_values)
+
     async def close(self) -> None:
         """Close the client session when done"""
         if self.client:
@@ -1239,6 +1318,8 @@ class ACInfinityControllerEntity(ACInfinityEntity):
 
     @property
     def is_suitable(self) -> bool:
+        if self._controller.is_airtap and self.data_key not in AIRTAP_CONTROLLER_KEYS:
+            return False
         return self._suitable_fn(self, self.controller)
 
 
@@ -1330,6 +1411,8 @@ class ACInfinityDeviceEntity(ACInfinityEntity):
 
     @property
     def is_suitable(self) -> bool:
+        if self._device.controller.is_airtap and self.data_key not in AIRTAP_DEVICE_KEYS:
+            return False
         return self._suitable_fn(self, self.device_port)
 
     @property
@@ -1430,28 +1513,26 @@ class ACInfinityEntities(list[ACInfinityEntity]):
             )
 
 
+def get_entity_config_value(entry: ConfigEntry, device_id: str, entity_config_key: str) -> str:
+    """The entity configuration chosen for a device / port, or the setup default (sensors only) when the device or
+    port was added to the account after the integration was configured and has no saved choice yet."""
+    return (
+        entry.data.get(ConfigurationKey.ENTITIES, {})
+        .get(device_id, {})
+        .get(entity_config_key, EntityConfigValue.SENSORS_ONLY)
+    )
+
+
 def enabled_fn_sensor(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
-    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
-    if not entity_config:
-        return True  # Enable synthetic devices by default
-    return entity_config.get(entity_config_key, EntityConfigValue.ALL) != EntityConfigValue.DISABLE
+    return get_entity_config_value(entry, device_id, entity_config_key) != EntityConfigValue.DISABLE
 
 
 def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
-    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
-    if not entity_config:
-        return True  # Enable synthetic devices by default
-    setting = entity_config.get(entity_config_key, EntityConfigValue.ALL)
+    setting = get_entity_config_value(entry, device_id, entity_config_key)
     return setting == EntityConfigValue.ALL or setting == EntityConfigValue.SENSORS_AND_CONTROLS
 
 
 def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
-    # For synthetic ports (e.g., port_0 for room-to-room fans), default to enabled
-    entity_config = entry.data[ConfigurationKey.ENTITIES].get(device_id, {})
-    if not entity_config:
-        return True  # Enable synthetic devices by default
-    setting = entity_config.get(entity_config_key, EntityConfigValue.ALL)
+    setting = get_entity_config_value(entry, device_id, entity_config_key)
     return setting == EntityConfigValue.ALL or setting == EntityConfigValue.SENSORS_AND_SETTINGS
 

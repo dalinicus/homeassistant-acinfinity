@@ -36,6 +36,7 @@ from tests.data_models import (
     AI_DEVICE_ID,
     CONTROLLER_PROPERTIES_DATA,
     DEVICE_CONTROLS,
+    DEVICE_SETTINGS,
     DEVICE_INFO_LIST_ALL,
 )
 
@@ -58,6 +59,12 @@ def setup(mocker: MockFixture):
         "get_device_mode_settings",
         new_callable=AsyncMock,
         return_value=deepcopy(DEVICE_CONTROLS),
+    )
+    mocker.patch.object(
+        ACInfinityClient,
+        "get_device_settings",
+        new_callable=AsyncMock,
+        return_value=deepcopy(DEVICE_SETTINGS),
     )
     mocker.patch.object(ACInfinityClient, "close", new_callable=AsyncMock)
     mocker.patch.object(HomeAssistant, "__init__", return_value=None)

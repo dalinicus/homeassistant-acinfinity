@@ -70,8 +70,11 @@ class ACInfinityFlowBase:
             # ConfigFlow - we are setting the integration up for the first time.  Don't add excessive entities.
             return EntityConfigValue.SENSORS_ONLY
 
+        # devices / ports added to the account after setup have no saved value yet
         return (
-            data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
+            data.get(ConfigurationKey.ENTITIES, {})
+            .get(device_id, {})
+            .get(entity_config_key, EntityConfigValue.SENSORS_ONLY)
         )
 
     def _build_entity_config_schema(
@@ -91,7 +94,6 @@ class ACInfinityFlowBase:
         """
         device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME)
         device_code = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_CODE)
-        port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
 
         entities = {}
         description_placeholders = {
@@ -117,7 +119,7 @@ class ACInfinityFlowBase:
             }
         })
 
-        for i in range(1, port_count + 1):
+        for i in service.get_device_ports(device_id):
             entity_config_key = f"port_{i}"
             description_placeholders[entity_config_key] = service.get_device_property(device_id, i, DevicePropertyKey.NAME)
             entities[vol.Required(entity_config_key, default=self.__get_saved_entity_conf_value(data, str(device_id), entity_config_key))] = selector(
@@ -192,7 +194,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 errors["base"] = "unknown"
 
         return self.async_show_form(
-            step_id="user", data_schema=CONFIG_SCHEMA, errors=errors  # pyright: ignore[reportArgumentType]
+            step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )
 
     async def async_step_enable_entities(self, user_input: dict[str, Any] | None = None):
@@ -220,7 +222,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
 
         return self.async_show_form(
             step_id="enable_entities",
-            data_schema=vol.Schema(entities),  # pyright: ignore[reportArgumentType]
+            data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
         )
@@ -314,7 +316,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="general_config",
-            data_schema=vol.Schema(  # pyright: ignore[reportArgumentType]
+            data_schema=vol.Schema(
                 {
                     vol.Required(ConfigurationKey.POLLING_INTERVAL,
                                  default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL,
@@ -347,7 +349,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="controller_select",
-            data_schema=vol.Schema({  # pyright: ignore[reportArgumentType]
+            data_schema=vol.Schema({
                 vol.Required("device_id"): selector({
                     "select": {
                         "options": options
@@ -382,7 +384,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="enable_entities",
-            data_schema=vol.Schema(entities),  # pyright: ignore[reportArgumentType]
+            data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
         )

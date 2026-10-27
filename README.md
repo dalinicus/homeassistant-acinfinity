@@ -22,6 +22,10 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro
 - Controller 69 Pro+
 - Controller AI+
+- AIRTAP AI Register Booster Fans (Wi-Fi models)
+
+AIRTAP fans have no ports; each fan shows up as its own device with the fan's mode (`AI` / `Off` / `On`), on/off power
+and current power on "port 0". Timer, cycle and schedule modes can still be set from the app but cannot be driven from Home Assistant.
 
 This integration requires the controller be connected to Wi-fi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 

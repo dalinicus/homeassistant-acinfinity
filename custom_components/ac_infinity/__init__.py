@@ -88,14 +88,12 @@ async def __initialize_new_devices_if_any(
     entities_config = new_data[ConfigurationKey.ENTITIES].copy()
     
     for device_id in new_device_ids:
-        port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT)
-
         device_config = {
             "controller": EntityConfigValue.SENSORS_ONLY,
             "sensors": EntityConfigValue.SENSORS_ONLY,
         }
 
-        for i in range(1, port_count + 1):
+        for i in service.get_device_ports(device_id):
             device_config[f"port_{i}"] = EntityConfigValue.SENSORS_ONLY
         
         entities_config[str(device_id)] = device_config
@@ -144,7 +142,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             # For each device that existed in v1, create explicit configuration
             # Set to most permissive to preserve v1 behavior where all entities were enabled always
             for device_id in device_ids:
-                port_count = service.get_controller_property(device_id, ControllerPropertyKey.PORT_COUNT, 0)
                 device_name = service.get_controller_property(device_id, ControllerPropertyKey.DEVICE_NAME, f"Device {device_id}")
 
                 device_config = {
@@ -152,7 +149,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                     "sensors": EntityConfigValue.SENSORS_ONLY,
                 }
 
-                for i in range(1, port_count + 1):
+                for i in service.get_device_ports(device_id):
                     device_config[f"port_{i}"] = EntityConfigValue.ALL
 
                 new_data[ConfigurationKey.ENTITIES][str(device_id)] = device_config

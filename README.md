@@ -15,6 +15,7 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
   - [Enable / Disable Entities](#enable--disable-entities)
   - [Remove Unwanted Entities](#remove-unwanted-entities)
 - [Fan Entities](#fan-entities)
+- [Calibrating Against Another Sensor](#calibrating-against-another-sensor)
 - [Diagnostics](#diagnostics)
 
 # Compatibility
@@ -99,6 +100,31 @@ percentage maps to the `On Power` level (10% per step).  Any other active mode (
 
 Ports whose device type is set in the AC Infinity app to something that is not a fan (grow light, heater, pump, ...) do not
 get a fan entity.
+
+# Calibrating Against Another Sensor
+
+A controller's built-in temperature / humidity sensor can be calibrated to match any other sensor in Home Assistant,
+from the integration's `Configure` menu (`Calibrate Sensors`) or with the `ac_infinity.calibrate` action.  The offset is
+written to the controller's own calibration setting, so the controller's triggers and display use the corrected value too.
+
+It is computed from the uncalibrated reading, so it is safe to run repeatedly, e.g. from an automation:
+
+```yaml
+automation:
+  - alias: Keep tent controller calibrated
+    triggers:
+      - trigger: time_pattern
+        hours: "/6"
+    actions:
+      - action: ac_infinity.calibrate
+        data:
+          device_id: <your controller device>
+          temperature_entity: sensor.reference_temperature
+          humidity_entity: sensor.reference_humidity
+```
+
+Offsets are whole degrees / percent and limited to the controller's range (±10 °C, ±20 °F, ±10 %).  Calibration is
+supported on the 69 Wifi / Pro / Pro+ controllers; AI controllers and standalone fans don't accept it from Home Assistant.
 
 # Diagnostics
 

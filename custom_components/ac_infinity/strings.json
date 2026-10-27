@@ -56,7 +56,8 @@
         "menu_options": {
           "general_config": "General Configuration",
           "controller_select": "Enable / Disable Entities",
-          "entity_filters": "Remove Unwanted Entities"
+          "entity_filters": "Remove Unwanted Entities",
+          "calibrate": "Calibrate Sensors"
         }
       },
       "general_config": {
@@ -130,13 +131,28 @@
           "port_7": "{port_7} (Port 7)",
           "port_8": "{port_8} (Port 8)"
         }
+      },
+      "calibrate": {
+        "title": "Calibrate sensors",
+        "description": "Sets the controller's calibration so its built-in temperature / humidity sensor reads the same as a reference sensor in Home Assistant. The offset is written to the controller, so its own triggers use the corrected value. For ongoing calibration, call the `ac_infinity.calibrate` action from an automation. {error}",
+        "data": {
+          "device_id": "Controller",
+          "temperature_entity": "Reference temperature sensor",
+          "humidity_entity": "Reference humidity sensor"
+        }
       }
     },
     "error": {
       "invalid_polling_interval": "Polling interval cannot be less than 5 seconds",
       "cannot_connect": "Failed to connect",
       "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_reference": "Choose a reference temperature and/or humidity sensor.",
+      "calibration_failed": "Calibration failed."
+    },
+    "abort": {
+      "calibrated": "Calibrated. Temperature offset: {temperature}, humidity offset: {humidity}{clamped}",
+      "no_calibratable_controllers": "None of your controllers support calibration from Home Assistant (AI controllers and standalone fans don't)."
     }
   },
   "entity": {
@@ -455,6 +471,26 @@
     "fan": {
       "fan": {
         "name": "Fan"
+      }
+    }
+  },
+  "services": {
+    "calibrate": {
+      "name": "Calibrate sensor",
+      "description": "Sets the controller's calibration so its built-in temperature / humidity sensor reads the same as a reference sensor. Written to the controller, so its own triggers use the corrected value. Safe to run repeatedly.",
+      "fields": {
+        "device_id": {
+          "name": "Controller",
+          "description": "The AC Infinity controller to calibrate."
+        },
+        "temperature_entity": {
+          "name": "Reference temperature",
+          "description": "Sensor the controller's temperature should match."
+        },
+        "humidity_entity": {
+          "name": "Reference humidity",
+          "description": "Sensor the controller's humidity should match."
+        }
       }
     }
   }

@@ -7,10 +7,15 @@ import asyncio
 import logging
 from datetime import datetime
 
+import probatio as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
+from homeassistant.helpers.typing import ConfigType
+
+from .calibration import async_calibrate, read_reference
 
 from .client import ACInfinityClient
 from .const import ConfigurationKey, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS, HOST, ControllerPropertyKey, \
@@ -24,6 +29,64 @@ from .core import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+SERVICE_CALIBRATE = "calibrate"
+ATTR_DEVICE_ID = "device_id"
+ATTR_TEMPERATURE_ENTITY = "temperature_entity"
+ATTR_HUMIDITY_ENTITY = "humidity_entity"
+
+CALIBRATE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_DEVICE_ID): cv.string,
+    vol.Optional(ATTR_TEMPERATURE_ENTITY): cv.entity_id,
+    vol.Optional(ATTR_HUMIDITY_ENTITY): cv.entity_id,
+})
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions."""
+
+    async def async_handle_calibrate(call: ServiceCall) -> ServiceResponse:
+        temperature_entity = call.data.get(ATTR_TEMPERATURE_ENTITY)
+        humidity_entity = call.data.get(ATTR_HUMIDITY_ENTITY)
+        if not temperature_entity and not humidity_entity:
+            raise HomeAssistantError("Choose a reference temperature and/or humidity sensor")
+
+        device = dr.async_get(hass).async_get(call.data[ATTR_DEVICE_ID])
+        controller_ids = {identifier[1] for identifier in device.identifiers if identifier[0] == DOMAIN} if device else set()
+        for entry_data in hass.data.get(DOMAIN, {}).values():
+            controller = next(
+                (c for c in entry_data.service.get_all_controller_properties() if c.controller_id in controller_ids),
+                None,
+            )
+            if controller is None:
+                continue
+
+            result = await async_calibrate(
+                entry_data.service,
+                controller,
+                read_reference(hass, temperature_entity, temperature=True) if temperature_entity else None,
+                read_reference(hass, humidity_entity, temperature=False) if humidity_entity else None,
+            )
+            await entry_data.list_coordinator.async_request_refresh()
+            return {
+                "temperature_offset": result.temperature_offset,
+                "temperature_unit": result.temperature_unit,
+                "humidity_offset": result.humidity_offset,
+                "clamped": result.clamped,
+            }
+
+        raise HomeAssistantError("Select an AC Infinity controller device")
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CALIBRATE,
+        async_handle_calibrate,
+        schema=CALIBRATE_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

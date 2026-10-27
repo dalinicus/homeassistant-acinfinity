@@ -42,7 +42,8 @@
           "update_password": "Die Aktualisierung des Passworts erfordert einen Neustart von Home Assistant."
         },
         "menu_options": {
-          "entity_filters": "Unerwünschte Entitäten entfernen"
+          "entity_filters": "Unerwünschte Entitäten entfernen",
+          "calibrate": "Sensoren kalibrieren"
         }
       },
       "notify_restart": {
@@ -72,13 +73,28 @@
         "data_description": {
           "number_display_type": "Ob Zahlen-Entitäten (z.B. Leistung) als Eingabefeld oder Schieberegler angezeigt werden."
         }
+      },
+      "calibrate": {
+        "title": "Sensoren kalibrieren",
+        "description": "Gleicht den eingebauten Sensor eines Controllers an einen Referenzsensor an. {error}",
+        "data": {
+          "device_id": "Controller",
+          "temperature_entity": "Referenz-Temperatur",
+          "humidity_entity": "Referenz-Feuchte"
+        }
       }
     },
     "error": {
       "invalid_polling_interval": "Das Abfrageintervall darf nicht weniger als 5 Sekunden betragen",
       "cannot_connect": "Verbindung fehlgeschlagen",
       "invalid_auth": "Ungültige Authentifizierung",
-      "unknown": "Unerwarteter Fehler"
+      "unknown": "Unerwarteter Fehler",
+      "no_reference": "Wähle mindestens einen Referenzsensor.",
+      "calibration_failed": "Kalibrierung fehlgeschlagen."
+    },
+    "abort": {
+      "calibrated": "Kalibriert. Temperatur-Offset: {temperature}, Feuchte-Offset: {humidity}{clamped}",
+      "no_calibratable_controllers": "Keiner deiner Controller unterstützt Kalibrierung aus Home Assistant."
     }
   },
   "entity": {
@@ -289,6 +305,26 @@
     "fan": {
       "fan": {
         "name": "Lüfter"
+      }
+    }
+  },
+  "services": {
+    "calibrate": {
+      "name": "Sensor kalibrieren",
+      "description": "Setzt die Kalibrierung des Controllers so, dass sein eingebauter Temperatur-/Feuchtesensor dem Referenzsensor entspricht.",
+      "fields": {
+        "device_id": {
+          "name": "Controller",
+          "description": "Der zu kalibrierende AC Infinity Controller."
+        },
+        "temperature_entity": {
+          "name": "Referenz-Temperatur",
+          "description": "Sensor, dem die Temperatur angeglichen wird."
+        },
+        "humidity_entity": {
+          "name": "Referenz-Feuchte",
+          "description": "Sensor, dem die Luftfeuchte angeglichen wird."
+        }
       }
     }
   }

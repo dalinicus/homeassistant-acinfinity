@@ -10,6 +10,7 @@ import probatio as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import selector
 from probatio import Required
 
@@ -20,6 +21,7 @@ from custom_components.ac_infinity.client import (
 )
 from . import ACInfinityService
 from .core import ACInfinityData, ACInfinityEntryData
+from .calibration import async_calibrate, read_reference
 from .entity_filter import async_filter_schema
 from .const import (
     ConfigurationKey,
@@ -281,7 +283,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         return self.async_show_menu(
-            step_id="init", menu_options=["general_config", "controller_select", "entity_filters"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters", "calibrate"]
         )
 
     async def async_step_general_config(self, user_input: dict[str, Any] | None = None):
@@ -440,6 +442,66 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="entity_filters",
             data_schema=await async_filter_schema(self.hass, dict(self.config_entry.data)),
+        )
+
+    async def async_step_calibrate(self, user_input: dict[str, Any] | None = None):
+        """Calibrate a controller's built-in sensor against another sensor in Home Assistant."""
+        entry_data: ACInfinityEntryData = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        controllers = {
+            c.controller_id: c
+            for c in entry_data.service.get_all_controller_properties()
+            if not (c.is_ai_controller or c.is_airtap or c.is_room_to_room_fan)
+        }
+        if not controllers:
+            return self.async_abort(reason="no_calibratable_controllers")
+
+        errors: dict[str, str] = {}
+        placeholders = {"error": ""}
+        if user_input is not None:
+            temperature_entity = user_input.get("temperature_entity")
+            humidity_entity = user_input.get("humidity_entity")
+            if not temperature_entity and not humidity_entity:
+                errors["base"] = "no_reference"
+            else:
+                try:
+                    result = await async_calibrate(
+                        entry_data.service,
+                        controllers[user_input["device_id"]],
+                        read_reference(self.hass, temperature_entity, temperature=True) if temperature_entity else None,
+                        read_reference(self.hass, humidity_entity, temperature=False) if humidity_entity else None,
+                    )
+                except HomeAssistantError as ex:
+                    errors["base"] = "calibration_failed"
+                    placeholders["error"] = str(ex)
+                else:
+                    await entry_data.list_coordinator.async_request_refresh()
+                    return self.async_abort(
+                        reason="calibrated",
+                        description_placeholders={
+                            "temperature": "-" if result.temperature_offset is None
+                            else f"{result.temperature_offset:+d} {result.temperature_unit}",
+                            "humidity": "-" if result.humidity_offset is None else f"{result.humidity_offset:+d} %",
+                            "clamped": " (limited to the controller's calibration range)" if result.clamped else "",
+                        },
+                    )
+
+        return self.async_show_form(
+            step_id="calibrate",
+            data_schema=vol.Schema({
+                vol.Required("device_id"): selector({
+                    "select": {
+                        "options": [{"value": i, "label": c.controller_name} for i, c in controllers.items()]
+                    }
+                }),
+                vol.Optional("temperature_entity"): selector(
+                    {"entity": {"domain": "sensor", "device_class": "temperature"}}
+                ),
+                vol.Optional("humidity_entity"): selector(
+                    {"entity": {"domain": "sensor", "device_class": "humidity"}}
+                ),
+            }),
+            errors=errors,
+            description_placeholders=placeholders,
         )
 
     async def async_step_notify_restart(self):

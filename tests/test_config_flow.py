@@ -592,7 +592,7 @@ class TestConfigFlow:
         await flow.async_step_init()
 
         flow.async_show_menu.assert_called_with(
-            step_id="init", menu_options=["general_config", "controller_select", "entity_filters"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters", "calibrate"]
         )
 
     async def test_options_flow_entity_filters_saves_and_reloads(self, setup_options_flow, mocker):

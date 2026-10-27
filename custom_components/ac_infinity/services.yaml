@@ -1,0 +1,17 @@
+calibrate:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: ac_infinity
+    temperature_entity:
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    humidity_entity:
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity

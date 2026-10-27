@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
-    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey,
+    AtType, DOMAIN, AdvancedSettingsKey, DeviceControlKey, RoomToRoomFanMode,
 )
 from custom_components.ac_infinity.core import (
     ACInfinityController,
@@ -68,6 +68,22 @@ MODE_OPTIONS = {
 }
 MODE_OPTIONS_REVERSE = {v: k for k, v in MODE_OPTIONS.items()}
 
+# Room-to-room/through-wall fan (e.g. AC-TWT6) mode options. This device reuses the
+# same "atType" field as UIS controllers, but with entirely different values/meanings -
+# confirmed via packet capture of the official app.
+ROOM_TO_ROOM_MODE_OPTIONS = {
+    RoomToRoomFanMode.MANUAL: "Manual",
+    RoomToRoomFanMode.TEMP_TARGET: "Temperature Target",
+    RoomToRoomFanMode.TIMER: "Timer",
+    RoomToRoomFanMode.AI_DIFFERENTIAL: "AI Differential",
+}
+ROOM_TO_ROOM_MODE_OPTIONS_REVERSE = {v: k for k, v in ROOM_TO_ROOM_MODE_OPTIONS.items()}
+
+# Display-only label for when the device reports atType=0 (powered off). Not included
+# in ROOM_TO_ROOM_MODE_OPTIONS/the select's own options list - turning the fan off/on is
+# handled by the dedicated power switch, not this selector.
+ROOM_TO_ROOM_MODE_DISPLAY_LABELS = {**ROOM_TO_ROOM_MODE_OPTIONS, RoomToRoomFanMode.OFF: "Off"}
+
 SETTINGS_MODE_OPTIONS = [
     "Auto",
     "Target",
@@ -120,20 +136,33 @@ DEVICE_LOAD_TYPE_OPTIONS_REVERSE = {v: k for k, v in DEVICE_LOAD_TYPE_OPTIONS.it
 def __suitable_fn_controller_setting_default(
     entity: ACInfinityEntity, controller: ACInfinityController
 ):
-    return not controller.is_ai_controller and entity.service.get_controller_setting_exists(
-        controller.controller_id, entity.data_key
+    return (
+        not controller.is_ai_controller
+        and not controller.is_room_to_room_fan
+        and entity.service.get_controller_setting_exists(
+            controller.controller_id, entity.data_key
+        )
     )
 
 
 def __suitable_fn_device_control_default(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return entity.service.get_device_control_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic/AI UIS controllers only; room-to-room fans use their own dedicated entities."""
+    return (
+        not device.controller.is_room_to_room_fan
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
 def __suitable_fn_device_setting_basic_controller(entity: ACInfinityEntity, device: ACInfinityDevice):
-    return not device.controller.is_ai_controller and entity.service.get_device_setting_exists(
-        device.controller.controller_id, device.device_port, entity.data_key
+    """For basic UIS controllers (tent controllers), not room-to-room fans or AI controllers"""
+    return (
+        not device.controller.is_ai_controller
+        and not device.controller.is_room_to_room_fan
+        and entity.service.get_device_setting_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
@@ -153,6 +182,15 @@ def __get_value_fn_active_mode(entity: ACInfinityEntity, device: ACInfinityDevic
             device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, 1
         )
     ]
+
+
+def __get_value_fn_room_to_room_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
+    active_mode = entity.service.get_device_control(
+        device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE, RoomToRoomFanMode.MANUAL
+    )
+    # "Off" (atType=0) is display-only here - falls back to "Manual" for any other
+    # atType value without a confirmed label, rather than raising a KeyError.
+    return ROOM_TO_ROOM_MODE_DISPLAY_LABELS.get(active_mode, ROOM_TO_ROOM_MODE_OPTIONS[RoomToRoomFanMode.MANUAL])
 
 
 def __get_value_fn_dynamic_response_type(
@@ -205,6 +243,19 @@ def __set_value_fn_active_mode(
     )
 
 
+def __set_value_fn_room_to_room_mode(
+    entity: ACInfinityEntity, device: ACInfinityDevice, value: str
+):
+    if value not in ROOM_TO_ROOM_MODE_OPTIONS.values():
+        raise ValueError(f"Invalid room-to-room fan mode: {value}")
+
+    return entity.service.update_device_control(
+        device,
+        DeviceControlKey.AT_TYPE,
+        ROOM_TO_ROOM_MODE_OPTIONS_REVERSE[value],
+    )
+
+
 def __get_value_fn_setting_mode(entity: ACInfinityEntity, device: ACInfinityDevice):
     return SETTINGS_MODE_OPTIONS[
         entity.service.get_device_control(
@@ -246,6 +297,17 @@ def __set_value_fn_device_load_type(
         device,
         AdvancedSettingsKey.DEVICE_LOAD_TYPE,
         STANDARD_DEVICE_LOAD_TYPE_OPTIONS_REVERSE[value]
+    )
+
+
+def __suitable_fn_room_to_room_fan_control(entity: ACInfinityEntity, device: ACInfinityDevice):
+    """Room-to-room fans expose their controls at device port 0 (controller level)"""
+    return (
+        device.controller.is_room_to_room_fan
+        and device.device_port == 0
+        and entity.service.get_device_control_exists(
+            device.controller.controller_id, device.device_port, entity.data_key
+        )
     )
 
 
@@ -319,6 +381,17 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceSelectEntityDescription] = [
         suitable_fn=__suitable_fn_device_setting_basic_controller,
         get_value_fn=__get_value_fn_dynamic_response_type,
         set_value_fn=__set_value_fn_dynamic_response_type,
+        at_type_fn=lambda at_type: True
+    ),
+    # Room-to-room fan mode selector (AC-TWT6, devType 33)
+    ACInfinityDeviceSelectEntityDescription(
+        key=DeviceControlKey.AT_TYPE,
+        translation_key="room_to_room_mode",
+        options=list(ROOM_TO_ROOM_MODE_OPTIONS.values()),
+        enabled_fn=enabled_fn_control,
+        suitable_fn=__suitable_fn_room_to_room_fan_control,
+        get_value_fn=__get_value_fn_room_to_room_mode,
+        set_value_fn=__set_value_fn_room_to_room_mode,
         at_type_fn=lambda at_type: True
     ),
 ]

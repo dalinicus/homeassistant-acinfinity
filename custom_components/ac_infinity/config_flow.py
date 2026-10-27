@@ -20,6 +20,7 @@ from custom_components.ac_infinity.client import (
 )
 from . import ACInfinityService
 from .core import ACInfinityData, ACInfinityEntryData
+from .entity_filter import async_filter_schema
 from .const import (
     ConfigurationKey,
     DEFAULT_POLLING_INTERVAL,
@@ -147,6 +148,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
         self.device_ids: list[str] | None = None
         self.device_index: int = 0
         self.entities: dict[str, Any] = {}
+        self.filters: dict[str, Any] = {}
 
     @staticmethod
     @callback
@@ -213,7 +215,7 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 return await self.async_step_enable_entities()
 
             else:
-                return await self.async_create_config_entry()
+                return await self.async_step_entity_filters()
 
         entities, description_placeholders = self._build_entity_config_schema(
             self.service,
@@ -225,6 +227,16 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
+        )
+
+    async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """Integration wide filters to drop whole kinds of entities, across every device."""
+        if user_input is not None:
+            self.filters = user_input
+            return await self.async_create_config_entry()
+
+        return self.async_show_form(
+            step_id="entity_filters", data_schema=await async_filter_schema(self.hass, None)
         )
 
     async def async_create_config_entry(self):
@@ -240,6 +252,8 @@ class ConfigFlow(ACInfinityFlowBase, config_entries.ConfigFlow, domain=DOMAIN): 
                 CONF_PASSWORD: self.password,
                 ConfigurationKey.POLLING_INTERVAL: DEFAULT_POLLING_INTERVAL,
                 ConfigurationKey.ENTITIES: self.entities,
+                ConfigurationKey.EXCLUDED_MODES: self.filters.get(ConfigurationKey.EXCLUDED_MODES, []),
+                ConfigurationKey.EXCLUDED_ENTITY_TYPES: self.filters.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES, []),
                 ConfigurationKey.MODIFIED_AT: datetime.now().isoformat()
             }
         )
@@ -255,7 +269,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         """Manage the options."""
         return self.async_show_menu(
-            step_id="init", menu_options=["general_config", "controller_select"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters"]
         )
 
     async def async_step_general_config(self, user_input: dict[str, Any] | None = None):
@@ -387,6 +401,22 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
             data_schema=vol.Schema(entities),
             errors=errors,
             description_placeholders=description_placeholders
+        )
+
+    async def async_step_entity_filters(self, user_input: dict[str, Any] | None = None):
+        """Integration wide filters to drop whole kinds of entities, across every device.  Saving reloads the
+        integration, which removes the excluded entities from Home Assistant."""
+        if user_input is not None:
+            new_data = self.config_entry.data.copy()
+            new_data[ConfigurationKey.EXCLUDED_MODES] = user_input.get(ConfigurationKey.EXCLUDED_MODES, [])
+            new_data[ConfigurationKey.EXCLUDED_ENTITY_TYPES] = user_input.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES, [])
+            self.__update_config_entry_data(new_data)
+            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="entity_filters",
+            data_schema=await async_filter_schema(self.hass, dict(self.config_entry.data)),
         )
 
     async def async_step_notify_restart(self):

@@ -301,10 +301,19 @@ class TestConfigFlow:
             "sensors": "all"
         }
 
-        result = await flow.async_step_enable_entities(user_input)
+        mocker.patch(
+            "custom_components.ac_infinity.config_flow.async_filter_schema", new_callable=mocker.AsyncMock
+        )
+        await flow.async_step_enable_entities(user_input)
 
-        # Verify that entities were stored for the last device
+        # Verify that entities were stored for the last device, then the entity filter form is shown
         assert flow.entities[str(AI_DEVICE_ID)] == user_input
+        flow.async_show_form.assert_called_with(step_id="entity_filters", data_schema=mocker.ANY)
+        flow.async_create_entry.assert_not_called()
+
+        result = await flow.async_step_entity_filters(
+            {"excluded_modes": ["7"], "excluded_entity_types": ["number.cycle_duration_on"]}
+        )
 
         # Verify config entry was created
         flow.async_create_entry.assert_called_once()
@@ -315,6 +324,8 @@ class TestConfigFlow:
         config_data = call_args[1]["data"]
         assert config_data[CONF_EMAIL] == EMAIL
         assert config_data[CONF_PASSWORD] == PASSWORD
+        assert config_data["excluded_modes"] == ["7"]
+        assert config_data["excluded_entity_types"] == ["number.cycle_duration_on"]
         assert config_data["entities"] == {
             str(DEVICE_ID): {"controller": "all", "sensors": "sensors_only"},
             str(AI_DEVICE_ID): {"controller": "sensors_only", "sensors": "all"}
@@ -577,8 +588,23 @@ class TestConfigFlow:
         await flow.async_step_init()
 
         flow.async_show_menu.assert_called_with(
-            step_id="init", menu_options=["general_config", "controller_select"]
+            step_id="init", menu_options=["general_config", "controller_select", "entity_filters"]
         )
+
+    async def test_options_flow_entity_filters_saves_and_reloads(self, setup_options_flow, mocker):
+        """Saving the entity filters stores them and reloads the entry so excluded entities are removed"""
+        _, test_objects = setup_options_flow
+        flow = test_objects.options_flow
+        update_mock = mocker.patch.object(flow.hass.config_entries, "async_update_entry", create=True)
+        reload_mock = mocker.patch.object(flow.hass.config_entries, "async_schedule_reload", create=True)
+
+        await flow.async_step_entity_filters({"excluded_modes": ["8"], "excluded_entity_types": []})
+
+        new_data = update_mock.call_args[1]["data"]
+        assert new_data["excluded_modes"] == ["8"]
+        assert new_data["excluded_entity_types"] == []
+        reload_mock.assert_called_once()
+        flow.async_create_entry.assert_called_once()
 
     async def test_options_flow_controller_select_shows_form_with_devices(self, setup_options_flow):
         """When async_step_controller_select is called without user input, it should show form with device options"""

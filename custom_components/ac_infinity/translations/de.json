@@ -15,6 +15,18 @@
           "password": "Passwort",
           "polling_interval": "Abfrageintervall (Sekunden)"
         }
+      },
+      "entity_filters": {
+        "title": "Unerwünschte Entitäten entfernen",
+        "description": "Entfernt ganze Entitätsarten von allen Controllern und Ports. Ausgeschlossene Entitäten werden aus Home Assistant gelöscht und nicht mehr erstellt.",
+        "data": {
+          "excluded_modes": "Entitäten für Modi entfernen",
+          "excluded_entity_types": "Entitätsarten entfernen"
+        },
+        "data_description": {
+          "excluded_modes": "Entfernt alle Entitäten, die nur für die gewählten Modi gelten. Der Modus selbst bleibt auswählbar.",
+          "excluded_entity_types": "Entfernt die gewählte Entität auf jedem Gerät."
+        }
       }
     }
   },
@@ -28,6 +40,9 @@
         },
         "data_description": {
           "update_password": "Die Aktualisierung des Passworts erfordert einen Neustart von Home Assistant."
+        },
+        "menu_options": {
+          "entity_filters": "Unerwünschte Entitäten entfernen"
         }
       },
       "notify_restart": {
@@ -36,6 +51,18 @@
         "menu_options": {
           "restart_yes": "Jetzt neu starten",
           "restart_no": "Später neu starten"
+        }
+      },
+      "entity_filters": {
+        "title": "Unerwünschte Entitäten entfernen",
+        "description": "Entfernt ganze Entitätsarten von allen Controllern und Ports. Ausgeschlossene Entitäten werden aus Home Assistant gelöscht und nicht mehr erstellt.",
+        "data": {
+          "excluded_modes": "Entitäten für Modi entfernen",
+          "excluded_entity_types": "Entitätsarten entfernen"
+        },
+        "data_description": {
+          "excluded_modes": "Entfernt alle Entitäten, die nur für die gewählten Modi gelten. Der Modus selbst bleibt auswählbar.",
+          "excluded_entity_types": "Entfernt die gewählte Entität auf jedem Gerät."
         }
       }
     },

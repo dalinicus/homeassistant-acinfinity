@@ -10,6 +10,7 @@ from datetime import datetime
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from .client import ACInfinityClient
 from .const import ConfigurationKey, DEFAULT_POLLING_INTERVAL, DOMAIN, PLATFORMS, HOST, ControllerPropertyKey, \
@@ -69,7 +70,50 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platforms with updated configuration
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    if len(entry_data.completed_platforms) == len(PLATFORMS):
+        __remove_stale_entities_and_devices(hass, entry, entry_data)
+    else:
+        _LOGGER.warning("Not all platforms finished setting up; skipping removal of stale entities.")
+
     return True
+
+
+def __remove_stale_entities_and_devices(
+    hass: HomeAssistant, entry: ConfigEntry, entry_data: ACInfinityEntryData
+) -> None:
+    """Remove registry entries for entities this integration no longer provides (disabled via the options flow,
+    or no longer applicable to the device), and port/sensor devices left without any entities.
+
+    Without this, entities switched off in the options flow linger as "unavailable" forever."""
+    entity_registry = er.async_get(hass)
+    removed = 0
+    for registry_entry in er.async_entries_for_config_entry(entity_registry, entry.entry_id):
+        if registry_entry.unique_id not in entry_data.provided_unique_ids:
+            entity_registry.async_remove(registry_entry.entity_id)
+            removed += 1
+
+    device_registry = dr.async_get(hass)
+    controller_identifiers = {(DOMAIN, controller_id) for controller_id in entry_data.service.get_device_ids()}
+    for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id):
+        if device.identifiers & controller_identifiers:
+            continue
+        if not er.async_entries_for_device(entity_registry, device.id, include_disabled_entities=True):
+            device_registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+
+    if removed:
+        _LOGGER.info("Removed %s entities no longer provided by the AC Infinity integration", removed)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: ConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """Allow a device to be deleted from the UI unless it is a controller still on the account."""
+    entry_data: ACInfinityEntryData = hass.data[DOMAIN][entry.entry_id]
+    return not any(
+        identifier[0] == DOMAIN and identifier[1] in entry_data.service.get_device_ids()
+        for identifier in device.identifiers
+    )
 
 
 async def __initialize_new_devices_if_any(

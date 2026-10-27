@@ -34,6 +34,18 @@
           "port_7": "{port_7} (Port 7)",
           "port_8": "{port_8} (Port 8)"
         }
+      },
+      "entity_filters": {
+        "title": "Remove unwanted entities",
+        "description": "Removes whole kinds of entities from every controller and port. Anything excluded here is deleted from Home Assistant and stops being created. Change it any time from the integration's Configure menu.",
+        "data": {
+          "excluded_modes": "Remove entities for modes",
+          "excluded_entity_types": "Remove entity types"
+        },
+        "data_description": {
+          "excluded_modes": "Removes every entity that only applies to the selected modes, e.g. all Schedule or VPD triggers. The mode itself can still be selected.",
+          "excluded_entity_types": "Removes the selected entity on every device, e.g. every 'Cycle Duration On'."
+        }
       }
     }
   },
@@ -43,7 +55,8 @@
         "title": "AC Infinity Configuration",
         "menu_options": {
           "general_config": "General Configuration",
-          "controller_select": "Enable / Disable Entities"
+          "controller_select": "Enable / Disable Entities",
+          "entity_filters": "Remove Unwanted Entities"
         }
       },
       "general_config": {
@@ -87,6 +100,35 @@
         "menu_options": {
           "restart_yes": "Restart Now",
           "restart_no": "Restart Later"
+        }
+      },
+      "entity_filters": {
+        "title": "Remove unwanted entities",
+        "description": "Removes whole kinds of entities from every controller and port. Anything excluded here is deleted from Home Assistant and stops being created. Change it any time from the integration's Configure menu.",
+        "data": {
+          "excluded_modes": "Remove entities for modes",
+          "excluded_entity_types": "Remove entity types"
+        },
+        "data_description": {
+          "excluded_modes": "Removes every entity that only applies to the selected modes, e.g. all Schedule or VPD triggers. The mode itself can still be selected.",
+          "excluded_entity_types": "Removes the selected entity on every device, e.g. every 'Cycle Duration On'."
+        }
+      },
+      "enable_entities": {
+        "title": "{device_name} ({device_code})",
+        "description": "Enable/Disable entity types for each device.",
+        "data": {
+          "controller": "{controller} (Controller)",
+          "sensors": "Sensors",
+          "port_0": "{port_0} (Fan)",
+          "port_1": "{port_1} (Port 1)",
+          "port_2": "{port_2} (Port 2)",
+          "port_3": "{port_3} (Port 3)",
+          "port_4": "{port_4} (Port 4)",
+          "port_5": "{port_5} (Port 5)",
+          "port_6": "{port_6} (Port 6)",
+          "port_7": "{port_7} (Port 7)",
+          "port_8": "{port_8} (Port 8)"
         }
       }
     },

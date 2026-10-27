@@ -273,7 +273,7 @@ async def async_setup_entry(
     entry_data: ACInfinityEntryData = hass.data[DOMAIN][config.entry_id]
     controllers = entry_data.service.get_all_controller_properties()
 
-    entities = ACInfinityEntities(config)
+    entities = ACInfinityEntities(config, entry_data.provided_unique_ids)
     for controller in controllers:
         for controller_description in CONTROLLER_DESCRIPTIONS:
             controller_entity = ACInfinityControllerBinarySensorEntity(
@@ -299,3 +299,4 @@ async def async_setup_entry(
                 entities.append_if_suitable(device_entity)
 
     add_entities_callback(entities)
+    entry_data.completed_platforms.add(__name__)

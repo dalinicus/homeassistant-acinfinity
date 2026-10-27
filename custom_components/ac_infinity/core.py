@@ -22,6 +22,7 @@ from homeassistant.helpers.update_coordinator import (
 from custom_components.ac_infinity.client import ACInfinityClient, ACInfinityClientInvalidAuth, \
     ACInfinityClientCannotConnect, ACInfinityClientRequestFailed
 from .const import (
+    AtType,
     AI_CONTROLLER_TYPES,
     ROOM_TO_ROOM_FAN_CONTROLLER_TYPES,
     ROOM_TO_ROOM_FAN_DISPLAY_SETTING_TRIGGER_KEYS,
@@ -1187,6 +1188,10 @@ class ACInfinityEntryData:
     device_coordinators: dict[str, ACInfinityDeviceCoordinator]
     """One coordinator per controller_id responsible for polling that controller's mode settings/controls.
     Listeners use the port index (0 for controller-level settings) as their subscription context."""
+    provided_unique_ids: set[str] = field(default_factory=set)
+    """Unique ids of every entity the platforms offered during setup, used to purge stale registry entries."""
+    completed_platforms: set[str] = field(default_factory=set)
+    """Platform modules that finished setup; stale entities are only purged once every platform has."""
 
 
 class ACInfinityEntity(CoordinatorEntity[ACInfinityDeviceListCoordinator], ABC):
@@ -1485,15 +1490,25 @@ class ACInfinityDeviceReadWriteMixin[T](ACInfinityDeviceReadOnlyMixin[T]):
 
 
 class ACInfinityEntities(list[ACInfinityEntity]):
-    def __init__(self, config: ConfigEntry):
+    def __init__(self, config: ConfigEntry, provided_unique_ids: set[str] | None = None):
         super().__init__()
         self._config_entry = config
+        self._provided_unique_ids = provided_unique_ids
 
     def append_if_suitable(self, entity: ACInfinityEntity):
 
-        if entity.is_enabled(self._config_entry):
+        if is_excluded_by_filters(self._config_entry, entity):
+            _LOGGER.debug(
+                'Ignoring excluded entity "%s" (%s) for platform "%s". (Excluded by user)',
+                entity.unique_id,
+                entity.translation_key,
+                entity.platform_name,
+            )
+        elif entity.is_enabled(self._config_entry):
             if entity.is_suitable:
                 self.append(entity)
+                if self._provided_unique_ids is not None:
+                    self._provided_unique_ids.add(entity.unique_id)
                 _LOGGER.debug(
                     'Initializing entity "%s" (%s) for platform "%s".',
                     entity.unique_id,
@@ -1514,6 +1529,32 @@ class ACInfinityEntities(list[ACInfinityEntity]):
                 entity.translation_key,
                 entity.platform_name,
             )
+
+
+ALL_AT_TYPES = frozenset(
+    value for name, value in vars(AtType).items() if not name.startswith("_") and isinstance(value, int)
+)
+
+
+def is_excluded_by_filters(entry: ConfigEntry, entity: ACInfinityEntity) -> bool:
+    """True if the user excluded this entity integration-wide, either by its type (e.g. every "Cycle Duration On")
+    or because every mode it applies to was excluded (e.g. all Schedule mode entities)."""
+    excluded_types = entry.data.get(ConfigurationKey.EXCLUDED_ENTITY_TYPES) or []
+    if f"{entity.platform_name}.{entity.translation_key}" in excluded_types:
+        return True
+
+    excluded_modes = {int(mode) for mode in entry.data.get(ConfigurationKey.EXCLUDED_MODES) or []}
+    at_type_fn = getattr(entity, "_at_type_fn", None)
+    if not excluded_modes or at_type_fn is None:
+        return False
+
+    # room-to-room fans reuse atType with unrelated mode numbers
+    if isinstance(entity, ACInfinityDeviceEntity) and entity.device_port.controller.is_room_to_room_fan:
+        return False
+
+    # entities shown in every mode are not mode specific, so a mode filter never removes them
+    applicable_modes = {mode for mode in ALL_AT_TYPES if at_type_fn(mode)}
+    return applicable_modes != ALL_AT_TYPES and applicable_modes <= excluded_modes
 
 
 def get_entity_config_value(entry: ConfigEntry, device_id: str, entity_config_key: str) -> str:

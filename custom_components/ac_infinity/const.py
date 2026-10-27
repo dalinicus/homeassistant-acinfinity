@@ -41,6 +41,8 @@ class ConfigurationKey:
     UPDATE_PASSWORD = "update_password"
     ENTITIES = "entities"
     MODIFIED_AT = "modified_at"
+    EXCLUDED_ENTITY_TYPES = "excluded_entity_types"
+    EXCLUDED_MODES = "excluded_modes"
 
 
 class EntityConfigValue:

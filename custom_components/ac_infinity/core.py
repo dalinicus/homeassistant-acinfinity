@@ -679,13 +679,28 @@ class ACInfinityService:
 
         port_indexes = list(port_indexes)
 
+        # AI controllers read and write settings through the mode endpoint, while standard
+        # controllers use the advanced settings endpoint (mirrors update_device_setting).
+        controller_properties = (self.data.controller_properties or {}).get(str(controller_id))
+        is_ai_controller = (
+            controller_properties is not None
+            and ACInfinityController(controller_properties).is_ai_controller
+        )
+
         async def _refresh_port(port_index: int) -> None:
-            result = await self._execute_with_retry(
+            controls = await self._execute_with_retry(
                 lambda: self.client.get_device_mode_settings(controller_id, port_index),
-                f"refresh device settings for controller {controller_id} port {port_index}",
+                f"refresh device controls for controller {controller_id} port {port_index}",
             )
-            self.data.device_controls[(controller_id, port_index)] = result
-            self.data.device_settings[(controller_id, port_index)] = result[DeviceControlKey.DEV_SETTING]
+            if is_ai_controller:
+                settings = controls[DeviceControlKey.DEV_SETTING]
+            else:
+                settings = await self._execute_with_retry(
+                    lambda: self.client.get_device_settings(controller_id, port_index),
+                    f"refresh device settings for controller {controller_id} port {port_index}",
+                )
+            self.data.device_controls[(controller_id, port_index)] = controls
+            self.data.device_settings[(controller_id, port_index)] = settings
 
         async with self._update_lock:
             results = await asyncio.gather(

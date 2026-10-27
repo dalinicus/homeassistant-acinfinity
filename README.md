@@ -13,7 +13,9 @@ This is a custom component for [Home Assistant](http://home-assistant.io) that a
 - [Configuration](#configuration)
   - [General Configuration](#general-configuration)
   - [Enable / Disable Entities](#enable--disable-entities)
-    
+- [Fan Entities](#fan-entities)
+- [Diagnostics](#diagnostics)
+
 # Compatibility
 
 This integration is compatible with the following UIS Controllers
@@ -23,9 +25,13 @@ This integration is compatible with the following UIS Controllers
 - Controller 69 Pro+
 - Controller AI+
 - AIRTAP AI Register Booster Fans (Wi-Fi models)
+- Room to Room Fan (AC-TWT6)
 
 AIRTAP fans have no ports; each fan shows up as its own device with the fan's mode (`AI` / `Off` / `On`), on/off power
 and current power on "port 0". Timer, cycle and schedule modes can still be set from the app but cannot be driven from Home Assistant.
+
+Room to room fans also have no ports; their inside / outside temperatures, mode, fan speed, target temperature, timer,
+power, direction, backlight and keypress sound are all attached to the fan's own device.
 
 This integration requires the controller be connected to Wi-fi, and thus is not compatible with bluetooth only devices such as Controller 67 or the base model of Controller 69, as they do not sync directly to the UIS Cloud
 
@@ -73,3 +79,18 @@ You can enable or disable these entities as needed.  The following options are a
 New controllers added to the AC Infinity app will be added with `Sensors Only` by default during the next home assistant restart.
 
 Entities disabled after initial setup will no longer be provided by this integration, but will not be automatically removed from home assistant.  They can be cleaned up manually via `https://<your-ha-instance>/config/entities`.
+
+# Fan Entities
+
+Every port with controls enabled also gets a regular Home Assistant `fan` entity, so it can be used with fan cards, voice
+assistants and the `fan.*` services.  Turning it on or off switches the port between `On` and `Off` mode, and the speed
+percentage maps to the `On Power` level (10% per step).  Any other active mode (Auto, VPD, Schedule, ...) is shown as on.
+
+Ports whose device type is set in the AC Infinity app to something that is not a fan (grow light, heater, pump, ...) do not
+get a fan entity.
+
+# Diagnostics
+
+The raw data the integration last received from the AC Infinity API can be downloaded from the integration's page in
+Home Assistant (`⋮` → `Download diagnostics`).  E-mail, password, MAC addresses and other identifiers are redacted.
+Please attach this file when reporting an issue with a device.

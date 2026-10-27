@@ -61,6 +61,18 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
+NUMBER_DISPLAY_TYPE_SELECTOR = selector({
+    "select": {
+        "options": [
+            {"value": "auto", "label": "Automatic (each entity's default)"},
+            {"value": "box", "label": "Box (type a number)"},
+            {"value": "slider", "label": "Slider"},
+        ],
+        "mode": "list",
+    }
+})
+
+
 class ACInfinityFlowBase:
     """Base class for AC Infinity config and options flows."""
 
@@ -279,6 +291,7 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
                 ConfigurationKey.POLLING_INTERVAL, DEFAULT_POLLING_INTERVAL
             )
             password: str | None = user_input.get(ConfigurationKey.UPDATE_PASSWORD, None)
+            number_display_type = user_input.get(ConfigurationKey.NUMBER_DISPLAY_TYPE, "auto")
 
             if polling_interval < 5:
                 errors[ConfigurationKey.POLLING_INTERVAL] = "invalid_polling_interval"
@@ -310,6 +323,10 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 new_data = self.config_entry.data.copy()
                 new_data[ConfigurationKey.POLLING_INTERVAL] = polling_interval
+                display_type_changed = (
+                    new_data.get(ConfigurationKey.NUMBER_DISPLAY_TYPE, "auto") != number_display_type
+                )
+                new_data[ConfigurationKey.NUMBER_DISPLAY_TYPE] = number_display_type
                 if password:
                     new_data[CONF_PASSWORD] = password
 
@@ -326,6 +343,9 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
 
                 if password:
                     return await self.async_step_notify_restart()
+                if display_type_changed:
+                    # number entities report their display type when added; reload so they pick up the new one
+                    self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
                 return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
@@ -335,7 +355,10 @@ class OptionsFlow(ACInfinityFlowBase, config_entries.OptionsFlow):
                     vol.Required(ConfigurationKey.POLLING_INTERVAL,
                                  default=self.__get_saved_conf_value(ConfigurationKey.POLLING_INTERVAL,
                                                                      DEFAULT_POLLING_INTERVAL)): int,
-                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str
+                    vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE,
+                                 default=self.__get_saved_conf_value(ConfigurationKey.NUMBER_DISPLAY_TYPE,
+                                                                     "auto")): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors=errors

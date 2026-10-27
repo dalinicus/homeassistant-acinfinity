@@ -434,3 +434,50 @@ class TestInit:
         assert device2_config["port_5"] == EntityConfigValue.SENSORS_ONLY
         assert device2_config["port_6"] == EntityConfigValue.SENSORS_ONLY
 
+
+
+class TestRemoveStaleEntities:
+    """Entities the integration no longer provides (excluded or disabled via options) are removed from the registry."""
+
+    @staticmethod
+    def _run(mocker: MockFixture, registry_entries, devices, device_entities, provided, controller_ids):
+        import custom_components.ac_infinity as integration
+
+        entity_registry = MagicMock()
+        device_registry = MagicMock()
+        mocker.patch.object(integration.er, "async_get", return_value=entity_registry)
+        mocker.patch.object(integration.er, "async_entries_for_config_entry", return_value=registry_entries)
+        mocker.patch.object(
+            integration.er, "async_entries_for_device", side_effect=lambda _, device_id, **__: device_entities.get(device_id, [])
+        )
+        mocker.patch.object(integration.dr, "async_get", return_value=device_registry)
+        mocker.patch.object(integration.dr, "async_entries_for_config_entry", return_value=devices)
+
+        service = MagicMock()
+        service.get_device_ids.return_value = controller_ids
+        entry_data = ACInfinityEntryData(service, MagicMock(), {}, provided_unique_ids=set(provided))
+        entry = MagicMock(entry_id=ENTRY_ID)
+
+        getattr(integration, "__remove_stale_entities_and_devices")(MagicMock(), entry, entry_data)
+        return entity_registry, device_registry
+
+    def test_removes_entities_not_provided(self, mocker: MockFixture):
+        entries = [
+            MagicMock(unique_id="kept", entity_id="sensor.kept"),
+            MagicMock(unique_id="excluded", entity_id="number.excluded"),
+        ]
+
+        entity_registry, _ = self._run(mocker, entries, [], {}, {"kept"}, [])
+
+        entity_registry.async_remove.assert_called_once_with("number.excluded")
+
+    def test_removes_empty_port_devices_but_never_controllers(self, mocker: MockFixture):
+        controller = MagicMock(id="controller", identifiers={(DOMAIN, "123")})
+        empty_port = MagicMock(id="empty_port", identifiers={(DOMAIN, "123_1")})
+        used_port = MagicMock(id="used_port", identifiers={(DOMAIN, "123_2")})
+
+        _, device_registry = self._run(
+            mocker, [], [controller, empty_port, used_port], {"used_port": [MagicMock()]}, set(), ["123"]
+        )
+
+        device_registry.async_update_device.assert_called_once_with("empty_port", remove_config_entry_id=ENTRY_ID)

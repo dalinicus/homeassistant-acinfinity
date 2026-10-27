@@ -64,6 +64,14 @@
           "excluded_modes": "Entfernt alle Entitäten, die nur für die gewählten Modi gelten. Der Modus selbst bleibt auswählbar.",
           "excluded_entity_types": "Entfernt die gewählte Entität auf jedem Gerät."
         }
+      },
+      "general_config": {
+        "data": {
+          "number_display_type": "Anzeigeart für Zahlen"
+        },
+        "data_description": {
+          "number_display_type": "Ob Zahlen-Entitäten (z.B. Leistung) als Eingabefeld oder Schieberegler angezeigt werden."
+        }
       }
     },
     "error": {

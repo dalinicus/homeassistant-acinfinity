@@ -19,6 +19,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 
 from custom_components.ac_infinity.const import (
+    ConfigurationKey,
     AtType,
     DOMAIN,
     AdvancedSettingsKey,
@@ -1319,6 +1320,13 @@ DEVICE_DESCRIPTIONS: list[ACInfinityDeviceNumberEntityDescription] = [
 ]
 
 
+def number_display_type(entity: ACInfinityEntity) -> NumberMode | None:
+    """The display type chosen in the options flow for every number entity, or None to keep each entity's default."""
+    entry = entity.coordinator.config_entry
+    value = entry.data.get(ConfigurationKey.NUMBER_DISPLAY_TYPE) if entry is not None else None
+    return NumberMode(value) if value in (NumberMode.BOX, NumberMode.SLIDER) else None
+
+
 class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity):
     entity_description: ACInfinityControllerNumberEntityDescription
 
@@ -1339,6 +1347,10 @@ class ACInfinityControllerNumberEntity(ACInfinityControllerEntity, NumberEntity)
             device_coordinator,
         )
         self.entity_description = description
+
+    @property
+    def mode(self) -> NumberMode:
+        return number_display_type(self) or super().mode
 
     @property
     def native_value(self) -> float | None:
@@ -1366,6 +1378,10 @@ class ACInfinityDeviceNumberEntity(ACInfinityDeviceEntity, NumberEntity):
             device, description.enabled_fn, description.suitable_fn, description.at_type_fn, description.key, Platform.NUMBER, list_coordinator, device_coordinator
         )
         self.entity_description = description
+
+    @property
+    def mode(self) -> NumberMode:
+        return number_display_type(self) or super().mode
 
     @property
     def native_value(self) -> float | None:

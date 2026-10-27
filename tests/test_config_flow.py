@@ -16,6 +16,7 @@ from custom_components.ac_infinity.client import (
     ACInfinityClientRequestFailed,
 )
 from custom_components.ac_infinity.config_flow import (
+    NUMBER_DISPLAY_TYPE_SELECTOR,
     CONFIG_SCHEMA,
     ConfigFlow,
     OptionsFlow,
@@ -388,6 +389,7 @@ class TestConfigFlow:
                 {
                     vol.Required(ConfigurationKey.POLLING_INTERVAL, default=expected_value): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={},
@@ -427,6 +429,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={},
@@ -467,6 +470,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={ConfigurationKey.POLLING_INTERVAL: "invalid_polling_interval"},
@@ -760,6 +764,7 @@ class TestConfigFlow:
                         ConfigurationKey.POLLING_INTERVAL, default=DEFAULT_POLLING_INTERVAL
                     ): int,
                     vol.Optional(ConfigurationKey.UPDATE_PASSWORD): str,
+                    vol.Required(ConfigurationKey.NUMBER_DISPLAY_TYPE, default="auto"): NUMBER_DISPLAY_TYPE_SELECTOR,
                 }
             ),
             errors={ConfigurationKey.UPDATE_PASSWORD: expected},

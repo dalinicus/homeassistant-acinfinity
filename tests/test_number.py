@@ -1,9 +1,10 @@
 import asyncio
+from unittest.mock import MagicMock
 from asyncio import Future
 
 import pytest
 from homeassistant.const import UnitOfTemperature
-from homeassistant.components.number import NumberDeviceClass
+from homeassistant.components.number import NumberDeviceClass, NumberMode
 from pytest_mock import MockFixture
 
 from custom_components.ac_infinity.const import (
@@ -1084,6 +1085,19 @@ class TestNumbers:
         await entity.async_set_native_value(f)
 
         test_objects.port_control_sets_mock.assert_called_with(entity._device, {setting: c, f_setting: f})
+
+    @pytest.mark.parametrize(
+        "display_type,expected",
+        [(None, NumberMode.AUTO), ("auto", NumberMode.AUTO), ("box", NumberMode.BOX), ("slider", NumberMode.SLIDER)],
+    )
+    async def test_number_display_type_option_overrides_mode(self, setup, display_type, expected):
+        """The options flow display type applies to every number entity, so speeds can be typed in"""
+        test_objects: ACTestObjects = setup
+        entity = await execute_and_get_device_entity(setup, async_setup_entry, 1, DeviceControlKey.ON_SPEED)
+        entity.coordinator.config_entry = MagicMock(data={"number_display_type": display_type})
+
+        assert isinstance(entity, ACInfinityDeviceNumberEntity)
+        assert entity.mode == expected
 
     @pytest.mark.parametrize(
         "setting",

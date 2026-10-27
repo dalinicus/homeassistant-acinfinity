@@ -1526,8 +1526,19 @@ class ACInfinityEntities(list[ACInfinityEntity]):
             self._entry_data.excluded_unique_ids.add((str(entity.platform_name), entity.unique_id))
 
     def append_if_suitable(self, entity: ACInfinityEntity):
+        # Only an entity that applies to this device can be kept or excluded.  Several descriptions share a
+        # unique id (e.g. the standard, AIRTAP and room-to-room "active mode" selects all use atType), so treating
+        # an inapplicable one as excluded would make the cleanup delete the real entity with the same id.
+        if not entity.is_suitable:
+            _LOGGER.debug(
+                'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
+                entity.unique_id,
+                entity.translation_key,
+                entity.platform_name,
+            )
+            return
 
-        if self._entry_data is not None and entity.is_suitable:
+        if self._entry_data is not None:
             self._entry_data.available_entity_types.setdefault(entity.controller_id, set()).add(entity_type(entity))
 
         if is_excluded_by_filters(self._config_entry, entity):
@@ -1539,21 +1550,13 @@ class ACInfinityEntities(list[ACInfinityEntity]):
                 entity.platform_name,
             )
         elif entity.is_enabled(self._config_entry):
-            if entity.is_suitable:
-                self.append(entity)
-                _LOGGER.debug(
-                    'Initializing entity "%s" (%s) for platform "%s".',
-                    entity.unique_id,
-                    entity.translation_key,
-                    entity.platform_name,
-                )
-            else:
-                _LOGGER.debug(
-                    'Ignoring unsuitable entity "%s" (%s) for platform "%s". (Not applicable for device)',
-                    entity.unique_id,
-                    entity.translation_key,
-                    entity.platform_name,
-                )
+            self.append(entity)
+            _LOGGER.debug(
+                'Initializing entity "%s" (%s) for platform "%s".',
+                entity.unique_id,
+                entity.translation_key,
+                entity.platform_name,
+            )
         else:
             self.__exclude(entity)
             _LOGGER.debug(

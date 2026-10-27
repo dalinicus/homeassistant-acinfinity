@@ -169,7 +169,7 @@ def __remove_excluded_entities_and_empty_devices(
         if device.identifiers & controller_identifiers:
             continue
         if not er.async_entries_for_device(entity_registry, device.id, include_disabled_entities=True):
-            device_registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+            device_registry.async_remove_device(device.id)
 
     if removed:
         _LOGGER.info("Removed %s AC Infinity entities excluded in the integration options", removed)

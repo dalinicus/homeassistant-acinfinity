@@ -492,7 +492,7 @@ class TestRemoveExcludedEntities:
             mocker, [], [controller, empty_port, used_port], {"used_port": [MagicMock()]}, set(), ["123"]
         )
 
-        device_registry.async_update_device.assert_called_once_with("empty_port", remove_config_entry_id=ENTRY_ID)
+        device_registry.async_remove_device.assert_called_once_with("empty_port")
 
 
 @pytest.mark.asyncio

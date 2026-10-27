@@ -862,7 +862,7 @@ class ACInfinityService:
         await self.update_controller_settings(controller, {setting_key: new_value})
 
     async def update_controller_settings(
-        self, controller: ACInfinityController, key_values: dict[str, int]
+        self, controller: ACInfinityController, key_values: dict[str, Any]
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -881,7 +881,7 @@ class ACInfinityService:
         self,
         device: ACInfinityDevice,
         setting_key: str,
-        new_value: int,
+        new_value: int | str,
     ):
         """Update the value of a setting via the AC Infinity API
 
@@ -895,7 +895,7 @@ class ACInfinityService:
     async def update_device_settings(
         self,
         device: ACInfinityDevice,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -928,7 +928,7 @@ class ACInfinityService:
     async def update_device_controls(
         self,
         device: ACInfinityDevice,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         if device.controller.is_ai_controller:
             await self.__update_ai_control_and_settings(device.controller.controller_id, device.device_port, key_values)
@@ -954,7 +954,7 @@ class ACInfinityService:
         self,
         controller_id: str | int,
         device_port: int,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -975,7 +975,7 @@ class ACInfinityService:
         controller_id: str | int,
         device_port: int,
         device_name: str,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -995,7 +995,7 @@ class ACInfinityService:
         self,
         controller_id: str | int,
         device_port: int,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -1023,7 +1023,7 @@ class ACInfinityService:
         cache: dict[tuple[str, int], Any],
         controller_id: str | int,
         device_port: int,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ) -> None:
         """Optimistically applies a just-written value to the cache so entities redraw with the new
         value immediately, rather than a stale value from a refresh that raced the API's write."""
@@ -1034,7 +1034,7 @@ class ACInfinityService:
         self,
         controller_id: str | int,
         device_port: int,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the values of a set of settings via the AC Infinity API
 
@@ -1057,7 +1057,7 @@ class ACInfinityService:
         dev_name: str,
         inside_room_name: str,
         outside_room_name: str,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update display/panel settings (backlight, keytone, brightness) via the AC
         Infinity API. These use a different request shape than other room-to-room fan
@@ -1083,7 +1083,7 @@ class ACInfinityService:
     async def __update_airtap_controls(
         self,
         controller_id: str | int,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Update the mode and/or speeds of an AIRTAP register fan via the AC Infinity API
 

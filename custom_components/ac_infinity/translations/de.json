@@ -250,6 +250,11 @@
       "schedule_mode_off_time": {
         "name": "Geplante Aus-Zeit"
       }
+    },
+    "fan": {
+      "fan": {
+        "name": "Lüfter"
+      }
     }
   }
 }

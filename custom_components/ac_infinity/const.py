@@ -11,6 +11,7 @@ PLATFORMS = [
     Platform.NUMBER,
     Platform.TIME,
     Platform.SWITCH,
+    Platform.FAN,
 ]
 HOST = "https://www.acinfinityserver.com"
 
@@ -735,6 +736,7 @@ AIRTAP_DEVICE_KEYS = frozenset({
     DevicePropertyKey.SPEAK,
     DevicePropertyKey.REMAINING_TIME,
     CustomDevicePropertyKey.NEXT_STATE_CHANGE,
+    "fan",
 })
 
 AIRTAP_CONTROLLER_KEYS = frozenset({

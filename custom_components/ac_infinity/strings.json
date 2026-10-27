@@ -409,6 +409,11 @@
       "schedule_mode_off_time": {
         "name": "Scheduled Off-Time"
       }
+    },
+    "fan": {
+      "fan": {
+        "name": "Fan"
+      }
     }
   }
 }

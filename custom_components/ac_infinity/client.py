@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 from urllib.parse import urlencode
 
 import aiohttp
@@ -152,7 +153,7 @@ class ACInfinityClient:
         return updated
 
     async def update_device_controls(
-        self, controller_id: str | int, device_port: int, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -179,7 +180,7 @@ class ACInfinityClient:
         _ = await self.__post(f"{API_URL_ADD_DEV_MODE}?{urlencode(updated)}", None, headers)
 
     async def update_device_settings(
-        self, controller_id: str | int, device_port: int, device_name: str, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, device_name: str, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -209,7 +210,7 @@ class ACInfinityClient:
         _ = await self.__post(f"{API_URL_UPDATE_ADV_SETTING}?{urlencode(updated)}", None, headers)
 
     async def update_ai_device_control_and_settings(
-        self, controller_id: str | int, device_port: int, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
     ):
         """Sets the provided settings on a port to a new values
 
@@ -258,7 +259,7 @@ class ACInfinityClient:
         _ = await self.__put(url, headers)
 
     async def update_room_to_room_fan_control(
-        self, controller_id: str | int, device_port: int, key_values: dict[str, int]
+        self, controller_id: str | int, device_port: int, key_values: dict[str, Any]
     ):
         """Sets control values for a room-to-room/through-wall fan (e.g. AC-TWT6, devType 33).
 
@@ -346,7 +347,7 @@ class ACInfinityClient:
         dev_name: str,
         inside_room_name: str,
         outside_room_name: str,
-        key_values: dict[str, int],
+        key_values: dict[str, Any],
     ):
         """Sets display/panel settings (backlight, keytone/keypress sound, brightness) for
         a room-to-room/through-wall fan (e.g. AC-TWT6, devType 33).
@@ -389,7 +390,7 @@ class ACInfinityClient:
         _ = await self.__put(url, headers)
 
     async def update_airtap_controls(
-        self, controller_id: str | int, key_values: dict[str, int]
+        self, controller_id: str | int, key_values: dict[str, Any]
     ):
         """Sets the mode and/or speeds of an AIRTAP register fan.
 

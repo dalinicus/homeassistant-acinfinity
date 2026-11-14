@@ -710,8 +710,11 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(field_value)
 
-        test_objects.port_control_set_mock.assert_called_with(
-            entity._device, setting, expected
+        at_type = test_objects.service.get_device_control(
+            entity._device.controller.controller_id, port, DeviceControlKey.AT_TYPE
+        )
+        test_objects.port_control_sets_mock.assert_called_with(
+            entity._device, {setting: expected, DeviceControlKey.AT_TYPE: at_type}
         )
         test_objects.refresh_mock.assert_not_called()
 
@@ -957,8 +960,11 @@ class TestNumbers:
         assert isinstance(entity, ACInfinityDeviceNumberEntity)
         await entity.async_set_native_value(field_value)
 
-        test_objects.port_control_set_mock.assert_called_with(
-            entity._device, setting, expected
+        at_type = test_objects.service.get_device_control(
+            entity._device.controller.controller_id, port, DeviceControlKey.AT_TYPE
+        )
+        test_objects.port_control_sets_mock.assert_called_with(
+            entity._device, {setting: expected, DeviceControlKey.AT_TYPE: at_type}
         )
         test_objects.refresh_mock.assert_not_called()
 

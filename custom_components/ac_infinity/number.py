@@ -344,8 +344,20 @@ def __set_value_fn_vpd_leaf_temp_offset(
 def __set_value_fn_timer_duration(
     entity: ACInfinityEntity, device: ACInfinityDevice, value: float
 ):
-    # value configured as minutes but stored as seconds
-    return entity.service.update_device_control(device, entity.data_key, int((value or 0) * 60))
+    # value configured as minutes but stored as seconds.
+    # The API update is read-modify-write: the client fetches the port's current settings from the
+    # cloud and posts them back with our change. Right after the mode is changed, that fetch can
+    # still return the old mode, which then gets written back and silently undoes the mode change.
+    # Pin the mode to the one we have cached (the timer entity is only available while the cached
+    # mode is the matching timer mode) so the write can't revert it.
+    at_type = entity.service.get_device_control(
+        device.controller.controller_id, device.device_port, DeviceControlKey.AT_TYPE
+    )
+    key_values = {entity.data_key: int((value or 0) * 60)}
+    if at_type is not None:
+        key_values[DeviceControlKey.AT_TYPE] = at_type
+
+    return entity.service.update_device_controls(device, key_values)
 
 
 def __set_value_fn_vpd_control(

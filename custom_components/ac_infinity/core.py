@@ -62,7 +62,8 @@ class ACInfinityController:
         self._identifier = (DOMAIN, self._controller_id)
 
         devices = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS] or []
-        self._devices = [ACInfinityDevice(self, device)for device in devices]
+        # Port 0 is a controller-level entry (reported by e.g. the Cloudline T6), not a physical port
+        self._devices = [ACInfinityDevice(self, device) for device in devices if device[DevicePropertyKey.PORT] > 0]
 
         self._device_info = DeviceInfo(
             identifiers={self._identifier},
@@ -1286,4 +1287,3 @@ def enabled_fn_control(entry: ConfigEntry, device_id: str, entity_config_key: st
 def enabled_fn_setting(entry: ConfigEntry, device_id: str, entity_config_key: str) -> bool:
     setting = entry.data[ConfigurationKey.ENTITIES][device_id][entity_config_key]
     return setting == EntityConfigValue.ALL or setting == EntityConfigValue.SENSORS_AND_SETTINGS
-

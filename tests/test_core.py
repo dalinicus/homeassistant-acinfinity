@@ -453,6 +453,16 @@ class TestACInfinity:
             assert device.controller == controller
             assert device.controller.controller_id == str(DEVICE_ID)
 
+    async def test_controller_devices_property_ignores_port_zero(self, mock_client):
+        """controllers such as the Cloudline T6 report a nameless port 0 that is not a physical port"""
+        controller_json = deepcopy(CONTROLLER_PROPERTIES)
+        ports = controller_json[ControllerPropertyKey.DEVICE_INFO][ControllerPropertyKey.PORTS]
+        ports.insert(0, {**ports[0], DevicePropertyKey.PORT: 0, DevicePropertyKey.NAME: None})
+
+        controller = ACInfinityController(controller_json)
+
+        assert [device.device_port for device in controller.devices] == [1, 2, 3, 4]
+
     async def test_controller_sensors_property_returns_empty_for_non_ai(self, mock_client):
         """controller.sensors property should return empty list for non-AI controllers"""
         controller = ACInfinityController(CONTROLLER_PROPERTIES)
